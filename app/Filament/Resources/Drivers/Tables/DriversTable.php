@@ -108,12 +108,13 @@ class DriversTable
                     ->badge()
                     ->color(fn ($state) => $state > 0 ? 'info' : 'gray'),
 
-                TextColumn::make('driverProfile.delivered_count')
+                // أسماء بدون نقطة عن قصد: اسم فيه نقطة يخلي فيلامنت
+                // يحاول يمشي على العلاقة، وتنكسر الصفحة لو كانت فاضية
+                TextColumn::make('delivered')
                     ->label('توصيلات')
-                    ->placeholder('0')
-                    ->sortable(),
+                    ->state(fn (User $record) => (int) ($record->driverProfile?->delivered_count ?? 0)),
 
-                TextColumn::make('driverProfile.rating_avg')
+                TextColumn::make('rating')
                     ->label('التقييم')
                     ->state(function (User $record) {
                         $p = $record->driverProfile;

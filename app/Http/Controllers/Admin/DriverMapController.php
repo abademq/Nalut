@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\User;
+use App\Services\DriverLocationService;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -13,8 +14,8 @@ use Illuminate\Http\JsonResponse;
  */
 class DriverMapController extends Controller
 {
-    /** السائق يُعتبر متصل لو موقعه تحدّث خلال هذي المدة */
-    private const STALE_MINUTES = 15;
+    /** الموقع يعتبر قديمًا بعد دقيقتين */
+    private const STALE_SECONDS = 120;
 
     public function locations(): JsonResponse
     {
@@ -28,8 +29,18 @@ class DriverMapController extends Controller
             ->groupBy('driver_id')
             ->pluck('total', 'driver_id');
 
+        // المواقع الحية تأتي من Cache
+        $locations = collect(DriverLocationService::onlineDrivers())
+            ->keyBy('driver_id');
+
         $online = [];
-        $counts = ['online' => 0, 'offline' => 0, 'suspended' => 0, 'pending' => 0];
+        $counts = [
+            'online' => 0,
+            'offline' => 0,
+            'suspended' => 0,
+            'pending' => 0,
+        ];
+
         $debt = 0.0;
         $credit = 0.0;
 
@@ -45,29 +56,35 @@ class DriverMapController extends Controller
 
             if (! $driver->is_active) {
                 $counts['suspended']++;
-
                 continue;
             }
 
             if (! $profile?->is_approved) {
                 $counts['pending']++;
-
                 continue;
             }
 
-            $fresh = $profile->location_updated_at
-                && $profile->location_updated_at->gt(now()->subMinutes(self::STALE_MINUTES));
+            $location = $locations->get($driver->id);
 
-            if ($profile->is_online && $fresh && $profile->current_lat) {
+            $fresh = $location
+                && isset($location['at'])
+                && $location['at'] >= now()->timestamp - self::STALE_SECONDS;
+
+            if (
+                $profile->is_online
+                && $fresh
+                && isset($location['lat'], $location['lng'])
+            ) {
                 $counts['online']++;
 
                 $online[] = [
                     'id'       => $driver->id,
                     'name'     => $driver->name,
                     'phone'    => $driver->phone,
-                    'lat'      => (float) $profile->current_lat,
-                    'lng'      => (float) $profile->current_lng,
-                    'since'    => $profile->location_updated_at->diffForHumans(),
+                    'lat'      => (float) $location['lat'],
+                    'lng'      => (float) $location['lng'],
+                    'heading'  => (float) ($location['heading'] ?? 0),
+                    'since'    => now()->createFromTimestamp($location['at'])->diffForHumans(),
                     'orders'   => (int) ($activeOrders[$driver->id] ?? 0),
                     'capacity' => (int) $profile->max_active_orders,
                     'balance'  => round($balance, 2),
