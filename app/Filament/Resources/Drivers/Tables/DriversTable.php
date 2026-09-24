@@ -63,15 +63,26 @@ class DriversTable
                 TextColumn::make('location_age')
                     ->label('آخر موقع')
                     ->state(function (User $record) {
-                        $age = $record->driverProfile?->locationAgeMinutes();
+                        $location = $record->driverProfile?->liveLocation();
 
-                        if ($age === null) {
+                        if (! $location) {
                             return 'ما فيش';
                         }
 
-                        return $age < 1 ? 'توّا' : "قبل {$age} دقيقة";
+                        // الكاش TTL دقيقتين، فالثواني أدق من الدقائق هنا
+                        $seconds = now()->timestamp - $location['at'];
+
+                        if ($seconds < 30) {
+                            return 'توّا';
+                        }
+
+                        if ($seconds < 120) {
+                            return "قبل {$seconds} ثانية";
+                        }
+
+                        return 'قبل '.(int) floor($seconds / 60).' دقيقة';
                     })
-                    ->color(fn (User $record) => ($record->driverProfile?->locationAgeMinutes() ?? 999) <= 10
+                    ->color(fn (User $record) => $record->driverProfile?->isReallyOnline()
                         ? 'success'
                         : 'gray'),
 

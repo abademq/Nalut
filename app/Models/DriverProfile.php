@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Services\DriverLocationService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -47,26 +48,56 @@ class DriverProfile extends Model
         return $this->belongsToMany(DeliveryZone::class, 'driver_zones');
     }
 
+    /**
+     * الموقع الحالي — من الكاش أولاً (المصدر الحقيقي)،
+     * ومن أعمدة الجدول كاحتياطي للبيانات القديمة.
+     *
+     * DriverLocationService يكتب في الكاش فقط بـ TTL 120 ثانية،
+     * فأعمدة current_lat/lng تضل فاضية للسائقين الجدد.
+     */
+    public function liveLocation(): ?array
+    {
+        if ($cached = DriverLocationService::get($this->user_id)) {
+            return [
+                'lat' => (float) $cached['lat'],
+                'lng' => (float) $cached['lng'],
+                'at'  => (int) $cached['at'],
+            ];
+        }
+
+        if ($this->current_lat && $this->location_updated_at) {
+            return [
+                'lat' => (float) $this->current_lat,
+                'lng' => (float) $this->current_lng,
+                'at'  => $this->location_updated_at->timestamp,
+            ];
+        }
+
+        return null;
+    }
+
     /// السائق يُعتبر متاح فعلياً لو موقعه تحدّث حديثاً.
     /// يحمينا من سائق أقفل التطبيق بدون ما يوقف «متاح».
-    public function isReallyOnline(int $staleMinutes = 10): bool
+    public function isReallyOnline(int $staleMinutes = 5): bool
     {
         if (! $this->is_online) {
             return false;
         }
 
-        if (! $this->location_updated_at) {
-            return false;
-        }
+        $age = $this->locationAgeMinutes();
 
-        return $this->location_updated_at->diffInMinutes(now()) <= $staleMinutes;
+        return $age !== null && $age <= $staleMinutes;
     }
 
     public function locationAgeMinutes(): ?int
     {
-        return $this->location_updated_at
-            ? (int) $this->location_updated_at->diffInMinutes(now())
-            : null;
+        $location = $this->liveLocation();
+
+        if (! $location) {
+            return null;
+        }
+
+        return (int) floor((now()->timestamp - $location['at']) / 60);
     }
 
     public function servesZone(?int $zoneId): bool
