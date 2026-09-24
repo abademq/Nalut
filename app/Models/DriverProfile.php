@@ -47,6 +47,28 @@ class DriverProfile extends Model
         return $this->belongsToMany(DeliveryZone::class, 'driver_zones');
     }
 
+    /// السائق يُعتبر متاح فعلياً لو موقعه تحدّث حديثاً.
+    /// يحمينا من سائق أقفل التطبيق بدون ما يوقف «متاح».
+    public function isReallyOnline(int $staleMinutes = 10): bool
+    {
+        if (! $this->is_online) {
+            return false;
+        }
+
+        if (! $this->location_updated_at) {
+            return false;
+        }
+
+        return $this->location_updated_at->diffInMinutes(now()) <= $staleMinutes;
+    }
+
+    public function locationAgeMinutes(): ?int
+    {
+        return $this->location_updated_at
+            ? (int) $this->location_updated_at->diffInMinutes(now())
+            : null;
+    }
+
     public function servesZone(?int $zoneId): bool
     {
         $ids = $this->zones()->pluck('delivery_zones.id');

@@ -9,3 +9,8 @@ Route::get('/', function () {
 use App\Http\Controllers\Api\PaymentController;
 Route::get('payments/callback', [PaymentController::class, 'callback'])
     ->name('payments.callback');
+
+use App\Http\Controllers\Admin\DriverMapController;
+
+Route::middleware(['web', 'auth'])
+    ->get('admin-api/drivers-map', [DriverMapController::class, 'locations']);
