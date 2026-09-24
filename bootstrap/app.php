@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => EnsureRole::class,
         ]);
+
+        // ما فيش مسار باسم login — بدونه أي طلب API بدون توكن يطيح بخطأ 500 بدل 401
+        $middleware->redirectGuestsTo(
+            fn ($request) => $request->is('api/*') ? null : '/admin/login'
+        );
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->shouldRenderJsonWhen(

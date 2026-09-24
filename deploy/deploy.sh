@@ -35,15 +35,19 @@ fi
 echo "==> الهجرات"
 php artisan migrate --force
 
-echo "==> الصلاحيات"
-chown -R www-data:www-data storage bootstrap/cache
-chmod -R 775 storage bootstrap/cache
-
 echo "==> بناء الكاش"
 php artisan optimize:clear
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
+
+# بعد الكاش مش قبله: أوامر artisan كـ root تنشئ ملفات سجل وكاش باسم root،
+# وخادم الويب (www-data) ما يقدرش يكتب فيها فيطيح بخطأ 500
+echo "==> الصلاحيات"
+mkdir -p storage/framework/{cache/data,sessions,views,testing} storage/logs storage/app/public bootstrap/cache
+chown -R www-data:www-data storage bootstrap/cache
+chmod -R 775 storage bootstrap/cache
+[[ -f storage/app/firebase.json ]] && chmod 640 storage/app/firebase.json
 
 echo "==> إعادة تشغيل الخدمات"
 systemctl restart php8.3-fpm

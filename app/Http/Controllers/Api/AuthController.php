@@ -5,52 +5,35 @@ namespace App\Http\Controllers\Api;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\Otp\OtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
     /** إرسال رمز تحقق للهاتف */
-    public function requestOtp(Request $request): JsonResponse
+    public function requestOtp(Request $request, OtpService $otp): JsonResponse
     {
         $data = $request->validate([
-            'phone' => ['required', 'string', 'regex:/^(09[1-5][0-9]{7})$/'],
+            'phone' => ['required', 'string', 'regex:/^(09[1-6][0-9]{7})$/'],
         ], [], ['phone' => 'رقم الهاتف']);
 
-        $recent = DB::table('otp_codes')
-            ->where('phone', $data['phone'])
-            ->where('created_at', '>', now()->subMinute())
-            ->count();
-
-        if ($recent >= 2) {
-            throw ValidationException::withMessages(['phone' => 'استنى دقيقة قبل ما تطلب رمز جديد.']);
-        }
-
-        $code = config('app.env') === 'production'
-            ? str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT)
-            : '1234';
-
-        DB::table('otp_codes')->insert([
-            'phone'      => $data['phone'],
-            'code'       => $code,
-            'expires_at' => now()->addSeconds((int) env('OTP_TTL_SECONDS', 300)),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-
-        // TODO: أرسل الرمز عبر مزوّد SMS أو واتساب
+        $result = $otp->request($data['phone'], $request->ip());
 
         return response()->json([
-            'message' => 'تم إرسال رمز التحقق.',
-            'debug_code' => env('OTP_DEV_MODE', false) ? $code : null,
+            'message'      => 'تم إرسال رمز التحقق.',
+            'channel'      => $result['channel'],
+            'expires_in'   => $result['expires_in'],
+            'resend_after' => $result['resend_after'],
+            // للتجربة فقط — OTP_DEV_MODE لازم يكون false مع مستخدمين حقيقيين
+            'debug_code'   => config('otp.debug') ? $result['code'] : null,
         ]);
     }
 
     /** التحقق من الرمز وإصدار التوكن */
-    public function verifyOtp(Request $request): JsonResponse
+    public function verifyOtp(Request $request, OtpService $otp): JsonResponse
     {
         $data = $request->validate([
             'phone' => ['required', 'string'],
@@ -62,18 +45,7 @@ class AuthController extends Controller
             'fcm_token' => ['nullable', 'string'],
         ]);
 
-        $otp = DB::table('otp_codes')
-            ->where('phone', $data['phone'])
-            ->whereNull('consumed_at')
-            ->where('expires_at', '>', now())
-            ->orderByDesc('id')
-            ->first();
-
-        if (! $otp || ! hash_equals($otp->code, $data['code'])) {
-            throw ValidationException::withMessages(['code' => 'الرمز غير صحيح أو منتهي.']);
-        }
-
-        DB::table('otp_codes')->where('id', $otp->id)->update(['consumed_at' => now()]);
+        $otp->verify($data['phone'], $data['code']);
 
         $user = User::where('phone', $data['phone'])->first();
 
@@ -164,7 +136,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $user->createToken('app')->plainTextToken,
-            'user'  => new UserResource($user->load('store', 'driverProfile')),
+            'user'  => $this->userPayload($user),
         ]);
     }
 
