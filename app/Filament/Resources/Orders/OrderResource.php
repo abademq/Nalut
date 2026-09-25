@@ -52,6 +52,12 @@ class OrderResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
+        // البلاغات المفتوحة أولوية — لو فيه، الشارة تبيّنهم بالأحمر
+        $issues = Order::whereHas('openIssue')->count();
+        if ($issues > 0) {
+            return '⚠ '.$issues;
+        }
+
         $count = Order::active()->count();
 
         return $count > 0 ? (string) $count : null;
@@ -59,7 +65,7 @@ class OrderResource extends Resource
 
     public static function getNavigationBadgeColor(): ?string
     {
-        return 'warning';
+        return Order::whereHas('openIssue')->exists() ? 'danger' : 'warning';
     }
 
     public static function form(Schema $schema): Schema

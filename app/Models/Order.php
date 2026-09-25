@@ -161,6 +161,17 @@ class Order extends Model
         });
     }
 
+    /** بلاغ السائق المفتوح — الطلب «قيد مراجعة الإدارة» */
+    public function openIssue(): HasOne
+    {
+        return $this->hasOne(OrderIssue::class)->where('status', 'open')->latestOfMany();
+    }
+
+    public function issues(): HasMany
+    {
+        return $this->hasMany(OrderIssue::class)->latest();
+    }
+
     /** طلب بالبطاقة والدفع لسه ما تأكدش */
     public function awaitingOnlinePayment(): bool
     {

@@ -79,6 +79,8 @@ Route::prefix('v1')->group(function () {
             Route::get('available-orders', [DriverController::class, 'available']);
             Route::post('orders/{order}/accept', [DriverController::class, 'accept']);
             Route::post('orders/{order}/status', [DriverController::class, 'updateStatus']);
+            Route::get('failure-reasons', [DriverController::class, 'failureReasons']);
+            Route::post('orders/{order}/issue', [DriverController::class, 'reportIssue']);
             Route::get('orders', [DriverController::class, 'myOrders']);
             Route::get('zones', [DriverController::class, 'zones']);
             Route::post('zones', [DriverController::class, 'updateZones']);

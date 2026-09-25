@@ -172,6 +172,13 @@ class DriverController extends Controller
         $this->profile($request);
         abort_unless($order->driver_id === $request->user()->id, 403);
 
+        // البلاغ المفتوح يوقف الطلب لين الإدارة تقرر
+        if ($order->openIssue()->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'status' => 'الطلب قيد مراجعة الإدارة — استنى قرارهم.',
+            ]);
+        }
+
         $data = $request->validate([
             'status' => ['required', 'in:picked_up,on_the_way,delivered,failed'],
             'reason' => ['nullable', 'string', 'max:200'],
@@ -189,13 +196,53 @@ class DriverController extends Controller
         return response()->json(['data' => new OrderResource($order)]);
     }
 
+    /** أسباب تعذّر التسليم — من لوحة التحكم */
+    public function failureReasons(Request $request): JsonResponse
+    {
+        $this->profile($request);
+
+        return response()->json(['data' => \App\Models\FailureReason::where('is_active', true)
+            ->orderBy('sort')->get(['id', 'label', 'hold_for_review', 'open_support'])]);
+    }
+
+    /** بلاغ تعذّر تسليم — يرجع التذكرة ورابط الدعم الفني */
+    public function reportIssue(Request $request, Order $order, \App\Services\DeliveryIssueService $issues): JsonResponse
+    {
+        $this->profile($request);
+
+        $data = $request->validate([
+            'reason_id' => ['required', 'integer'],
+            'note'      => ['nullable', 'string', 'max:300'],
+            'lat'       => ['nullable', 'numeric', 'between:-90,90'],
+            'lng'       => ['nullable', 'numeric', 'between:-180,180'],
+        ]);
+
+        $reason = \App\Models\FailureReason::where('is_active', true)->findOrFail($data['reason_id']);
+
+        $issue = $issues->report(
+            $order, $request->user(), $reason, $data['note'] ?? null,
+            isset($data['lat']) ? (float) $data['lat'] : null,
+            isset($data['lng']) ? (float) $data['lng'] : null,
+        );
+
+        return response()->json([
+            'ticket'       => $issue->ticket,
+            'under_review' => $issue->action === 'review',
+            'message'      => $issue->action === 'review'
+                ? 'تم إرسال البلاغ — الطلب قيد مراجعة الإدارة'
+                : 'تم تسجيل فشل التسليم',
+            'support_url'  => $issues->supportUrl($issue),
+            'data'         => new OrderResource($issue->order->fresh(['store', 'items', 'customer', 'openIssue'])),
+        ], 201);
+    }
+
     public function myOrders(Request $request): JsonResponse
     {
         $this->profile($request);
 
         $orders = Order::where('driver_id', $request->user()->id)
             ->when($request->status === 'active', fn ($q) => $q->active())
-            ->with(['store', 'items', 'customer'])
+            ->with(['store', 'items', 'customer', 'openIssue'])
             ->latest()
             ->paginate(20);
 

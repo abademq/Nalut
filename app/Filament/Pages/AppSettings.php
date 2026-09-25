@@ -38,6 +38,8 @@ class AppSettings extends Page
         'about.facebook'    => '',
         'about.instagram'   => '',
         'about.website'     => '',
+        // واتساب الدعم الفني — بلاغات السائقين تفتح محادثة معاه
+        'about.support_whatsapp' => '',
     ];
 
     public ?array $data = [];
@@ -96,6 +98,12 @@ class AppSettings extends Page
                         TextInput::make('facebook')->label('فيسبوك')->url()->maxLength(255),
                         TextInput::make('instagram')->label('إنستغرام')->url()->maxLength(255),
                         TextInput::make('website')->label('الموقع')->url()->maxLength(255),
+                    ]),
+                Section::make('الدعم الفني')
+                    ->description('لما السائق يبلّغ على طلب تعذّر تسليمه، تنفتح محادثة واتساب مع الرقم هذا')
+                    ->schema([
+                        TextInput::make('support_whatsapp')->label('واتساب الدعم الفني')->tel()->maxLength(20)
+                            ->helperText('بالصيغة الدولية: 218910000000'),
                     ]),
             ]);
     }

@@ -13,7 +13,19 @@ class OrderResource extends JsonResource
             'id'             => $this->id,
             'code'           => $this->code,
             'status'         => $this->status->value,
-            'status_label'   => $this->status->label(),
+            // بلاغ سائق مفتوح = الحالة تضل، لكن الزبون والمتجر يشوفو «قيد مراجعة الإدارة»
+            'status_label'   => $this->openIssue ? 'قيد مراجعة الإدارة' : $this->status->label(),
+            'under_review'   => (bool) $this->openIssue,
+            // تفاصيل البلاغ ورابط الدعم — للسائق صاحب الطلب بس
+            'issue'          => $this->when(
+                $this->openIssue && $request->user()?->id === $this->driver_id,
+                fn () => [
+                    'ticket'      => $this->openIssue->ticket,
+                    'reason'      => $this->openIssue->reason_label,
+                    'created_at'  => $this->openIssue->created_at,
+                    'support_url' => app(\App\Services\DeliveryIssueService::class)->supportUrl($this->openIssue),
+                ]
+            ),
             'is_final'       => $this->status->isFinal(),
             'payment_method' => $this->payment_method->value,
             'is_paid'        => (bool) $this->is_paid,

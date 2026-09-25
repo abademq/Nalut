@@ -23,6 +23,7 @@ class OrdersTable
     {
         return $table
             ->defaultSort('id', 'desc')
+            ->modifyQueryUsing(fn ($query) => $query->with('openIssue'))
             ->poll('30s')
             ->columns([
                 TextColumn::make('code')
@@ -48,8 +49,10 @@ class OrdersTable
                 TextColumn::make('status')
                     ->label('الحالة')
                     ->badge()
-                    ->formatStateUsing(fn (OrderStatus $state) => $state->label())
-                    ->color(fn (OrderStatus $state) => match ($state) {
+                    ->formatStateUsing(fn (OrderStatus $state, $record) => $record->openIssue
+                        ? '⚠ قيد المراجعة — '.$state->label()
+                        : $state->label())
+                    ->color(fn (OrderStatus $state, $record) => $record->openIssue ? 'danger' : match ($state) {
                         OrderStatus::Pending                         => 'warning',
                         OrderStatus::Accepted, OrderStatus::Preparing => 'info',
                         OrderStatus::Ready, OrderStatus::Assigned    => 'primary',
@@ -96,6 +99,10 @@ class OrdersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                \Filament\Tables\Filters\Filter::make('under_review')
+                    ->label('قيد المراجعة (بلاغات السائقين)')
+                    ->query(fn ($query) => $query->whereHas('openIssue')),
+
                 SelectFilter::make('status')
                     ->label('الحالة')
                     ->options(fn () => collect(OrderStatus::cases())
@@ -115,6 +122,38 @@ class OrdersTable
             ])
             ->recordActions([
                 ViewAction::make()->label('عرض'),
+
+                // بلاغ سائق مفتوح: الإدارة تقرر مصير الطلب
+                Action::make('resolveIssue')
+                    ->authorize(fn () => \App\Support\Perm::can('orders.manage'))
+                    ->visible(fn ($record) => (bool) $record->openIssue)
+                    ->label('مراجعة البلاغ')
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->color('danger')
+                    ->modalHeading(fn ($record) => 'بلاغ '.$record->openIssue?->ticket)
+                    ->modalDescription(fn ($record) => $record->openIssue
+                        ? "السبب: {$record->openIssue->reason_label}"
+                            .($record->openIssue->note ? " — {$record->openIssue->note}" : '')
+                            .' · السائق: '.($record->openIssue->driver?->name ?? '—')
+                            .' · '.$record->openIssue->created_at?->diffForHumans()
+                        : null)
+                    ->modalSubmitActionLabel('تنفيذ القرار')
+                    ->schema([
+                        Select::make('resolution')
+                            ->label('القرار')
+                            ->options(\App\Models\OrderIssue::RESOLUTIONS)
+                            ->required(),
+                        TextInput::make('note')->label('ملاحظة')->maxLength(200),
+                    ])
+                    ->action(function ($record, array $data) {
+                        try {
+                            app(\App\Services\DeliveryIssueService::class)
+                                ->resolve($record->openIssue, auth()->user(), $data['resolution'], $data['note'] ?? null);
+                            Notification::make()->title('تم تنفيذ القرار')->success()->send();
+                        } catch (ValidationException $e) {
+                            Notification::make()->title(collect($e->errors())->flatten()->first())->danger()->send();
+                        }
+                    }),
 
                 Action::make('changeStatus')
                 ->authorize(fn () => \App\Support\Perm::can('orders.manage'))
