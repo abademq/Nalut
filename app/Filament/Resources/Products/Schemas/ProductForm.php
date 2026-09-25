@@ -59,9 +59,15 @@ class ProductForm
                     ->rows(3)
                     ->columnSpanFull(),
 
-                FileUpload::make('image')
-                    ->label('صورة المنتج')
+                FileUpload::make('images')
+                    ->label('صور المنتج')
+                    ->helperText('الصورة الأولى هي الرئيسية — اسحب الصور لتغيير الترتيب.')
                     ->image()
+                    ->multiple()
+                    ->reorderable()
+                    ->appendFiles()
+                    ->maxFiles(\App\Models\Product::MAX_IMAGES)
+                    ->maxSize(5120)
                     ->disk('public')
                     ->directory('products')
                     ->columnSpanFull(),

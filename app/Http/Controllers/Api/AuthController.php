@@ -17,10 +17,12 @@ class AuthController extends Controller
     public function requestOtp(Request $request, OtpService $otp): JsonResponse
     {
         $data = $request->validate([
-            'phone' => ['required', 'string', 'regex:/^(09[1-6][0-9]{7})$/'],
+            'phone'    => ['required', 'string', 'regex:/^(09[1-6][0-9]{7})$/'],
+            // بصمة التطبيق (11 حرف) — تنضاف للرسالة باش أندرويد يعبّي الرمز لحاله
+            'app_hash' => ['nullable', 'string', 'regex:/^[A-Za-z0-9+\/]{11}$/'],
         ], [], ['phone' => 'رقم الهاتف']);
 
-        $result = $otp->request($data['phone'], $request->ip());
+        $result = $otp->request($data['phone'], $request->ip(), $data['app_hash'] ?? null);
 
         return response()->json([
             'message'      => 'تم إرسال رمز التحقق.',

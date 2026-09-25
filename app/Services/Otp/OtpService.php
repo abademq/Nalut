@@ -20,7 +20,7 @@ class OtpService
     /**
      * @return array{channel: string, code: string, expires_in: int, resend_after: int}
      */
-    public function request(string $phone, ?string $ip = null): array
+    public function request(string $phone, ?string $ip = null, ?string $appHash = null): array
     {
         $cfg = config('otp');
 
@@ -31,7 +31,7 @@ class OtpService
         if ($test !== null) {
             [$code, $channel] = [$test, 'test'];
         } else {
-            [$code, $channel] = $this->deliver($phone, $cfg);
+            [$code, $channel] = $this->deliver($phone, $cfg, $appHash);
         }
 
         // رمز جديد يلغي أي رمز سابق لنفس الرقم
@@ -106,22 +106,23 @@ class OtpService
     }
 
     /** @return array{0: string, 1: string} [code, channel] */
-    private function deliver(string $phone, array $cfg): array
+    private function deliver(string $phone, array $cfg, ?string $appHash = null): array
     {
         return match ($cfg['driver']) {
-            'resala' => $this->viaResala($phone, $cfg),
+            'resala' => $this->viaResala($phone, $cfg, $appHash),
             'log'    => $this->viaLog($phone, $cfg),
             default  => throw new \InvalidArgumentException("OTP_DRIVER غير معروف: {$cfg['driver']}"),
         };
     }
 
-    private function viaResala(string $phone, array $cfg): array
+    private function viaResala(string $phone, array $cfg, ?string $appHash = null): array
     {
         try {
             $result = ResalaClient::fromConfig()->sendPin(
                 $this->international($phone),
                 $cfg['length'],
                 $cfg['service_name'],
+                $appHash,
             );
         } catch (ResalaException $e) {
             Log::log($e->insufficientCredit ? 'critical' : 'error', 'OTP send failed: '.$e->getMessage(), ['phone' => $phone]);

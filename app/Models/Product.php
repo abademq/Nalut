@@ -12,7 +12,7 @@ class Product extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'store_id', 'menu_section_id', 'name', 'description', 'image',
+        'store_id', 'menu_section_id', 'name', 'description', 'image', 'images',
         'price', 'discount_price', 'is_available', 'sort',
         'track_stock', 'stock_quantity', 'max_per_order', 'low_stock_alert',
     ];
@@ -25,7 +25,33 @@ class Product extends Model
             'is_available'   => 'boolean',
             'track_stock'    => 'boolean',
             'stock_quantity' => 'integer',
+            'images'         => 'array',
         ];
+    }
+
+    /** أقصى عدد صور للمنتج */
+    public const MAX_IMAGES = 8;
+
+    protected static function booted(): void
+    {
+        // image = أول صورة في images دائماً — التطبيقات القديمة والجداول تقرا image
+        static::saving(function (Product $p) {
+            if ($p->isDirty('images')) {
+                $images = array_values(array_filter((array) $p->images));
+                $p->images = $images ?: null;
+                $p->image = $images[0] ?? null;
+            } elseif ($p->isDirty('image')) {
+                $rest = array_values(array_diff((array) $p->images, [$p->getOriginal('image'), $p->image]));
+                $images = array_values(array_filter([$p->image, ...$rest]));
+                $p->images = $images ?: null;
+            }
+        });
+    }
+
+    /** روابط كل الصور بالترتيب */
+    public function imageUrls(): array
+    {
+        return array_map(fn ($path) => asset('storage/'.$path), (array) $this->images);
     }
 
     public function store(): BelongsTo

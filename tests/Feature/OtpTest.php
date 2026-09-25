@@ -218,4 +218,20 @@ class OtpTest extends TestCase
     {
         $this->get('/api/v1/me')->assertStatus(401);
     }
+
+    public function test_app_hash_is_passed_to_resala_autofill(): void
+    {
+        $this->fakeResala();
+
+        $this->postJson('/api/v1/auth/otp', ['phone' => self::PHONE, 'app_hash' => 'FA+9qCX9VSu'])->assertOk();
+
+        Http::assertSent(fn (Request $r) => str_contains($r->url(), 'autofill=FA%2B9qCX9VSu'));
+    }
+
+    public function test_invalid_app_hash_rejected(): void
+    {
+        Http::fake();
+        $this->postJson('/api/v1/auth/otp', ['phone' => self::PHONE, 'app_hash' => 'bad hash!'])->assertStatus(422);
+        Http::assertNothingSent();
+    }
 }

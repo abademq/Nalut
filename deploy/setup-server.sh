@@ -53,6 +53,13 @@ else
   git clone "$REPO" "$APP_DIR"
 fi
 
+echo "==> حدود رفع الصور في PHP (الافتراضي 2MB للملف و 8MB للطلب)"
+cat > /etc/php/8.3/fpm/conf.d/99-nalut.ini <<PHPINI
+upload_max_filesize = 8M
+post_max_size = 48M
+max_file_uploads = 20
+PHPINI
+
 echo "==> Nginx"
 SERVER_IP="$(curl -s ifconfig.me || echo '_')"
 
@@ -65,7 +72,7 @@ server {
 
     index index.php;
     charset utf-8;
-    client_max_body_size 20M;
+    client_max_body_size 50M;
 
     add_header X-Frame-Options "SAMEORIGIN";
     add_header X-Content-Type-Options "nosniff";

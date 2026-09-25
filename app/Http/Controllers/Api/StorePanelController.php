@@ -11,6 +11,8 @@ use App\Models\Product;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 /** واجهات تطبيق المتجر */
 class StorePanelController extends Controller
@@ -187,12 +189,11 @@ class StorePanelController extends Controller
             'stock_quantity'  => ['nullable', 'integer', 'min:0'],
             'max_per_order'   => ['nullable', 'integer', 'min:1'],
             'low_stock_alert' => ['nullable', 'integer', 'min:0'],
-            'image'           => ['nullable', 'image', 'max:2048'],
+            ...self::IMAGE_RULES,
         ]);
 
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store("stores/{$store->id}", 'public');
-        }
+        [$data['images']] = $this->resolveImages($request, [], $store->id);
+        unset($data['image'], $data['remove_images'], $data['main_image']);
 
         $product = $store->products()->create($data);
 
@@ -213,14 +214,18 @@ class StorePanelController extends Controller
             'stock_quantity'  => ['nullable', 'integer', 'min:0'],
             'max_per_order'   => ['nullable', 'integer', 'min:1'],
             'low_stock_alert' => ['nullable', 'integer', 'min:0'],
-            'image'           => ['nullable', 'image', 'max:2048'],
+            ...self::IMAGE_RULES,
         ]);
 
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store("stores/{$product->store_id}", 'public');
-        }
+        [$images, $removed] = $this->resolveImages($request, (array) $product->images, $product->store_id);
+        unset($data['image'], $data['images'], $data['remove_images'], $data['main_image']);
 
-        $product->update(array_filter($data, fn ($v) => ! is_null($v)));
+        $product->fill(array_filter($data, fn ($v) => ! is_null($v)));
+        $product->images = $images;
+        $product->save();
+
+        // نمسحو الملفات بعد ما ينحفظ المنتج — لو الحفظ فشل ما نخسروش الصور
+        Storage::disk('public')->delete($removed);
 
         return response()->json(['data' => new ProductResource($product->fresh())]);
     }
@@ -231,5 +236,59 @@ class StorePanelController extends Controller
         $product->delete();
 
         return response()->json(['message' => 'تم الحذف.']);
+    }
+
+    /** قواعد الصور — صورة واحدة (image) للتوافق مع النسخ القديمة، أو عدة صور (images[]) */
+    private const IMAGE_RULES = [
+        'image'           => ['nullable', 'image', 'max:5120'],
+        'images'          => ['nullable', 'array', 'max:'.Product::MAX_IMAGES],
+        'images.*'        => ['image', 'max:5120'],
+        'remove_images'   => ['nullable', 'array'],
+        'remove_images.*' => ['string'],
+        'main_image'      => ['nullable', 'string'],
+    ];
+
+    /**
+     * يحسب قائمة الصور الجديدة: الحالية − المحذوفة + المرفوعة، والرئيسية أولاً.
+     *
+     * @return array{0: array<int, string>, 1: array<int, string>} [الصور, الملفات اللي تنمسح]
+     */
+    private function resolveImages(Request $request, array $current, int $storeId): array
+    {
+        $remove = array_map([$this, 'toPath'], (array) $request->input('remove_images', []));
+        $removed = array_values(array_intersect($current, $remove));
+        $images = array_values(array_diff($current, $removed));
+
+        $uploads = array_merge(
+            $request->hasFile('image') ? [$request->file('image')] : [],
+            (array) $request->file('images', []),
+        );
+
+        if (count($images) + count($uploads) > Product::MAX_IMAGES) {
+            throw ValidationException::withMessages([
+                'images' => 'أقصى عدد '.Product::MAX_IMAGES.' صور للمنتج.',
+            ]);
+        }
+
+        foreach ($uploads as $file) {
+            $images[] = $file->store("stores/{$storeId}", 'public');
+        }
+
+        if ($main = $request->input('main_image')) {
+            $main = $this->toPath($main);
+            if (in_array($main, $images, true)) {
+                $images = [$main, ...array_values(array_diff($images, [$main]))];
+            }
+        }
+
+        return [$images, $removed];
+    }
+
+    /** يقبل رابط كامل أو مسار — ويرجّع المسار داخل قرص public */
+    private function toPath(string $value): string
+    {
+        $pos = strpos($value, '/storage/');
+
+        return $pos === false ? ltrim($value, '/') : substr($value, $pos + strlen('/storage/'));
     }
 }
