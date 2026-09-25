@@ -136,6 +136,12 @@ class OtpService
 
     private function viaLog(string $phone, array $cfg): array
     {
+        // على الإنتاج: log يعني ما حد يوصله رمز، والرموز تنكتب في السجل
+        if (app()->environment('production')) {
+            Log::critical('OTP_DRIVER=log على الإنتاج — اضبط OTP_DRIVER=resala');
+            throw new HttpException(503, 'تعذّر إرسال رمز التحقق حالياً. حاول بعد شوية.');
+        }
+
         $code = str_pad((string) random_int(0, 10 ** $cfg['length'] - 1), $cfg['length'], '0', STR_PAD_LEFT);
 
         Log::info("OTP for {$phone}: {$code}");

@@ -13,6 +13,11 @@ class FinanceStatsWidget extends StatsOverviewWidget
 {
     protected static ?int $sort = 1;
 
+    public static function canView(): bool
+    {
+        return \App\Support\Perm::can('finance.view');
+    }
+
     protected function getStats(): array
     {
         $delivered = Order::where('status', OrderStatus::Delivered->value);

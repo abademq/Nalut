@@ -14,6 +14,12 @@ use UnitEnum;
 
 class DriverResource extends Resource
 {
+    use \App\Filament\Concerns\GuardedByPermission;
+
+    public const PERM_VIEW = 'users.view';
+
+    public const PERM_MANAGE = 'users.manage';
+
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTruck;

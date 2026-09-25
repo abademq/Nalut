@@ -21,6 +21,11 @@ class DriversMap extends Page
 
     protected string $view = 'filament.pages.drivers-map';
 
+    public static function canAccess(): bool
+    {
+        return \App\Support\Perm::can('orders.view') || \App\Support\Perm::can('users.view');
+    }
+
     public static function getNavigationLabel(): string
     {
         return 'خريطة السائقين';

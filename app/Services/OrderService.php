@@ -149,13 +149,10 @@ class OrderService
                 ]);
             }
 
-            if ($store->owner && NotificationSetting::isEnabled('store', 'pending')) {
-                PushService::toUser(
-                    $store->owner,
-                    'طلب جديد',
-                    "طلب رقم {$order->code} — افتح التطبيق",
-                    ['type' => 'new_order', 'order_id' => (string) $order->id]
-                );
+            // طلب بالبطاقة ما يوصلش للمتجر قبل ما الدفع يتأكد —
+            // الإشعار يتبعت من PaymentController بعد نجاح الدفع
+            if (! $order->awaitingOnlinePayment()) {
+                $this->notifyStoreNewOrder($order);
             }
 
             if ($customer && NotificationSetting::isEnabled('customer', 'pending')) {
@@ -233,6 +230,14 @@ class OrderService
     {
         $lines = [];
 
+        // الكمية الإجمالية لكل منتج — نفس المنتج ممكن يجي في أكثر من سطر
+        // (خيارات مختلفة)، والحد الأقصى والمخزون ينطبقو على المجموع مش على كل سطر
+        $totals = [];
+        foreach ($items as $item) {
+            $pid = (int) ($item['product_id'] ?? 0);
+            $totals[$pid] = ($totals[$pid] ?? 0) + max(1, (int) ($item['quantity'] ?? 1));
+        }
+
         foreach ($items as $item) {
             $product = Product::with('options.values')
                 ->where('store_id', $store->id)
@@ -241,13 +246,15 @@ class OrderService
 
             $quantity = max(1, (int) ($item['quantity'] ?? 1));
 
-            if ($product->max_per_order && $quantity > $product->max_per_order) {
+            $total = $totals[$product->id] ?? $quantity;
+
+            if ($product->max_per_order && $total > $product->max_per_order) {
                 throw ValidationException::withMessages([
                     'items' => "أقصى كمية من «{$product->name}» في الطلب الواحد {$product->max_per_order}.",
                 ]);
             }
 
-            if ($product->track_stock && $product->stock_quantity < $quantity) {
+            if ($product->track_stock && $product->stock_quantity < $total) {
                 throw ValidationException::withMessages([
                     'items' => $product->stock_quantity > 0
                         ? "المتوفر من «{$product->name}» توّا {$product->stock_quantity} فقط."
@@ -329,6 +336,17 @@ class OrderService
         if ($isAbnormal && ! $force) {
             throw ValidationException::withMessages([
                 'status' => "لا يمكن الانتقال من «{$from->label()}» إلى «{$to->label()}».",
+            ]);
+        }
+
+        // الدفع الإلكتروني لازم يتأكد قبل التحضير وقبل التسليم —
+        // وإلا الطلب يتسلّم ويتعلّم مدفوع وتتوزّع المستحقات بدون ما حد دفع.
+        // حتى الإدارة (force) ما تتجاوزهاش: لو الزبون دفع بطريقة ثانية، غيّر طريقة الدفع أول.
+        if ($order->awaitingOnlinePayment()
+            && in_array($to, [OrderStatus::Preparing, OrderStatus::Ready, OrderStatus::Assigned,
+                OrderStatus::PickedUp, OrderStatus::OnTheWay, OrderStatus::Delivered], true)) {
+            throw ValidationException::withMessages([
+                'status' => 'الطلب بانتظار تأكيد الدفع الإلكتروني.',
             ]);
         }
 
@@ -421,6 +439,21 @@ class OrderService
 
             return $order->fresh(['items', 'store', 'driver']);
         });
+    }
+
+    /** إشعار «طلب جديد» لصاحب المتجر */
+    public function notifyStoreNewOrder(Order $order): void
+    {
+        $owner = $order->store?->owner;
+
+        if ($owner && NotificationSetting::isEnabled('store', 'pending')) {
+            PushService::toUser(
+                $owner,
+                'طلب جديد',
+                "طلب رقم {$order->code} — افتح التطبيق",
+                ['type' => 'new_order', 'order_id' => (string) $order->id]
+            );
+        }
     }
 
     /**

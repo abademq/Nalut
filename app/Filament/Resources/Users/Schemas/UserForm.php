@@ -30,7 +30,9 @@ class UserForm
 
                 Select::make('role')
                     ->label('الدور')
+                    // دور «إدارة» يظهر للمدير الكامل بس — منع تصعيد الصلاحيات
                     ->options(fn () => collect(UserRole::cases())
+                        ->reject(fn ($r) => $r === UserRole::Admin && ! \App\Support\Perm::isSuper())
                         ->mapWithKeys(fn ($r) => [$r->value => $r->label()])
                         ->all())
                     ->required()
@@ -63,7 +65,7 @@ class UserForm
                     ->columns(2)
                     ->columnSpanFull()
                     ->bulkToggleable()
-                    ->visible(fn ($get) => $get('role') === UserRole::Admin->value)
+                    ->visible(fn ($get) => $get('role') === UserRole::Admin->value && \App\Support\Perm::isSuper())
                     ->helperText('لو ما اخترت ولا وحدة، الحساب ياخذ صلاحية كاملة. '
                         .'اختار صلاحيات محددة باش تقيّده.'),
             ]);

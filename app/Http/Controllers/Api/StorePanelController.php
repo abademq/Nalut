@@ -39,7 +39,9 @@ class StorePanelController extends Controller
                 'orders'  => $store->orders()->whereBetween('created_at', [$from, $to])->count(),
                 'sales'   => (float) $store->orders()->whereBetween('created_at', [$from, $to])
                     ->where('status', OrderStatus::Delivered->value)->sum('store_earning'),
-                'pending' => $store->orders()->where('status', OrderStatus::Pending->value)->count(),
+                'pending' => $store->orders()->where('status', OrderStatus::Pending->value)
+                    ->where(fn ($q) => $q->where('payment_method', '!=', 'card')->orWhere('is_paid', true))
+                    ->count(),
                 'active'  => $store->orders()->active()->count(),
             ],
             'low_stock' => $store->products()
@@ -71,6 +73,8 @@ class StorePanelController extends Controller
         $final = [OrderStatus::Delivered->value, OrderStatus::Cancelled->value, OrderStatus::Failed->value];
 
         $orders = $store->orders()
+            // طلبات البطاقة اللي دفعها ما تأكدش ما تظهرش للمتجر
+            ->where(fn ($q) => $q->where('payment_method', '!=', 'card')->orWhere('is_paid', true))
             ->when($request->status === 'active', fn ($q) => $q->active())
             // السجل: كل الطلبات المنتهية (مكتملة + ملغية + فاشلة)
             ->when($request->status === 'history', fn ($q) => $q->whereIn('status', $final))

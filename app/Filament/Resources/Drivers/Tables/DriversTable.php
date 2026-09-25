@@ -184,6 +184,7 @@ class DriversTable
             ->recordActions([
                 ActionGroup::make([
                     Action::make('approve')
+                ->authorize(fn () => \App\Support\Perm::can('users.manage'))
                         ->label('اعتماد السائق')
                         ->icon('heroicon-o-check-badge')
                         ->color('success')
@@ -200,6 +201,7 @@ class DriversTable
                         }),
 
                     Action::make('forceOffline')
+                ->authorize(fn () => \App\Support\Perm::can('users.manage'))
                         ->label('جعله غير متاح')
                         ->icon('heroicon-o-pause-circle')
                         ->color('warning')
@@ -217,6 +219,7 @@ class DriversTable
                         }),
 
                     Action::make('settle')
+                ->authorize(fn () => \App\Support\Perm::can('finance.manage'))
                         ->label('تسوية الحساب')
                         ->icon('heroicon-o-banknotes')
                         ->color('info')
@@ -252,6 +255,7 @@ class DriversTable
                         }),
 
                     Action::make('toggleActive')
+                ->authorize(fn () => \App\Support\Perm::can('users.manage'))
                         ->label(fn (User $record) => $record->is_active
                             ? 'إيقاف الحساب'
                             : 'تفعيل الحساب')

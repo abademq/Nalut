@@ -13,6 +13,12 @@ use UnitEnum;
 
 class RechargeCardResource extends Resource
 {
+    use \App\Filament\Concerns\GuardedByPermission;
+
+    public const PERM_VIEW = 'cards.manage';
+
+    public const PERM_MANAGE = 'cards.manage';
+
     protected static ?string $model = RechargeCard::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCreditCard;

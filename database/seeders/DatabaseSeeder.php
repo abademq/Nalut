@@ -17,6 +17,13 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // بيانات تجريبية بأرقام معروفة — ممنوعة على الإنتاج إلا لو طلبتها صراحة
+        if (app()->environment('production') && ! env('SEED_DEMO')) {
+            $this->command?->error('ممنوع تشغيل البيانات التجريبية على الإنتاج. للضرورة: SEED_DEMO=1 php artisan db:seed --force');
+
+            return;
+        }
+
         DeliveryZone::create([
             'name' => 'نالوت المركز', 'base_fee' => 5, 'fee_per_km' => 1.5,
             'center_lat' => 31.8686, 'center_lng' => 10.9817, 'radius_km' => 15,
@@ -25,11 +32,16 @@ class DatabaseSeeder extends Seeder
         $types = collect(['مطاعم', 'مقاهي وحلويات', 'بقالة', 'صيدليات'])
             ->map(fn ($name, $i) => StoreType::create(['name' => $name, 'sort' => $i]));
 
+        // كلمة مرور عشوائية تنطبع مرة وحدة — مش مكتوبة في الكود
+        $adminPassword = Str::password(16, symbols: false);
+
         User::create([
             'name' => 'مدير النظام', 'phone' => '0910000000',
-            'password' => 'password', 'role' => UserRole::Admin->value,
+            'password' => $adminPassword, 'role' => UserRole::Admin->value,
             'phone_verified_at' => now(),
         ]);
+
+        $this->command?->warn("كلمة مرور المدير (0910000000): {$adminPassword} — احفظها وبدّلها");
 
         $owner = User::create([
             'name' => 'صاحب المطعم', 'phone' => '0911111111',

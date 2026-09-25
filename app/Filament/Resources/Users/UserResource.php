@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Users;
 
+use App\Support\Perm;
+use App\Enums\UserRole;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
@@ -32,17 +34,32 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->hasPermission('users.view') ?? false;
+        return Perm::can('users.view') || Perm::can('users.manage');
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->hasPermission('users.manage') ?? false;
+        return Perm::can('users.manage');
     }
 
+    /**
+     * حسابات الإدارة ما يعدّلها ولا يمسحها إلا المدير الكامل —
+     * وإلا صاحب users.manage يقدر يعطي نفسه أو غيره صلاحيات أكثر.
+     */
     public static function canEdit($record): bool
     {
-        return auth()->user()?->hasPermission('users.manage') ?? false;
+        return Perm::can('users.manage')
+            && ($record->role !== UserRole::Admin || Perm::isSuper());
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::canEdit($record) && $record->id !== auth()->id();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return Perm::can('users.manage');
     }
 
     public static function getModelLabel(): string

@@ -117,6 +117,7 @@ class OrdersTable
                 ViewAction::make()->label('عرض'),
 
                 Action::make('changeStatus')
+                ->authorize(fn () => \App\Support\Perm::can('orders.manage'))
                     ->label('تغيير الحالة')
                     ->icon('heroicon-o-arrow-path')
                     ->color('primary')

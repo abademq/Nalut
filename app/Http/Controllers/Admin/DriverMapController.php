@@ -19,6 +19,12 @@ class DriverMapController extends Controller
 
     public function locations(): JsonResponse
     {
+        // مواقع السائقين بيانات حساسة — نفس صلاحية صفحة الخريطة
+        abort_unless(
+            \App\Support\Perm::can('orders.view') || \App\Support\Perm::can('users.view'),
+            403
+        );
+
         $drivers = User::where('role', 'driver')
             ->with(['driverProfile.zones', 'wallet'])
             ->get();

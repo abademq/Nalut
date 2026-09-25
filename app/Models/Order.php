@@ -161,6 +161,12 @@ class Order extends Model
         });
     }
 
+    /** طلب بالبطاقة والدفع لسه ما تأكدش */
+    public function awaitingOnlinePayment(): bool
+    {
+        return $this->payment_method === \App\Enums\PaymentMethod::Card && ! $this->is_paid;
+    }
+
     /** وقت الجاهزية المتوقع = وقت القبول + مدة التحضير */
     public function readyEta(): ?\Illuminate\Support\Carbon
     {

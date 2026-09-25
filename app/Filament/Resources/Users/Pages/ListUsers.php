@@ -23,6 +23,7 @@ class ListUsers extends ListRecords
     {
         return [
             Action::make('topupByPhone')
+                ->authorize(fn () => \App\Support\Perm::can('finance.manage'))
                 ->label('شحن محفظة برقم الهاتف')
                 ->icon('heroicon-o-device-phone-mobile')
                 ->color('success')

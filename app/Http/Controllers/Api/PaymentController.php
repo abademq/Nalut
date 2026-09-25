@@ -224,12 +224,18 @@ class PaymentController extends Controller
             return;
         }
 
-        DB::transaction(function () use ($tx) {
-            $tx->refresh();
+        $paidOrder = null;
 
-            if ($tx->isPaid()) {
+        DB::transaction(function () use ($tx, &$paidOrder) {
+            // قفل الصف: callback وتأكيد التطبيق ممكن يوصلو في نفس اللحظة —
+            // بدون القفل الاثنين يشوفو «غير مدفوع» ويضيفو الرصيد مرتين
+            $locked = PaymentTransaction::whereKey($tx->id)->lockForUpdate()->first();
+
+            if (! $locked || $locked->isPaid()) {
                 return;
             }
+
+            $tx->setRawAttributes($locked->getAttributes(), true);
 
             $tx->update(['status' => 'paid', 'paid_at' => now()]);
 
@@ -246,6 +252,8 @@ class PaymentController extends Controller
             // دفع طلب محدد: نخصم من المحفظة ونعلّمه مدفوع
             if ($tx->purpose === 'order' && $tx->order_id) {
                 $order = Order::find($tx->order_id);
+
+                $order = $order ? Order::whereKey($order->id)->lockForUpdate()->first() : null;
 
                 if ($order && ! $order->is_paid) {
                     $due = max(0, (float) $order->total - (float) $order->wallet_paid);
@@ -264,10 +272,19 @@ class PaymentController extends Controller
                             'wallet_paid' => (float) $order->wallet_paid + $pay,
                             'is_paid'     => ((float) $order->wallet_paid + $pay) >= (float) $order->total,
                         ]);
+
+                        if ($order->is_paid) {
+                            $paidOrder = $order;
+                        }
                     }
                 }
             }
         });
+
+        // الدفع تأكد = الطلب يوصل للمتجر توّا
+        if ($paidOrder) {
+            app(\App\Services\OrderService::class)->notifyStoreNewOrder($paidOrder->fresh('store.owner'));
+        }
     }
 
     private function gatewayFor(string $key, string $purpose, float $amount): PaymentGateway

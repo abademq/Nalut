@@ -122,6 +122,7 @@ class UsersTable
             ])
             ->recordActions([
                 Action::make('topup')
+                ->authorize(fn () => \App\Support\Perm::can('finance.manage'))
                     ->label('شحن محفظة')
                     ->icon('heroicon-o-plus-circle')
                     ->color('success')
@@ -172,6 +173,7 @@ class UsersTable
                     EditAction::make()->label('تعديل'),
 
                     Action::make('deduct')
+                ->authorize(fn () => \App\Support\Perm::can('finance.manage'))
                         ->label('خصم من المحفظة')
                         ->icon('heroicon-o-minus-circle')
                         ->color('warning')
@@ -201,6 +203,7 @@ class UsersTable
                         }),
 
                     Action::make('driverSettings')
+                ->authorize(fn () => \App\Support\Perm::can('users.manage'))
                         ->label('إعدادات السائق')
                         ->icon('heroicon-o-adjustments-horizontal')
                         ->color('info')
@@ -252,6 +255,7 @@ class UsersTable
                         }),
 
                     Action::make('approveDriver')
+                ->authorize(fn () => \App\Support\Perm::can('users.manage'))
                         ->label('اعتماد السائق')
                         ->icon('heroicon-o-check-badge')
                         ->color('success')
@@ -265,6 +269,8 @@ class UsersTable
                         }),
 
                     Action::make('toggleActive')
+                ->authorize(fn ($record) => \App\Support\Perm::can('users.manage')
+                    && ($record->role !== \App\Enums\UserRole::Admin || \App\Support\Perm::isSuper()))
                         ->label(fn (User $record) => $record->is_active ? 'إيقاف الحساب' : 'تفعيل الحساب')
                         ->icon(fn (User $record) => $record->is_active ? 'heroicon-o-no-symbol' : 'heroicon-o-check')
                         ->color(fn (User $record) => $record->is_active ? 'danger' : 'success')
@@ -277,6 +283,7 @@ class UsersTable
             ->toolbarActions([
                 BulkActionGroup::make([
                     BulkAction::make('applyCapacity')
+                        ->authorize(fn () => \App\Support\Perm::can('users.manage'))
                         ->label('ضبط سعة الطلبات')
                         ->icon('heroicon-o-adjustments-horizontal')
                         ->color('info')

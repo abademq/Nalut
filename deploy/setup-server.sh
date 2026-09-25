@@ -134,10 +134,12 @@ done
 systemctl daemon-reload
 
 echo "==> نسخة احتياطية يومية"
-mkdir -p /var/backups/nalut
+# النسخ فيها كل بيانات الزبائن — root بس يقراها
+install -d -m 700 /var/backups/nalut
 cat > /usr/local/bin/nalut-backup <<BACKUP
 #!/usr/bin/env bash
 set -e
+umask 077
 STAMP=\$(date +%F-%H%M)
 mysqldump --single-transaction ${DB_NAME} | gzip > /var/backups/nalut/${DB_NAME}-\${STAMP}.sql.gz
 ls -1t /var/backups/nalut/*.sql.gz | tail -n +15 | xargs -r rm --

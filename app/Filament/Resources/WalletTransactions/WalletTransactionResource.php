@@ -13,6 +13,12 @@ use UnitEnum;
 
 class WalletTransactionResource extends Resource
 {
+    use \App\Filament\Concerns\GuardedByPermission;
+
+    public const PERM_VIEW = 'finance.view';
+
+    public const PERM_MANAGE = 'finance.manage';
+
     protected static ?string $model = WalletTransaction::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;

@@ -19,6 +19,12 @@ use UnitEnum;
 
 class StoreResource extends Resource
 {
+    use \App\Filament\Concerns\GuardedByPermission;
+
+    public const PERM_VIEW = 'stores.manage';
+
+    public const PERM_MANAGE = 'stores.manage';
+
     protected static ?string $model = Store::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;

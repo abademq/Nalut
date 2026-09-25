@@ -42,6 +42,11 @@ class AppSettings extends Page
 
     public ?array $data = [];
 
+    public static function canAccess(): bool
+    {
+        return \App\Support\Perm::can('settings.manage');
+    }
+
     public static function getNavigationLabel(): string
     {
         return 'عن التطبيق';

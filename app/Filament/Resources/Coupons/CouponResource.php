@@ -19,6 +19,12 @@ use UnitEnum;
 
 class CouponResource extends Resource
 {
+    use \App\Filament\Concerns\GuardedByPermission;
+
+    public const PERM_VIEW = 'coupons.manage';
+
+    public const PERM_MANAGE = 'coupons.manage';
+
     protected static ?string $model = Coupon::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedTicket;

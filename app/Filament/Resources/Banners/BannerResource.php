@@ -28,6 +28,12 @@ use UnitEnum;
 /** إعلانات الصفحة الرئيسية في تطبيق الزبون */
 class BannerResource extends Resource
 {
+    use \App\Filament\Concerns\GuardedByPermission;
+
+    public const PERM_VIEW = 'settings.manage';
+
+    public const PERM_MANAGE = 'settings.manage';
+
     protected static ?string $model = Banner::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedMegaphone;

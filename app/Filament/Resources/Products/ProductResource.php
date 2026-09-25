@@ -19,6 +19,12 @@ use UnitEnum;
 
 class ProductResource extends Resource
 {
+    use \App\Filament\Concerns\GuardedByPermission;
+
+    public const PERM_VIEW = 'products.manage';
+
+    public const PERM_MANAGE = 'products.manage';
+
     protected static ?string $model = Product::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCube;

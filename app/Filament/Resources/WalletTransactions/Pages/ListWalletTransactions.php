@@ -19,6 +19,7 @@ class ListWalletTransactions extends ListRecords
     {
         return [
             Action::make('settlement')
+                ->authorize(fn () => \App\Support\Perm::can('finance.manage'))
                 ->label('تسوية نقدية')
                 ->icon('heroicon-o-hand-raised')
                 ->color('success')
@@ -72,6 +73,7 @@ class ListWalletTransactions extends ListRecords
                 }),
 
             Action::make('payout')
+                ->authorize(fn () => \App\Support\Perm::can('finance.manage'))
                 ->label('صرف مستحقات')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('warning')

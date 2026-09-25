@@ -19,6 +19,12 @@ use UnitEnum;
 
 class OrderResource extends Resource
 {
+    use \App\Filament\Concerns\GuardedByPermission;
+
+    public const PERM_VIEW = 'orders.view';
+
+    public const PERM_MANAGE = 'orders.manage';
+
     protected static ?string $model = Order::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
