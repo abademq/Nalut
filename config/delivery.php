@@ -13,4 +13,7 @@ return [
 
     // معامل احتياطي لو OSRM ما ردّش (خط مستقيم × المعامل)
     'road_factor' => env('ROAD_DISTANCE_FACTOR', 1.3),
+
+    // مهلة إتمام الدفع الإلكتروني قبل إلغاء الطلب تلقائياً (دقائق)
+    'unpaid_order_timeout_minutes' => (int) env('UNPAID_ORDER_TIMEOUT', 30),
 ];

@@ -171,4 +171,20 @@ class SecurityFixesTest extends TestCase
         $admin = User::where('phone', '0910000000')->first();
         $this->assertFalse(\Illuminate\Support\Facades\Hash::check('password', $admin->password));
     }
+
+    public function test_unpaid_card_orders_are_auto_cancelled_after_timeout(): void
+    {
+        config(['delivery.unpaid_order_timeout_minutes' => 30]);
+        $old = $this->cardOrder(false);
+        $old->forceFill(['created_at' => now()->subMinutes(31)])->save();
+        $fresh = $this->cardOrder(false);
+        $paidOld = $this->cardOrder(true);
+        $paidOld->forceFill(['created_at' => now()->subHour()])->save();
+
+        $this->artisan('orders:cancel-unpaid')->assertSuccessful();
+
+        $this->assertSame(OrderStatus::Cancelled, $old->fresh()->status);
+        $this->assertSame(OrderStatus::Pending, $fresh->fresh()->status);
+        $this->assertSame(OrderStatus::Pending, $paidOld->fresh()->status);
+    }
 }
