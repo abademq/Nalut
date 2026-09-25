@@ -12,7 +12,9 @@ class AddressController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        return response()->json(['data' => $request->user()->addresses()->latest()->get()]);
+        // الافتراضي أولاً — التطبيق يختاره تلقائياً في السلة
+        return response()->json(['data' => $request->user()->addresses()
+            ->orderByDesc('is_default')->latest()->get()]);
     }
 
     public function store(Request $request): JsonResponse
@@ -29,9 +31,12 @@ class AddressController extends Controller
         // العنوان برا كل مناطق التوصيل = ما نحفظوهش
         $data['delivery_zone_id'] = GeoService::requireZone($data['lat'], $data['lng'], 'lat')?->id;
 
+        // أول عنوان للزبون يولّي افتراضي تلقائياً
+        $isFirst = ! $request->user()->addresses()->exists();
+
         $address = $request->user()->addresses()->create($data);
 
-        if ($data['is_default'] ?? false) {
+        if (($data['is_default'] ?? false) || $isFirst) {
             $this->makeDefault($request, $address);
         }
 
@@ -63,9 +68,24 @@ class AddressController extends Controller
     public function destroy(Request $request, Address $address): JsonResponse
     {
         abort_unless($address->user_id === $request->user()->id, 403);
+        $wasDefault = (bool) $address->is_default;
         $address->delete();
 
+        // مسح الافتراضي = أحدث عنوان باقي ياخذ مكانه
+        if ($wasDefault) {
+            $request->user()->addresses()->latest()->first()?->update(['is_default' => true]);
+        }
+
         return response()->json(['message' => 'تم الحذف.']);
+    }
+
+    /** POST addresses/{address}/default */
+    public function setDefault(Request $request, Address $address): JsonResponse
+    {
+        abort_unless($address->user_id === $request->user()->id, 403);
+        $this->makeDefault($request, $address);
+
+        return response()->json(['data' => $address->fresh(), 'message' => 'صار العنوان الافتراضي.']);
     }
 
     private function makeDefault(Request $request, Address $address): void

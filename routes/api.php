@@ -16,6 +16,7 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/otp', [AuthController::class, 'requestOtp'])->middleware('throttle:10,1');
     Route::post('auth/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:10,1');
     Route::post('auth/login', [AuthController::class, 'login']);
+    Route::get('app/content', [\App\Http\Controllers\Api\AppContentController::class, 'show']);
 
     Route::middleware('auth:sanctum')->group(function () {
 
@@ -36,6 +37,7 @@ Route::prefix('v1')->group(function () {
         // ---------- الزبون ----------
         Route::middleware('role:customer')->group(function () {
             Route::get('coverage', [AddressController::class, 'coverage']);
+            Route::post('addresses/{address}/default', [AddressController::class, 'setDefault']);
             Route::apiResource('addresses', AddressController::class)->except('show');
 
             Route::get('store-types', [CatalogController::class, 'types']);

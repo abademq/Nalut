@@ -98,12 +98,18 @@ class StorePanelController extends Controller
             'reason'            => ['nullable', 'string', 'max:200'],
         ]);
 
-        $order = $this->orders->transition(
-            $order,
-            OrderStatus::from($data['status']),
-            $request->user(),
-            $data
-        );
+        // السائق خذا الطلب قبل ما المتجر يضغط «جاهز» (انقضت مدة التحضير):
+        // الحالة تضل «أُسند لسائق»، لكن نسجّلو إن الأكل جاهز ونبلّغو السائق
+        if ($data['status'] === 'ready' && $order->status === OrderStatus::Assigned) {
+            $order = $this->orders->markReadyWhileAssigned($order, $request->user());
+        } else {
+            $order = $this->orders->transition(
+                $order,
+                OrderStatus::from($data['status']),
+                $request->user(),
+                $data
+            );
+        }
 
         return response()->json(['data' => new OrderResource($order->load(['items', 'customer']))]);
     }
@@ -201,7 +207,7 @@ class StorePanelController extends Controller
             'description'     => ['nullable', 'string', 'max:500'],
             'price'           => ['required', 'numeric', 'min:0'],
             'discount_price'  => ['nullable', 'numeric', 'min:0', 'lt:price'],
-            'menu_section_id' => ['nullable', 'integer'],
+            'menu_section_id' => ['nullable', 'integer', $this->ownSectionRule($store->id)],
             'is_available'    => ['nullable', 'boolean'],
             'track_stock'     => ['nullable', 'boolean'],
             'stock_quantity'  => ['nullable', 'integer', 'min:0'],
@@ -227,6 +233,8 @@ class StorePanelController extends Controller
             'description'     => ['nullable', 'string', 'max:500'],
             'price'           => ['nullable', 'numeric', 'min:0'],
             'discount_price'  => ['nullable', 'numeric', 'min:0'],
+            // كان ناقص من القائمة — فتغيير القسم ينحفظ بدون ما يتغيّر فعلياً
+            'menu_section_id' => ['nullable', 'integer', $this->ownSectionRule($product->store_id)],
             'is_available'    => ['nullable', 'boolean'],
             'track_stock'     => ['nullable', 'boolean'],
             'stock_quantity'  => ['nullable', 'integer', 'min:0'],
@@ -239,6 +247,12 @@ class StorePanelController extends Controller
         unset($data['image'], $data['images'], $data['remove_images'], $data['main_image']);
 
         $product->fill(array_filter($data, fn ($v) => ! is_null($v)));
+
+        // القسم لازم يقبل null: «بدون قسم» = نفك المنتج من قسمه
+        if ($request->exists('menu_section_id')) {
+            $product->menu_section_id = $data['menu_section_id'] ?? null;
+        }
+
         $product->images = $images;
         $product->save();
 
@@ -384,5 +398,11 @@ class StorePanelController extends Controller
                 'subtotal'     => (float) $o->subtotal,
             ])->values(),
         ]);
+    }
+
+    /** القسم لازم يكون تابع لنفس المتجر */
+    private function ownSectionRule(int $storeId): \Illuminate\Validation\Rules\Exists
+    {
+        return \Illuminate\Validation\Rule::exists('menu_sections', 'id')->where('store_id', $storeId);
     }
 }

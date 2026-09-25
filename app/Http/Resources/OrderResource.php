@@ -78,6 +78,8 @@ class OrderResource extends JsonResource
             // مدة التحضير ووقت الجاهزية المتوقع — يظهرو للزبون وقت التحضير
             'prep_time_minutes'   => $this->prep_time_minutes,
             'ready_eta'           => $this->readyEta()?->toIso8601String(),
+            // المتجر ضغط «جاهز» — حتى لو الحالة أُسند لسائق
+            'ready_at'            => $this->ready_at,
             'minutes_until_ready' => $this->status->value === 'preparing' ? $this->minutesUntilReady() : null,
             'created_at'     => $this->created_at,
             'accepted_at'    => $this->accepted_at,

@@ -17,6 +17,8 @@ class StoreResource extends JsonResource
             'logo'              => $this->logo ? asset('storage/'.$this->logo) : null,
             'cover'             => $this->cover ? asset('storage/'.$this->cover) : null,
             'type'              => $this->whenLoaded('type', fn () => $this->type?->name),
+            'phone'             => $this->phone,
+            'address'           => $this->address,
             'lat'               => $this->lat,
             'lng'               => $this->lng,
             'min_order'         => (float) $this->min_order,

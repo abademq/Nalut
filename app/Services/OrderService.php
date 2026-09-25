@@ -423,6 +423,32 @@ class OrderService
         });
     }
 
+    /**
+     * المتجر جهّز الطلب بعد ما السائق قبله (الحالة Assigned).
+     * ما نغيّروش الحالة — نسجّلو ready_at ونبلّغو السائق والزبون.
+     */
+    public function markReadyWhileAssigned(Order $order, ?User $actor = null): Order
+    {
+        if ($order->ready_at) {
+            throw ValidationException::withMessages(['status' => 'الطلب متعلّم جاهز من قبل.']);
+        }
+
+        $order->update(['ready_at' => now()]);
+
+        $data = ['type' => 'order_status', 'order_id' => (string) $order->id, 'status' => 'ready'];
+        $title = "طلب {$order->code}";
+
+        if ($order->driver && NotificationSetting::isEnabled('driver', 'ready')) {
+            PushService::toUser($order->driver, $title, 'الطلب جاهز في المتجر — تقدر تستلمه توّا', $data);
+        }
+
+        if ($order->customer && NotificationSetting::isEnabled('customer', 'ready')) {
+            PushService::toUser($order->customer, $title, $this->customerBody($order, OrderStatus::Ready), $data);
+        }
+
+        return $order->fresh(['items', 'store', 'driver']);
+    }
+
     private function notify(Order $order, OrderStatus $to): void
     {
         $data = [
@@ -466,8 +492,7 @@ class OrderService
                 ? "المتجر قبل طلبك — جاهز خلال {$order->prep_time_minutes} دقيقة"
                 : 'المتجر قبل طلبك',
             OrderStatus::Preparing => $order->prep_time_minutes
-                ? "المتجر قبل طلبك وبدا التحضير — جاهز خلال {$order->prep_time_minutes} دقيقة تقريباً"
-                    .($order->readyEta() ? ' (حوالي الساعة '.\App\Support\LocalDay::toLocal($order->readyEta())->format('H:i').')' : '')
+                ? "المتجر قبل طلبك وبدا التحضير — سيكون جاهز خلال {$order->prep_time_minutes} دقيقة تقديرياً"
                 : 'المتجر قبل طلبك وبدا التحضير',
             OrderStatus::Ready     => 'طلبك جاهز، السائق في الطريق للمتجر',
             OrderStatus::Assigned  => $order->driver

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Stores\Schemas;
 
+use App\Filament\Forms\MapPicker;
 use App\Models\User;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -71,14 +72,22 @@ class StoreForm
                     ->disk('public')
                     ->directory('stores'),
 
+                // الموقع إلزامي: منه تتحسب مسافة التوصيل ورسومه، ويظهر للسائق والزبون
+                MapPicker::make('lat', 'lng', null, true, 'موقع المتجر'),
+
                 TextInput::make('lat')
                     ->label('خط العرض')
                     ->numeric()
-                    ->helperText('من خرائط جوجل: كليك يمين على الموقع'),
+                    ->required()
+                    ->minValue(-90)->maxValue(90)
+                    ->validationMessages(['required' => 'حدّد موقع المتجر على الخريطة.']),
 
                 TextInput::make('lng')
                     ->label('خط الطول')
-                    ->numeric(),
+                    ->numeric()
+                    ->required()
+                    ->minValue(-180)->maxValue(180)
+                    ->validationMessages(['required' => 'حدّد موقع المتجر على الخريطة.']),
 
                 TextInput::make('commission_percent')
                     ->label('نسبة العمولة %')
