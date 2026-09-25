@@ -67,6 +67,9 @@ return [
 
     'timezone' => 'UTC',
 
+    // توقيت العرض والتقارير (التخزين يضل UTC) — يوم المتجر يبدا 00:00 بتوقيت ليبيا
+    'local_timezone' => env('APP_TIMEZONE', 'Africa/Tripoli'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

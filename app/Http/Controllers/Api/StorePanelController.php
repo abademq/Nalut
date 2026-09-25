@@ -8,7 +8,9 @@ use App\Http\Resources\OrderResource;
 use App\Http\Resources\ProductResource;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\OrderItem;
 use App\Services\OrderService;
+use App\Support\LocalDay;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -27,14 +29,15 @@ class StorePanelController extends Controller
     public function summary(Request $request): JsonResponse
     {
         $store = $this->store($request);
+        [$from, $to] = LocalDay::range();
 
         return response()->json([
             'store' => [
                 'id' => $store->id, 'name' => $store->name, 'is_open' => (bool) $store->is_open,
             ],
             'today' => [
-                'orders'  => $store->orders()->whereDate('created_at', today())->count(),
-                'sales'   => (float) $store->orders()->whereDate('created_at', today())
+                'orders'  => $store->orders()->whereBetween('created_at', [$from, $to])->count(),
+                'sales'   => (float) $store->orders()->whereBetween('created_at', [$from, $to])
                     ->where('status', OrderStatus::Delivered->value)->sum('store_earning'),
                 'pending' => $store->orders()->where('status', OrderStatus::Pending->value)->count(),
                 'active'  => $store->orders()->active()->count(),
@@ -59,10 +62,25 @@ class StorePanelController extends Controller
     {
         $store = $this->store($request);
 
+        $request->validate([
+            'status' => ['nullable', 'string'],
+            'date'   => ['nullable', 'date_format:Y-m-d'],
+            'q'      => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $final = [OrderStatus::Delivered->value, OrderStatus::Cancelled->value, OrderStatus::Failed->value];
+
         $orders = $store->orders()
             ->when($request->status === 'active', fn ($q) => $q->active())
-            ->when($request->status && $request->status !== 'active',
+            // السجل: كل الطلبات المنتهية (مكتملة + ملغية + فاشلة)
+            ->when($request->status === 'history', fn ($q) => $q->whereIn('status', $final))
+            ->when($request->status && ! in_array($request->status, ['active', 'history'], true),
                 fn ($q) => $q->where('status', $request->status))
+            ->when($request->date, function ($q) use ($request) {
+                [$from, $to] = LocalDay::range($request->date);
+                $q->whereBetween('created_at', [$from, $to]);
+            })
+            ->when($request->q, fn ($q) => $q->where('code', 'like', '%'.$request->q.'%'))
             ->with(['items', 'customer', 'driver'])
             ->latest()
             ->paginate(20);
@@ -290,5 +308,81 @@ class StorePanelController extends Controller
         $pos = strpos($value, '/storage/');
 
         return $pos === false ? ltrim($value, '/') : substr($value, $pos + strlen('/storage/'));
+    }
+
+    /**
+     * تقرير يومي للمتجر: الطلبات والمبيعات وأكثر المنتجات مبيعاً.
+     * المبيعات = الطلبات المسلّمة فقط. اليوم بتوقيت ليبيا.
+     */
+    public function dailyReport(Request $request): JsonResponse
+    {
+        $store = $this->store($request);
+        $request->validate(['date' => ['nullable', 'date_format:Y-m-d']]);
+
+        [$from, $to, $day] = LocalDay::range($request->date);
+
+        $orders = $store->orders()
+            ->whereBetween('created_at', [$from, $to])
+            ->orderBy('created_at')
+            ->get();
+
+        $delivered = $orders->filter(fn ($o) => $o->status === OrderStatus::Delivered);
+        $count = fn (OrderStatus $s) => $orders->filter(fn ($o) => $o->status === $s)->count();
+        $money = fn ($c, string $col) => round((float) $c->sum($col), 2);
+
+        $byPayment = $delivered
+            ->groupBy(fn ($o) => $o->payment_method->value)
+            ->map(fn ($g) => [
+                'method' => $g->first()->payment_method->value,
+                'label'  => $g->first()->payment_method->label(),
+                'orders' => $g->count(),
+                'amount' => $money($g, 'subtotal'),
+            ])
+            ->values();
+
+        $topProducts = OrderItem::query()
+            ->whereIn('order_id', $delivered->pluck('id'))
+            ->selectRaw('name, SUM(quantity) as qty, SUM(line_total) as amount')
+            ->groupBy('name')
+            ->orderByDesc('qty')
+            ->limit(10)
+            ->get()
+            ->map(fn ($r) => [
+                'name'     => $r->name,
+                'quantity' => (int) $r->qty,
+                'amount'   => round((float) $r->amount, 2),
+            ]);
+
+        return response()->json([
+            'date'         => $day->toDateString(),
+            'store'        => $store->name,
+            'generated_at' => now(LocalDay::timezone())->format('Y-m-d H:i'),
+            'orders'       => [
+                'total'     => $orders->count(),
+                'delivered' => $delivered->count(),
+                'cancelled' => $count(OrderStatus::Cancelled),
+                'failed'    => $count(OrderStatus::Failed),
+                'active'    => $orders->filter(fn ($o) => ! $o->status->isFinal())->count(),
+            ],
+            'sales'        => [
+                // قيمة الأصناف قبل التوصيل
+                'gross'      => $money($delivered, 'subtotal'),
+                'discount'   => $money($delivered, 'discount'),
+                'commission' => $money($delivered, 'commission_amount'),
+                // صافي المتجر بعد عمولة المنصة
+                'net'        => $money($delivered, 'store_earning'),
+                'average'    => $delivered->count() ? round((float) $delivered->avg('subtotal'), 2) : 0.0,
+            ],
+            'by_payment'   => $byPayment,
+            'top_products' => $topProducts,
+            'list'         => $orders->map(fn ($o) => [
+                'code'         => $o->code,
+                'time'         => LocalDay::toLocal($o->created_at)?->format('H:i'),
+                'status'       => $o->status->value,
+                'status_label' => $o->status->label(),
+                'payment'      => $o->payment_method->label(),
+                'subtotal'     => (float) $o->subtotal,
+            ])->values(),
+        ]);
     }
 }

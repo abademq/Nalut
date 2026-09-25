@@ -55,6 +55,7 @@ Route::prefix('v1')->group(function () {
             Route::get('summary', [StorePanelController::class, 'summary']);
             Route::post('toggle-open', [StorePanelController::class, 'toggleOpen']);
             Route::get('orders', [StorePanelController::class, 'orders']);
+            Route::get('reports/daily', [StorePanelController::class, 'dailyReport']);
             Route::post('orders/{order}/status', [StorePanelController::class, 'updateOrderStatus']);
             Route::get('products', [StorePanelController::class, 'products']);
             Route::post('products', [StorePanelController::class, 'storeProduct']);
