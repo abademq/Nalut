@@ -108,7 +108,8 @@ class Order extends Model
             return false;
         }
 
-        return $this->accepted_at
+        // copy(): addMinutes تعدّل الكائن نفسه، وبدونها accepted_at يتغيّر في الذاكرة
+        return $this->accepted_at->copy()
             ->addMinutes((int) ($this->prep_time_minutes ?? 0))
             ->isPast();
     }
@@ -120,28 +121,53 @@ class Order extends Model
             return 0;
         }
 
-        $readyAt = $this->accepted_at->addMinutes((int) ($this->prep_time_minutes ?? 0));
+        $readyAt = $this->accepted_at->copy()->addMinutes((int) ($this->prep_time_minutes ?? 0));
 
         return max(0, (int) ceil(now()->diffInMinutes($readyAt, false)));
     }
 
     /**
-     * رقم طلب من 6 أرقام فقط — أسهل على الزبون والمتجر
-     * في المكالمات والفواتير المطبوعة.
+     * أرقام الطلبات متسلسلة: 1، 2، 3... = رقم الطلب في قاعدة البيانات (id).
+     * الـ id يتولّد من قاعدة البيانات نفسها، فما فيش تكرار حتى لو جو طلبين
+     * في نفس اللحظة. وقت الإنشاء نحطو رقم مؤقت، ويتبدّل مباشرة بعده.
      */
+    public static function temporaryCode(): string
+    {
+        return 'T'.strtoupper(\Illuminate\Support\Str::random(11));
+    }
+
+    /** @deprecated الأرقام صارت متسلسلة — استعمل temporaryCode() */
     public static function generateCode(): string
     {
-        for ($i = 0; $i < 30; $i++) {
-            $code = (string) random_int(100000, 999999);
+        return self::temporaryCode();
+    }
 
-            if (! self::where('code', $code)->exists()) {
-                return $code;
+    protected static function booted(): void
+    {
+        static::created(function (Order $order) {
+            if (! str_starts_with((string) $order->code, 'T')) {
+                return;
             }
+
+            $code = (string) $order->id;
+
+            // احتياط لقواعد بيانات فيها أرقام عشوائية قديمة ممكن تتصادم
+            if (self::where('code', $code)->whereKeyNot($order->id)->exists()) {
+                $code = $order->id.'-'.$order->created_at?->format('y');
+            }
+
+            $order->code = $code;
+            $order->saveQuietly();
+        });
+    }
+
+    /** وقت الجاهزية المتوقع = وقت القبول + مدة التحضير */
+    public function readyEta(): ?\Illuminate\Support\Carbon
+    {
+        if (! $this->accepted_at || ! $this->prep_time_minutes) {
+            return null;
         }
 
-        // احتياطي لو الأرقام العشوائية تزاحمت
-        $last = (int) (self::max('code') ?: 100000);
-
-        return (string) min($last + 1, 999999);
+        return \Illuminate\Support\Carbon::parse($this->accepted_at)->addMinutes((int) $this->prep_time_minutes);
     }
 }

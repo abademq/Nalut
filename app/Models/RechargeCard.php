@@ -43,17 +43,40 @@ class RechargeCard extends Model
         };
     }
 
-    /** كود بصيغة NLT-XXXX-XXXX بدون حروف ملتبسة */
-    public static function generateCode(): string
+    /**
+     * رقم الكرت: أرقام فقط، طوله من config('wallet.card_digits').
+     * أول رقم ما يكونش صفر (باش ما يضيعش لو انكتب في Excel كرقم).
+     * random_int آمن للتشفير — الأرقام ما تتوقّعش.
+     */
+    public static function generateCode(?int $digits = null): string
     {
-        $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $digits ??= (int) config('wallet.card_digits', 12);
 
         do {
-            $part1 = collect(range(1, 4))->map(fn () => $alphabet[random_int(0, strlen($alphabet) - 1)])->join('');
-            $part2 = collect(range(1, 4))->map(fn () => $alphabet[random_int(0, strlen($alphabet) - 1)])->join('');
-            $code  = "NLT-$part1-$part2";
+            $code = (string) random_int(1, 9);
+            for ($i = 1; $i < $digits; $i++) {
+                $code .= random_int(0, 9);
+            }
         } while (self::where('code', $code)->exists());
 
         return $code;
+    }
+
+    /**
+     * توحيد اللي كتبه الزبون: الكروت الرقمية تقبل مسافات وشرطات
+     * (1234 5678 9012)، والكروت القديمة (NLT-XXXX-XXXX) تضل زي ما هي.
+     */
+    public static function normalize(string $input): string
+    {
+        $input = strtoupper(trim($input));
+        $digits = preg_replace('/[\s\-]/', '', $input);
+
+        return ctype_digit($digits) ? $digits : $input;
+    }
+
+    /** للطباعة والعرض: 1234 5678 9012 */
+    public static function format(string $code): string
+    {
+        return ctype_digit($code) ? trim(chunk_split($code, 4, ' ')) : $code;
     }
 }

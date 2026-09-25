@@ -75,7 +75,8 @@ class Store extends Model
         }
 
         if ($this->opens_at && $this->closes_at) {
-            $now = now()->format('H:i:s');
+            // ساعات العمل بتوقيت ليبيا — now() لوحدها UTC (فرق ساعتين)
+            $now = now(\App\Support\LocalDay::timezone())->format('H:i:s');
 
             return $this->opens_at <= $this->closes_at
                 ? ($now >= $this->opens_at && $now <= $this->closes_at)

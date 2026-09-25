@@ -26,7 +26,8 @@ class AddressController extends Controller
             'is_default' => ['nullable', 'boolean'],
         ]);
 
-        $data['delivery_zone_id'] = GeoService::resolveZone($data['lat'], $data['lng'])?->id;
+        // العنوان برا كل مناطق التوصيل = ما نحفظوهش
+        $data['delivery_zone_id'] = GeoService::requireZone($data['lat'], $data['lng'], 'lat')?->id;
 
         $address = $request->user()->addresses()->create($data);
 
@@ -41,13 +42,20 @@ class AddressController extends Controller
     {
         abort_unless($address->user_id === $request->user()->id, 403);
 
-        $address->update($request->validate([
+        $data = $request->validate([
             'label'    => ['nullable', 'string', 'max:30'],
             'details'  => ['nullable', 'string', 'max:255'],
             'landmark' => ['nullable', 'string', 'max:255'],
-            'lat'      => ['nullable', 'numeric'],
-            'lng'      => ['nullable', 'numeric'],
-        ]));
+            'lat'      => ['nullable', 'numeric', 'between:-90,90', 'required_with:lng'],
+            'lng'      => ['nullable', 'numeric', 'between:-180,180', 'required_with:lat'],
+        ]);
+
+        // الموقع تغيّر = نعاودو نحددو المنطقة (قبل كانت تضل القديمة)
+        if (isset($data['lat'], $data['lng'])) {
+            $data['delivery_zone_id'] = GeoService::requireZone($data['lat'], $data['lng'], 'lat')?->id;
+        }
+
+        $address->update(array_filter($data, fn ($v) => $v !== null));
 
         return response()->json(['data' => $address->fresh()]);
     }
@@ -64,5 +72,24 @@ class AddressController extends Controller
     {
         $request->user()->addresses()->where('id', '!=', $address->id)->update(['is_default' => false]);
         $address->update(['is_default' => true]);
+    }
+
+    /** فحص التغطية قبل الحفظ — التطبيق يسأل وهو يحرّك الدبوس على الخريطة */
+    public function coverage(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
+        ]);
+
+        $zone = GeoService::resolveZone((float) $data['lat'], (float) $data['lng']);
+        $anyZones = \App\Models\DeliveryZone::where('is_active', true)->exists();
+        $covered = $zone !== null || ! $anyZones;
+
+        return response()->json([
+            'covered' => $covered,
+            'zone'    => $zone?->name,
+            'message' => $covered ? null : GeoService::OUT_OF_COVERAGE,
+        ]);
     }
 }

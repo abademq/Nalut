@@ -45,7 +45,8 @@ class OrderService
                 ? GeoService::distanceKm($store->lat, $store->lng, $address->lat, $address->lng)
                 : 0;
 
-            $zone        = $address->zone ?: GeoService::resolveZone($address->lat, $address->lng);
+            // المنطقة تتحسب من جديد — لو الإدارة عدّلت المناطق بعد حفظ العنوان
+            $zone        = GeoService::requireZone((float) $address->lat, (float) $address->lng, 'address_id');
             $deliveryFee = GeoService::deliveryFee($distance, $zone);
 
             // الكوبون بعد حساب التوصيل — باش يشتغل عرض «توصيل مجاني»
@@ -79,7 +80,8 @@ class OrderService
             }
 
             $order = Order::create([
-                'code'              => Order::generateCode(),
+                // رقم مؤقت — يتبدّل برقم متسلسل (id) مباشرة بعد الإنشاء
+                'code'              => Order::temporaryCode(),
                 'customer_id'       => $customer->id,
                 'store_id'          => $store->id,
                 'delivery_zone_id'  => $zone?->id,
@@ -185,7 +187,8 @@ class OrderService
             ? GeoService::distanceKm($store->lat, $store->lng, $address->lat, $address->lng)
             : 0;
 
-        $zone        = $address->zone ?: GeoService::resolveZone($address->lat, $address->lng);
+        // المنطقة تتحسب من جديد — لو الإدارة عدّلت المناطق بعد حفظ العنوان
+            $zone        = GeoService::requireZone((float) $address->lat, (float) $address->lng, 'address_id');
         $deliveryFee = GeoService::deliveryFee($distance, $zone);
 
         $discount   = 0;
@@ -337,6 +340,11 @@ class OrderService
                     'accepted_at'       => now(),
                     'prep_time_minutes' => $extra['prep_time_minutes'] ?? $order->prep_time_minutes,
                 ],
+                // القبول = بدء التحضير: نسجّلو وقت القبول ومدة التحضير اللي حددها المتجر
+                OrderStatus::Preparing => $payload = $payload + [
+                    'accepted_at'       => $order->accepted_at ?? now(),
+                    'prep_time_minutes' => $extra['prep_time_minutes'] ?? $order->prep_time_minutes,
+                ],
                 OrderStatus::Ready     => $payload['ready_at'] = now(),
                 OrderStatus::Assigned  => $payload['driver_id'] = $extra['driver_id'] ?? $order->driver_id,
                 OrderStatus::PickedUp  => $payload['picked_up_at'] = now(),
@@ -457,7 +465,10 @@ class OrderService
             OrderStatus::Accepted  => $order->prep_time_minutes
                 ? "المتجر قبل طلبك — جاهز خلال {$order->prep_time_minutes} دقيقة"
                 : 'المتجر قبل طلبك',
-            OrderStatus::Preparing => 'المتجر بدا يحضّر طلبك',
+            OrderStatus::Preparing => $order->prep_time_minutes
+                ? "المتجر قبل طلبك وبدا التحضير — جاهز خلال {$order->prep_time_minutes} دقيقة تقريباً"
+                    .($order->readyEta() ? ' (حوالي الساعة '.\App\Support\LocalDay::toLocal($order->readyEta())->format('H:i').')' : '')
+                : 'المتجر قبل طلبك وبدا التحضير',
             OrderStatus::Ready     => 'طلبك جاهز، السائق في الطريق للمتجر',
             OrderStatus::Assigned  => $order->driver
                 ? "أُسند طلبك للسائق {$order->driver->name}"

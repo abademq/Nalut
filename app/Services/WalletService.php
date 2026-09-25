@@ -67,7 +67,7 @@ class WalletService
     public function redeemCard(User $user, string $code): WalletTransaction
     {
         return DB::transaction(function () use ($user, $code) {
-            $card = RechargeCard::where('code', strtoupper(trim($code)))
+            $card = RechargeCard::where('code', RechargeCard::normalize($code))
                 ->lockForUpdate()
                 ->first();
 

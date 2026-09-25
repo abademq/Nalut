@@ -105,6 +105,26 @@ class GeoService
         return round($baseFee + ($billableKm * $perKm), 2);
     }
 
+    /** رسالة موحّدة لما يكون العنوان برا كل مناطق التوصيل */
+    public const OUT_OF_COVERAGE = 'عذراً، خدمتنا غير متوفرة في منطقتك حالياً.';
+
+    /**
+     * منطقة التوصيل للإحداثيات، أو خطأ «غير متوفرة في منطقتك».
+     *
+     * لو ما فيش ولا منطقة نشطة معرّفة (نظام جديد لسه ما تضبطش)
+     * ما نمنعوش الطلبات — نرجّعو null ونستعملو الرسوم الافتراضية.
+     */
+    public static function requireZone(float $lat, float $lng, string $field = 'address'): ?DeliveryZone
+    {
+        $zone = self::resolveZone($lat, $lng);
+
+        if (! $zone && DeliveryZone::where('is_active', true)->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([$field => self::OUT_OF_COVERAGE]);
+        }
+
+        return $zone;
+    }
+
     /** أقرب منطقة توصيل تغطّي الإحداثيات — بالخط المستقيم لأنها دائرة تغطية */
     public static function resolveZone(float $lat, float $lng): ?DeliveryZone
     {

@@ -35,6 +35,7 @@ Route::prefix('v1')->group(function () {
 
         // ---------- الزبون ----------
         Route::middleware('role:customer')->group(function () {
+            Route::get('coverage', [AddressController::class, 'coverage']);
             Route::apiResource('addresses', AddressController::class)->except('show');
 
             Route::get('store-types', [CatalogController::class, 'types']);

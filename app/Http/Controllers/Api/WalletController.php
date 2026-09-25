@@ -7,6 +7,9 @@ use App\Models\WalletTransaction;
 use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 class WalletController extends Controller
 {
@@ -45,10 +48,30 @@ class WalletController extends Controller
     public function redeem(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'code' => ['required', 'string', 'max:20'],
+            'code' => ['required', 'string', 'max:24'],
         ]);
 
-        $tx = $this->wallets->redeemCard($request->user(), $data['code']);
+        // حماية من تخمين أرقام الكروت: المحاولات الفاشلة فقط تنحسب
+        $userKey = 'card-redeem:user:'.$request->user()->id;
+        $ipKey   = 'card-redeem:ip:'.$request->ip();
+
+        foreach ([[$userKey, 'wallet.redeem_max_failures_per_user'], [$ipKey, 'wallet.redeem_max_failures_per_ip']] as [$key, $cfg]) {
+            if (RateLimiter::tooManyAttempts($key, (int) config($cfg))) {
+                $minutes = (int) ceil(RateLimiter::availableIn($key) / 60);
+                throw ValidationException::withMessages([
+                    'code' => "محاولات خاطئة كثيرة. حاول بعد {$minutes} دقيقة.",
+                ]);
+            }
+        }
+
+        try {
+            $tx = $this->wallets->redeemCard($request->user(), $data['code']);
+        } catch (ValidationException $e) {
+            RateLimiter::hit($userKey, 3600);
+            RateLimiter::hit($ipKey, 3600);
+            Log::warning('Failed card redeem', ['user' => $request->user()->id, 'ip' => $request->ip()]);
+            throw $e;
+        }
 
         return response()->json([
             'message' => 'تم شحن '.number_format((float) $tx->amount, 2).' د.ل',

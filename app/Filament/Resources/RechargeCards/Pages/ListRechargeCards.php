@@ -99,7 +99,8 @@ class ListRechargeCards extends ListRecords
 
                         foreach ($cards as $c) {
                             fputcsv($out, [
-                                $c->code,
+                                // مسافات بين كل 4 أرقام: Excel يقراه نص مش رقم (بدونها يطلع 1.23E+11)
+                                RechargeCard::format($c->code),
                                 number_format((float) $c->amount, 2, '.', ''),
                                 $c->batch,
                                 $c->statusLabel(),
@@ -155,7 +156,7 @@ class ListRechargeCards extends ListRecords
                     foreach ($cards as $c) {
                         $html .= '<div class="card">'
                             .'<div class="brand">توصيل نالوت — كرت شحن</div>'
-                            .'<div class="code">'.e($c->code).'</div>'
+                            .'<div class="code">'.e(RechargeCard::format($c->code)).'</div>'
                             .'<div class="amount">'.number_format((float) $c->amount, 2).' د.ل</div>'
                             .'<div class="meta">'
                             .($c->expires_at ? 'ينتهي: '.$c->expires_at->format('Y-m-d') : 'بدون انتهاء')

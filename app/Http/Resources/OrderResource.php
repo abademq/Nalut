@@ -75,6 +75,10 @@ class OrderResource extends JsonResource
                 'status' => $l->to_status,
                 'at'     => $l->created_at,
             ])),
+            // مدة التحضير ووقت الجاهزية المتوقع — يظهرو للزبون وقت التحضير
+            'prep_time_minutes'   => $this->prep_time_minutes,
+            'ready_eta'           => $this->readyEta()?->toIso8601String(),
+            'minutes_until_ready' => $this->status->value === 'preparing' ? $this->minutesUntilReady() : null,
             'created_at'     => $this->created_at,
             'accepted_at'    => $this->accepted_at,
             'delivered_at'   => $this->delivered_at,

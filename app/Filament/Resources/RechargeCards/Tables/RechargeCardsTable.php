@@ -19,6 +19,7 @@ class RechargeCardsTable
             ->columns([
                 TextColumn::make('code')
                     ->label('الكود')
+                    ->formatStateUsing(fn ($state) => \App\Models\RechargeCard::format((string) $state))
                     ->searchable()
                     ->copyable()
                     ->weight('bold')
