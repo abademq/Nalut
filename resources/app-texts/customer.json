@@ -10,14 +10,24 @@
   "vars": "{statusCode}"
  },
  {
+  "text": "توصيل نالوت",
+  "group": "main",
+  "vars": null
+ },
+ {
   "text": "عنوان",
   "group": "models",
   "vars": null
  },
  {
-  "text": "توصيل نالوت",
-  "group": "about_screen",
-  "vars": null
+  "text": "إشعار في الخلفية: {messageId}",
+  "group": "push",
+  "vars": "{messageId}"
+ },
+ {
+  "text": "فشل تسجيل توكن الإشعارات: {value}",
+  "group": "push",
+  "vars": "{value}"
  },
  {
   "text": "اتصل بنا",
@@ -445,6 +455,11 @@
   "vars": null
  },
  {
+  "text": "هذا الحساب مسجّل كـ{store}.",
+  "group": "login_screen",
+  "vars": "{store}"
+ },
+ {
   "text": "متجر",
   "group": "login_screen",
   "vars": null
@@ -453,11 +468,6 @@
   "text": "سائق",
   "group": "login_screen",
   "vars": null
- },
- {
-  "text": "هذا الحساب مسجّل كـ{store}.",
-  "group": "login_screen",
-  "vars": "{store}"
  },
  {
   "text": "اطلب من مطاعم ومتاجر نالوت",
@@ -725,19 +735,9 @@
   "vars": null
  },
  {
-  "text": "جاهز تقريباً الساعة {hour}:{minute}",
+  "text": "جاهز خلال {minutes} دقيقة تقريباً",
   "group": "order_tracking_screen",
-  "vars": "{hour} {minute}"
- },
- {
-  "text": "باقي حوالي {left} دقيقة",
-  "group": "order_tracking_screen",
-  "vars": "{left}"
- },
- {
-  "text": "على وشك الجهوزية",
-  "group": "order_tracking_screen",
-  "vars": null
+  "vars": "{minutes}"
  },
  {
   "text": "تعديل الاسم",

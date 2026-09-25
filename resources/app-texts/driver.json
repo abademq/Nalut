@@ -1,0 +1,537 @@
+[
+ {
+  "text": "انتهت الجلسة، سجّل دخولك من جديد.",
+  "group": "api",
+  "vars": null
+ },
+ {
+  "text": "صار خطأ في الاتصال ({statusCode})",
+  "group": "api",
+  "vars": "{statusCode}"
+ },
+ {
+  "text": "سائق نالوت",
+  "group": "main",
+  "vars": null
+ },
+ {
+  "text": "زبون",
+  "group": "models",
+  "vars": null
+ },
+ {
+  "text": "إشعار في الخلفية: {messageId}",
+  "group": "push",
+  "vars": "{messageId}"
+ },
+ {
+  "text": "فشل تسجيل توكن الإشعارات: {value}",
+  "group": "push",
+  "vars": "{value}"
+ },
+ {
+  "text": "ما نقدرش نوصل للخادم.",
+  "group": "available_tab",
+  "vars": null
+ },
+ {
+  "text": "قبول الطلب",
+  "group": "available_tab",
+  "vars": null
+ },
+ {
+  "text": "\nتحصّل نقداً: {cashToCollect} د.ل",
+  "group": "available_tab",
+  "vars": "{cashToCollect}"
+ },
+ {
+  "text": "من {storeName}\nإلى {addressDetails}\n\nأجرتك: {deliveryFee} د.ل{cashToCollect}",
+  "group": "available_tab",
+  "vars": "{storeName} {addressDetails} {deliveryFee} {cashToCollect}"
+ },
+ {
+  "text": "رجوع",
+  "group": "available_tab",
+  "vars": null
+ },
+ {
+  "text": "قبول",
+  "group": "available_tab",
+  "vars": null
+ },
+ {
+  "text": "الطلب صار لك",
+  "group": "available_tab",
+  "vars": null
+ },
+ {
+  "text": "طلبات متاحة",
+  "group": "available_tab",
+  "vars": null
+ },
+ {
+  "text": "إعادة المحاولة",
+  "group": "available_tab",
+  "vars": null
+ },
+ {
+  "text": "ما فيش طلبات متاحة توّا",
+  "group": "available_tab",
+  "vars": null
+ },
+ {
+  "text": "تأكد إنك متاح، والصفحة تتحدّث لحالها",
+  "group": "available_tab",
+  "vars": null
+ },
+ {
+  "text": "أرباحي",
+  "group": "earnings_tab",
+  "vars": null
+ },
+ {
+  "text": "كاش عندك للمنصة",
+  "group": "earnings_tab",
+  "vars": null
+ },
+ {
+  "text": "رصيدك",
+  "group": "earnings_tab",
+  "vars": null
+ },
+ {
+  "text": "{balance} د.ل",
+  "group": "earnings_tab",
+  "vars": "{balance}"
+ },
+ {
+  "text": "سلّمه للإدارة عشان يتصفّى حسابك",
+  "group": "earnings_tab",
+  "vars": null
+ },
+ {
+  "text": "مستحقاتك عند المنصة",
+  "group": "earnings_tab",
+  "vars": null
+ },
+ {
+  "text": "السجل المالي التفصيلي",
+  "group": "earnings_tab",
+  "vars": null
+ },
+ {
+  "text": "الأجرة المكتسبة",
+  "group": "earnings_tab",
+  "vars": null
+ },
+ {
+  "text": "اليوم",
+  "group": "earnings_tab",
+  "vars": null
+ },
+ {
+  "text": "هذا الشهر",
+  "group": "earnings_tab",
+  "vars": null
+ },
+ {
+  "text": "الإجمالي",
+  "group": "earnings_tab",
+  "vars": null
+ },
+ {
+  "text": "طلب مسلّم",
+  "group": "earnings_tab",
+  "vars": null
+ },
+ {
+  "text": "{value} د.ل",
+  "group": "earnings_tab",
+  "vars": "{value}"
+ },
+ {
+  "text": "متاح — تستقبل طلبات",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "غير متاح",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "متاحة",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "طلباتي",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "الأرباح",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "حسابي",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "ما نقدرش نوصل للخادم. تأكد من الشبكة.",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "هذا الحساب مش حساب سائق.",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "حسابك لسه ما تمش اعتماده من الإدارة.",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "منصة توصيل نالوت",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "رقم الهاتف",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "رمز التحقق",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "دخول",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "إرسال رمز التحقق",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "إعادة إرسال الرمز بعد {resendIn} ثانية",
+  "group": "login_screen",
+  "vars": "{resendIn}"
+ },
+ {
+  "text": "ما وصلنيش الرمز — أعد الإرسال",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "تغيير الرقم",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "تم التحديث",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "مراجعة طلب {code}",
+  "group": "my_orders_tab",
+  "vars": "{code}"
+ },
+ {
+  "text": "تأكد من كل صنف وكميته قبل ما تخرج من المتجر.",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "ملاحظة: {note}",
+  "group": "my_orders_tab",
+  "vars": "{note}"
+ },
+ {
+  "text": "إجمالي القطع",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "{quantity} قطعة",
+  "group": "my_orders_tab",
+  "vars": "{quantity}"
+ },
+ {
+  "text": "عدد الأنواع",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "تحصّل من الزبون",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "{cashToCollect} د.ل",
+  "group": "my_orders_tab",
+  "vars": "{cashToCollect}"
+ },
+ {
+  "text": "استلمت الطلب",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "علّم على كل الأصناف",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "تأكيد التسليم",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "\nمدفوع من المحفظة {walletPaid} د.ل",
+  "group": "my_orders_tab",
+  "vars": "{walletPaid}"
+ },
+ {
+  "text": "إجمالي الطلب {total} د.ل{walletPaid}\n\nتحصّل نقداً: {cash} د.ل\n\nالمبلغ بيتسجّل عليك لين تسلّمه للإدارة.",
+  "group": "my_orders_tab",
+  "vars": "{total} {walletPaid} {cash}"
+ },
+ {
+  "text": "الطلب مدفوع بالكامل — ما تحصّلش فلوس.",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "سلّمت الطلب",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "الطلب هذا ما عادش في طلباتك النشطة",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "ما قدرناش نفتحو واتساب — تأكد إنه مثبّت",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "ما فيش أسباب مضافة — كلّم الإدارة",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "مشكلة في الطلب {code}",
+  "group": "my_orders_tab",
+  "vars": "{code}"
+ },
+ {
+  "text": "شن صار؟",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "تفاصيل (اختياري)",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "إرسال البلاغ",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "تم إرسال البلاغ",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "مشكلة / تعذّر التسليم",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "الطلب قيد مراجعة الإدارة",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "التذكرة {issueTicket}",
+  "group": "my_orders_tab",
+  "vars": "{issueTicket}"
+ },
+ {
+  "text": "فتح التذكرة مع الدعم الفني",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "راجع الأصناف واستلم",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "خرجت للزبون",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "تم التسليم",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "ما عندكش طلبات نشطة",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "يبعد {distanceToStore} كم عنك",
+  "group": "order_card",
+  "vars": "{distanceToStore}"
+ },
+ {
+  "text": "{distanceKm} كم",
+  "group": "order_card",
+  "vars": "{distanceKm}"
+ },
+ {
+  "text": "أجرتك {deliveryFee} د.ل",
+  "group": "order_card",
+  "vars": "{deliveryFee}"
+ },
+ {
+  "text": "إجمالي الطلب",
+  "group": "order_card",
+  "vars": null
+ },
+ {
+  "text": "{total} د.ل",
+  "group": "order_card",
+  "vars": "{total}"
+ },
+ {
+  "text": "مدفوع من المحفظة",
+  "group": "order_card",
+  "vars": null
+ },
+ {
+  "text": "− {walletPaid} د.ل",
+  "group": "order_card",
+  "vars": "{walletPaid}"
+ },
+ {
+  "text": "تحصّل نقداً",
+  "group": "order_card",
+  "vars": null
+ },
+ {
+  "text": "مدفوع بالكامل — ما تحصّلش فلوس",
+  "group": "order_card",
+  "vars": null
+ },
+ {
+  "text": "ملاحظة الزبون: {notes}",
+  "group": "order_card",
+  "vars": "{notes}"
+ },
+ {
+  "text": "اتصال",
+  "group": "order_card",
+  "vars": null
+ },
+ {
+  "text": "فتح الخريطة",
+  "group": "order_card",
+  "vars": null
+ },
+ {
+  "text": "بتوصلك طلبات كل المناطق",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "تم حفظ {ids} منطقة",
+  "group": "settings_tab",
+  "vars": "{ids}"
+ },
+ {
+  "text": "تسجيل الخروج",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "بيتوقف تتبّع موقعك وما توصلكش طلبات.",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "خروج",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "مناطق العمل",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "اختار المناطق اللي تبي تخدم فيها. لو ما اخترت ولا وحدة، بتوصلك طلبات كل المناطق.",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "جاري الحفظ...",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "حفظ المناطق",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "أمس",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "السجل المالي",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "الكل",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "داخل",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "خارج",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "ما فيش حركات",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "الرصيد بعدها: {balanceAfter} د.ل{minute}",
+  "group": "wallet_screen",
+  "vars": "{balanceAfter} {minute}"
+ }
+]

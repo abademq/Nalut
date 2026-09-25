@@ -172,6 +172,7 @@ class Texts
         'printer_settings_screen' => 'إعدادات الطابعة', 'receipt_widget' => 'الواصل المطبوع',
         'receipt_service' => 'الطباعة', 'daily_report' => 'التقرير المطبوع', 'daily_report_screen' => 'تقرير اليوم',
         'earnings_tab' => 'الأرباح', 'my_orders_tab' => 'طلباتي', 'available_tab' => 'الطلبات المتاحة',
+        'order_card' => 'بطاقة الطلب', 'push' => 'الإشعارات', 'main' => 'عام', 'wallet_models' => 'المحفظة',
         'api' => 'أخطاء الاتصال', 'models' => 'عام', 'cart' => 'السلة', 'quick_location' => 'الموقع',
     ];
 
