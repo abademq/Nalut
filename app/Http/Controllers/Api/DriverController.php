@@ -175,7 +175,7 @@ class DriverController extends Controller
         // البلاغ المفتوح يوقف الطلب لين الإدارة تقرر
         if ($order->openIssue()->exists()) {
             throw \Illuminate\Validation\ValidationException::withMessages([
-                'status' => 'الطلب قيد مراجعة الإدارة — استنى قرارهم.',
+                'status' => \App\Support\Texts::get('msg.under_review_block'),
             ]);
         }
 
@@ -185,6 +185,11 @@ class DriverController extends Controller
             'lat'    => ['nullable', 'numeric'],
             'lng'    => ['nullable', 'numeric'],
         ]);
+
+        // موقع السائق لحظة تغيير الحالة — باش خريطة الزبون تطلع فوراً بدون ما تستنى التحديث الدوري
+        if (isset($data['lat'], $data['lng'])) {
+            DriverLocationService::put($request->user()->id, (float) $data['lat'], (float) $data['lng']);
+        }
 
         $order = $this->orders->transition(
             $order,

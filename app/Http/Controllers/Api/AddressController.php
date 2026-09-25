@@ -109,7 +109,7 @@ class AddressController extends Controller
         return response()->json([
             'covered' => $covered,
             'zone'    => $zone?->name,
-            'message' => $covered ? null : GeoService::OUT_OF_COVERAGE,
+            'message' => $covered ? null : \App\Support\Texts::get('msg.out_of_coverage'),
         ]);
     }
 }

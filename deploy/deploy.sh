@@ -35,6 +35,9 @@ fi
 echo "==> الهجرات"
 php artisan migrate --force
 
+echo "==> مزامنة النصوص"
+php artisan texts:sync
+
 echo "==> بناء الكاش"
 php artisan optimize:clear
 php artisan config:cache

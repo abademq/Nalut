@@ -1,0 +1,1027 @@
+[
+ {
+  "text": "انتهت الجلسة، سجّل دخولك من جديد.",
+  "group": "api",
+  "vars": null
+ },
+ {
+  "text": "صار خطأ في الاتصال ({statusCode})",
+  "group": "api",
+  "vars": "{statusCode}"
+ },
+ {
+  "text": "تقرير المبيعات اليومي",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "الطلبات",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "كل الطلبات",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "مكتملة",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "ملغية",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "فشل التسليم",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "لسه جارية",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "المبيعات (المكتملة فقط)",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "قيمة الأصناف",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "الخصومات",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "عمولة المنصة",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "صافي المتجر",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "متوسط الطلب",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "الأكثر مبيعاً",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "تفاصيل الطلبات",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "طُبع: {generatedAt}",
+  "group": "daily_report",
+  "vars": "{generatedAt}"
+ },
+ {
+  "text": "توصيل نالوت",
+  "group": "daily_report",
+  "vars": null
+ },
+ {
+  "text": "، ",
+  "group": "models",
+  "vars": null
+ },
+ {
+  "text": "زبون",
+  "group": "models",
+  "vars": null
+ },
+ {
+  "text": "ما نقدرش نتصل بالطابعة. تأكد إنها مقترنة ومفتوحة.",
+  "group": "receipt_service",
+  "vars": null
+ },
+ {
+  "text": "ما قدرناش نجهّز الفاتورة.",
+  "group": "receipt_service",
+  "vars": null
+ },
+ {
+  "text": "فشلت الطباعة: {value}",
+  "group": "receipt_service",
+  "vars": "{value}"
+ },
+ {
+  "text": "ما نقدرش نتصل بالطابعة.",
+  "group": "receipt_service",
+  "vars": null
+ },
+ {
+  "text": "نسخة المتجر",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "نسخة الزبون",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "راجع الأصناف قبل التسليم",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "شكراً لطلبك",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "ملاحظة: {note}",
+  "group": "receipt_widget",
+  "vars": "{note}"
+ },
+ {
+  "text": "إجمالي القطع",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "مجموع الأصناف",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "رسوم التوصيل",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "مدفوع من المحفظة",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "الإجمالي",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "{total} د.ل",
+  "group": "receipt_widget",
+  "vars": "{total}"
+ },
+ {
+  "text": "يُحصّل نقداً: {cashToCollect} د.ل",
+  "group": "receipt_widget",
+  "vars": "{cashToCollect}"
+ },
+ {
+  "text": "مدفوع بالكامل — لا تحصّل فلوس",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "الزبون: {customerName}",
+  "group": "receipt_widget",
+  "vars": "{customerName}"
+ },
+ {
+  "text": "الهاتف: {customerPhone}",
+  "group": "receipt_widget",
+  "vars": "{customerPhone}"
+ },
+ {
+  "text": "العنوان: {addressDetails}",
+  "group": "receipt_widget",
+  "vars": "{addressDetails}"
+ },
+ {
+  "text": "علامة: {addressLandmark}",
+  "group": "receipt_widget",
+  "vars": "{addressLandmark}"
+ },
+ {
+  "text": "السائق: {driverName}",
+  "group": "receipt_widget",
+  "vars": "{driverName}"
+ },
+ {
+  "text": "ملاحظة الزبون: {notes}",
+  "group": "receipt_widget",
+  "vars": "{notes}"
+ },
+ {
+  "text": "ما نقدرش نوصل للخادم.",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "طُبع التقرير",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "تقرير اليوم",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "طباعة",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "اليوم السابق",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "اليوم  {day}/{month}/{year}",
+  "group": "daily_report_screen",
+  "vars": "{day} {month} {year}"
+ },
+ {
+  "text": "اليوم التالي",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "جاري الطباعة...",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "طباعة التقرير",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "إعادة المحاولة",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "{value} د.ل",
+  "group": "daily_report_screen",
+  "vars": "{value}"
+ },
+ {
+  "text": "الطلبات المكتملة",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "جارية",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "المبيعات",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "الطلبات المكتملة فقط",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "طلبات اليوم ({total})",
+  "group": "daily_report_screen",
+  "vars": "{total}"
+ },
+ {
+  "text": "ما فيش طلبات في هذا اليوم",
+  "group": "daily_report_screen",
+  "vars": null
+ },
+ {
+  "text": "المنتجات",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "المتجر",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "ما نقدرش نوصل للخادم. تأكد من الشبكة.",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "هذا الحساب مش حساب متجر.",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "الحساب مش مربوط بمتجر. تواصل مع الإدارة.",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "متجري",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "منصة توصيل نالوت",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "رقم الهاتف",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "رمز التحقق",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "دخول",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "إرسال رمز التحقق",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "إعادة إرسال الرمز بعد {resendIn} ثانية",
+  "group": "login_screen",
+  "vars": "{resendIn}"
+ },
+ {
+  "text": "ما وصلنيش الرمز — أعد الإرسال",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "تغيير الرقم",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "الكل",
+  "group": "order_history_screen",
+  "vars": null
+ },
+ {
+  "text": "اختار اليوم",
+  "group": "order_history_screen",
+  "vars": null
+ },
+ {
+  "text": "طُبعت الفاتورة",
+  "group": "order_history_screen",
+  "vars": null
+ },
+ {
+  "text": "التوصيل",
+  "group": "order_history_screen",
+  "vars": null
+ },
+ {
+  "text": "إعادة طباعة الفاتورة",
+  "group": "order_history_screen",
+  "vars": null
+ },
+ {
+  "text": "سجل الطلبات",
+  "group": "order_history_screen",
+  "vars": null
+ },
+ {
+  "text": "بحث برقم الطلب",
+  "group": "order_history_screen",
+  "vars": null
+ },
+ {
+  "text": "اليوم",
+  "group": "order_history_screen",
+  "vars": null
+ },
+ {
+  "text": "ما فيش طلبات بهذا الفلتر",
+  "group": "order_history_screen",
+  "vars": null
+ },
+ {
+  "text": "{createdAt}  ·  {pieces} قطعة  ·  {customerName}",
+  "group": "order_history_screen",
+  "vars": "{createdAt} {pieces} {customerName}"
+ },
+ {
+  "text": "{subtotal}\nد.ل",
+  "group": "order_history_screen",
+  "vars": "{subtotal}"
+ },
+ {
+  "text": "طُبع واصل المتجر",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "طُبع واصل الزبون",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "تم التحديث",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "قبول وبدء التحضير",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "كم دقيقة تحتاج لتحضيره؟",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "{value} د",
+  "group": "orders_tab",
+  "vars": "{value}"
+ },
+ {
+  "text": "رجوع",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "قبول",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "الصنف خلص",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "المتجر مزدحم توّا",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "المتجر على وشك الغلق",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "العنوان بعيد عن نطاقنا",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "مشكلة في الطلب — الزبون يتصل بينا",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "رفض الطلب",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "اختار السبب:",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "سبب آخر",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "اكتب السبب",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "السبب يوصل للزبون في الإشعار — اختار بدقة.",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "رفضه المتجر",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "تشغيل التنبيه",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "كتم التنبيه",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "ما فيش طلبات نشطة توّا",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "طلبات جديدة",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "قيد التنفيذ",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "{lineTotal} د.ل",
+  "group": "orders_tab",
+  "vars": "{lineTotal}"
+ },
+ {
+  "text": "الإجمالي {total} د.ل",
+  "group": "orders_tab",
+  "vars": "{total}"
+ },
+ {
+  "text": "واصل المتجر",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "واصل الزبون",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "رفض",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "جاهز للاستلام",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "جاهز — بانتظار السائق",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "البلوتوث مقفول — شغّله من إعدادات الجهاز.",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "ما قدرناش نقرا قائمة الطابعات: {value}",
+  "group": "printer_settings_screen",
+  "vars": "{value}"
+ },
+ {
+  "text": "طُبعت صفحة المعايرة — شوف الخط",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "تم الاتصال بالطابعة",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "ما نجحش الاتصال",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "الطابعة",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "الطابعة متصلة",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "ما فيش طابعة متصلة",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "عرض الورق",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "ورق 5.5 سم = 384 عادةً، وورق 8 سم = 576. لو النص يطلع برّا الورقة، نقّص الرقم وجرّب من جديد.",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "طباعة صفحة معايرة",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "تطبع خطين بعرض الورقة كامل. لو الخط ينقطع قبل الحافة أو يطلع برّا، غيّر الرقم فوق لين الخط يوصل الحافتين بالضبط.",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "الطابعات المقترنة",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "لازم تقرن الطابعة أول من إعدادات البلوتوث في الجهاز، وبعدها تظهر هنا.",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "ما فيش طابعات مقترنة",
+  "group": "printer_settings_screen",
+  "vars": null
+ },
+ {
+  "text": "ما قدرناش نفتحو الصور. تأكد من الصلاحيات.",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "من المعرض",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "تقدر تختار أكثر من صورة",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "بالكاميرا",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "الرئيسية",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "اجعلها الرئيسية",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "حذف",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "إضافة صور",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "الصور",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "({imageCount} من {maxImages})",
+  "group": "product_form_screen",
+  "vars": "{imageCount} {maxImages}"
+ },
+ {
+  "text": "الصورة الأولى هي اللي تظهر في القائمة",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "اكتب اسم المنتج.",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "اكتب سعر صحيح.",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "سعر العرض لازم يكون أقل من السعر الأصلي.",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "تعديل منتج",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "منتج جديد",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "اسم المنتج *",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "برجر لحم",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "الوصف",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "المكوّنات، الحجم، أي تفاصيل تهم الزبون",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "القسم",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "بدون قسم",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "السعر",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "السعر (د.ل) *",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "سعر العرض",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "اختياري",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "التوفّر",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "متوفر للطلب",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "أوقفه لمّا يخلص مؤقتاً",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "تتبّع الكمية",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "للمنتجات المحدودة — تنقص تلقائياً مع كل طلب",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "الكمية المتوفرة",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "أقصى كمية في الطلب الواحد",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "اتركه فاضي = بدون حد",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "جاري الحفظ...",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "جاري رفع الصور...",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "حفظ التعديلات",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "إضافة المنتج",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "حذف المنتج",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "متأكد تبي تحذف «{name}»؟",
+  "group": "products_tab",
+  "vars": "{name}"
+ },
+ {
+  "text": "قسم جديد",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "تعديل القسم",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "اسم القسم",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "مقبلات، سندويتشات، مشروبات...",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "حفظ",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "حذف القسم",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "بيتحذف «{name}» فقط — منتجاته ({productsCount}) ما تتحذفش، بس تصير بدون قسم.",
+  "group": "products_tab",
+  "vars": "{name} {productsCount}"
+ },
+ {
+  "text": "أقسام القائمة",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "رتّبهم بالسحب — نفس الترتيب يشوفه الزبون.",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "ما فيش أقسام بعد",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "{productsCount} منتج",
+  "group": "products_tab",
+  "vars": "{productsCount}"
+ },
+ {
+  "text": "ابدا بإضافة أقسام قائمتك",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "إدارة الأقسام",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "ما فيش منتجات في القسم",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "{effectivePrice} د.ل",
+  "group": "products_tab",
+  "vars": "{effectivePrice}"
+ },
+ {
+  "text": "تعديل",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "خلص — مخفي لين تعبّيه",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "المخزون: 0",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "المخزون: {qty}",
+  "group": "products_tab",
+  "vars": "{qty}"
+ },
+ {
+  "text": "تسجيل الخروج",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "متأكد تبي تخرج من الحساب؟",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "خروج",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "المتجر مفتوح",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "المتجر مغلق",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "تستقبل طلبات توّا",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "الزبائن ما يقدروش يطلبو",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "ملخص اليوم",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "طلبات اليوم",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "مبيعات اليوم",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "{sales} د.ل",
+  "group": "settings_tab",
+  "vars": "{sales}"
+ },
+ {
+  "text": "بانتظار القبول",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "طلبات نشطة",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "اختيار طابعة الفواتير",
+  "group": "settings_tab",
+  "vars": null
+ }
+]

@@ -9,6 +9,7 @@ use App\Models\NotificationSetting;
 use App\Models\Order;
 use App\Models\OrderIssue;
 use App\Models\User;
+use App\Support\Texts;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -73,8 +74,8 @@ class DeliveryIssueService
                 if ($order->customer && NotificationSetting::isEnabled('customer', 'failed')) {
                     PushService::toUser(
                         $order->customer,
-                        "طلب {$order->code}",
-                        'صار ظرف مع السائق وطلبك قيد مراجعة الإدارة — نتواصلو معاك قريب',
+                        Texts::get('notify.title', ['code' => $order->code]),
+                        Texts::get('notify.customer.under_review'),
                         ['type' => 'order_status', 'order_id' => (string) $order->id, 'status' => 'review']
                     );
                 }
@@ -116,7 +117,7 @@ class DeliveryIssueService
 
             match ($resolution) {
                 'continue'  => $issue->driver && PushService::toUser(
-                    $issue->driver, "طلب {$order->code}", 'الإدارة راجعت البلاغ — كمّل التوصيل',
+                    $issue->driver, Texts::get('notify.title', ['code' => $order->code]), Texts::get('notify.driver.review_continue'),
                     ['type' => 'order_status', 'order_id' => (string) $order->id]
                 ),
                 'reassign'  => $this->reassign($order, $admin, $reason),
@@ -137,7 +138,7 @@ class DeliveryIssueService
         $this->orders->transition($order->fresh(), OrderStatus::Ready, $admin, ['reason' => $reason, 'force' => true]);
 
         if ($old) {
-            PushService::toUser($old, "طلب {$order->code}", 'الإدارة حوّلت الطلب لسائق آخر', [
+            PushService::toUser($old, Texts::get('notify.title', ['code' => $order->code]), Texts::get('notify.driver.reassigned_away'), [
                 'type' => 'order_status', 'order_id' => (string) $order->id,
             ]);
         }

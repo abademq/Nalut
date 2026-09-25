@@ -42,6 +42,7 @@ class Order extends Model
             'picked_up_at'   => 'datetime',
             'delivered_at'   => 'datetime',
             'cancelled_at'   => 'datetime',
+            'stock_restored_at' => 'datetime',
         ];
     }
 

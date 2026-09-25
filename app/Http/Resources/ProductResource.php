@@ -24,6 +24,8 @@ class ProductResource extends JsonResource
             'stock_quantity'  => $this->track_stock ? (int) $this->stock_quantity : null,
             'max_per_order'   => $this->max_per_order ? (int) $this->max_per_order : null,
             'low_stock_alert' => $this->low_stock_alert ? (int) $this->low_stock_alert : null,
+            // خلص وتخفّى تلقائياً — يرجع لحاله لما المخزون يرجع
+            'sold_out'        => $this->sold_out_at !== null,
             'section_id'     => $this->menu_section_id,
             'options'        => $this->whenLoaded('options', fn () => $this->options->map(fn ($o) => [
                 'id'          => $o->id,

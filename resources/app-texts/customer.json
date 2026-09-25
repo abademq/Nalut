@@ -1,0 +1,952 @@
+[
+ {
+  "text": "انتهت الجلسة، سجّل دخولك من جديد.",
+  "group": "api",
+  "vars": null
+ },
+ {
+  "text": "صار خطأ في الاتصال ({statusCode})",
+  "group": "api",
+  "vars": "{statusCode}"
+ },
+ {
+  "text": "عنوان",
+  "group": "models",
+  "vars": null
+ },
+ {
+  "text": "توصيل نالوت",
+  "group": "about_screen",
+  "vars": null
+ },
+ {
+  "text": "اتصل بنا",
+  "group": "about_screen",
+  "vars": null
+ },
+ {
+  "text": "واتساب",
+  "group": "about_screen",
+  "vars": null
+ },
+ {
+  "text": "البريد",
+  "group": "about_screen",
+  "vars": null
+ },
+ {
+  "text": "فيسبوك",
+  "group": "about_screen",
+  "vars": null
+ },
+ {
+  "text": "إنستغرام",
+  "group": "about_screen",
+  "vars": null
+ },
+ {
+  "text": "الموقع",
+  "group": "about_screen",
+  "vars": null
+ },
+ {
+  "text": "عن التطبيق",
+  "group": "about_screen",
+  "vars": null
+ },
+ {
+  "text": "تواصل معنا",
+  "group": "about_screen",
+  "vars": null
+ },
+ {
+  "text": "الإصدار 1.0",
+  "group": "about_screen",
+  "vars": null
+ },
+ {
+  "text": "المنزل",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "اكتب وصف العنوان (الحي، الشارع...)",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "ما نقدرش نوصل للخادم.",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "تحديد العنوان",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "جاري تحديد موقعك بدقة...",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "عذراً، خدمتنا غير متوفرة في منطقتك حالياً.",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "حرّك الخريطة لين الدبوس يكون على بيتك",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "وصف العنوان",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "الحي، الشارع، رقم البيت",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "علامة مميزة (اختياري)",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "جنب مسجد... / قدام محل...",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "اسم العنوان",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "المنزل / الشغل",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "جاري الحفظ...",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "حفظ العنوان",
+  "group": "address_picker_screen",
+  "vars": null
+ },
+ {
+  "text": "صار العنوان الافتراضي",
+  "group": "addresses_screen",
+  "vars": null
+ },
+ {
+  "text": "حذف العنوان",
+  "group": "addresses_screen",
+  "vars": null
+ },
+ {
+  "text": "متأكد تبي تحذف «{details}»؟",
+  "group": "addresses_screen",
+  "vars": "{details}"
+ },
+ {
+  "text": "رجوع",
+  "group": "addresses_screen",
+  "vars": null
+ },
+ {
+  "text": "حذف",
+  "group": "addresses_screen",
+  "vars": null
+ },
+ {
+  "text": "اختار العنوان",
+  "group": "addresses_screen",
+  "vars": null
+ },
+ {
+  "text": "عناويني",
+  "group": "addresses_screen",
+  "vars": null
+ },
+ {
+  "text": "عنوان جديد",
+  "group": "addresses_screen",
+  "vars": null
+ },
+ {
+  "text": "ما عندكش عناوين محفوظة",
+  "group": "addresses_screen",
+  "vars": null
+ },
+ {
+  "text": "ضيف عنوانك",
+  "group": "addresses_screen",
+  "vars": null
+ },
+ {
+  "text": "الافتراضي",
+  "group": "addresses_screen",
+  "vars": null
+ },
+ {
+  "text": "تعيين كعنوان افتراضي",
+  "group": "addresses_screen",
+  "vars": null
+ },
+ {
+  "text": "ملاحظة للمتجر",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "بدون بصل، حار...",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "حفظ",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "اختار عنوان التوصيل أول.",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "{value} د.ل",
+  "group": "cart_screen",
+  "vars": "{value}"
+ },
+ {
+  "text": "السلة",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "السلة فاضية",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "السلة — {storeName}",
+  "group": "cart_screen",
+  "vars": "{storeName}"
+ },
+ {
+  "text": "{effectivePrice} د.ل للواحدة",
+  "group": "cart_screen",
+  "vars": "{effectivePrice}"
+ },
+ {
+  "text": "ملاحظة: {note}",
+  "group": "cart_screen",
+  "vars": "{note}"
+ },
+ {
+  "text": "+ ضيف ملاحظة",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "تعديل الملاحظة",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "اختار عنوان التوصيل",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "نقداً عند الاستلام",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "من المحفظة",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "الرصيد: {walletBalance} د.ل",
+  "group": "cart_screen",
+  "vars": "{walletBalance}"
+ },
+ {
+  "text": "استعمل رصيد المحفظة والباقي نقداً",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "كود خصم (اختياري)",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "ملاحظات للمتجر أو السائق",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "مجموع الأصناف",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "رسوم التوصيل",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "{distance_km} كم",
+  "group": "cart_screen",
+  "vars": "{distance_km}"
+ },
+ {
+  "text": "الخصم",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "الإجمالي",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "تدفع نقداً",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "أقل طلب من هذا المتجر {min_order} د.ل",
+  "group": "cart_screen",
+  "vars": "{min_order}"
+ },
+ {
+  "text": "اختار العنوان باش نحسبو رسوم التوصيل",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "جاري الإرسال...",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "تأكيد الطلب",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "{count} صنف · {subtotal} د.ل",
+  "group": "home_screen",
+  "vars": "{count} {subtotal}"
+ },
+ {
+  "text": "إعادة المحاولة",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "دوّر على متجر...",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "الكل",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "الأقرب",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "الأعلى تقييماً",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "الأكثر تقييماً",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "الاسم",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "ما فيش متاجر",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "مفتوح توّا",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "مغلق حالياً",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "اطلب من مطاعم نالوت",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "توصيل سريع لباب بيتك",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "مغلق",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "{prepTime} دقيقة",
+  "group": "home_screen",
+  "vars": "{prepTime}"
+ },
+ {
+  "text": "{distanceKm} كم",
+  "group": "home_screen",
+  "vars": "{distanceKm}"
+ },
+ {
+  "text": "أقل طلب {minOrder} د.ل",
+  "group": "home_screen",
+  "vars": "{minOrder}"
+ },
+ {
+  "text": "ما نقدرش نوصل للخادم. تأكد من الشبكة.",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "اكتب اسمك.",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "كلمة المرور 6 حروف على الأقل.",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "متجر",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "سائق",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "هذا الحساب مسجّل كـ{store}.",
+  "group": "login_screen",
+  "vars": "{store}"
+ },
+ {
+  "text": "اطلب من مطاعم ومتاجر نالوت",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "تسجيل دخول",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "حساب جديد",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "دخول برمز التحقق — استعملها لو نسيت كلمة المرور",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "رقم الهاتف",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "كلمة المرور",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "رمز التحقق",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "اسمك",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "الاسم اللي يشوفه السائق",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "6 حروف على الأقل — تستعملها في الدخول",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "نسيت كلمة المرور؟",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "رجوع للدخول بكلمة المرور",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "إعادة إرسال الرمز بعد {resendIn} ثانية",
+  "group": "login_screen",
+  "vars": "{resendIn}"
+ },
+ {
+  "text": "ما وصلنيش الرمز — أعد الإرسال",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "تغيير الرقم",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "دخول",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "إرسال رمز التحقق",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "إنشاء الحساب",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "إلغاء الطلب",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "متأكد تبي تلغي طلبك؟",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "ألغاه الزبون",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "قيّم تجربتك",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "المتجر: {storeName}",
+  "group": "order_tracking_screen",
+  "vars": "{storeName}"
+ },
+ {
+  "text": "السائق: {driverName}",
+  "group": "order_tracking_screen",
+  "vars": "{driverName}"
+ },
+ {
+  "text": "ملاحظة (اختياري)",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "بعدين",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "إرسال",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "شكراً على تقييمك",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "الطلب",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "نستنو موقع السائق...",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "تم إرسال طلبك — رقم {code}",
+  "group": "order_tracking_screen",
+  "vars": "{code}"
+ },
+ {
+  "text": "بيوصلك إشعار أول ما المتجر يقبل الطلب",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "التتبّع على الخريطة يبدا لمّا السائق يستلم طلبك",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "الأصناف",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "{lineTotal} د.ل",
+  "group": "order_tracking_screen",
+  "vars": "{lineTotal}"
+ },
+ {
+  "text": "مدفوع من المحفظة",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "{walletPaid} د.ل",
+  "group": "order_tracking_screen",
+  "vars": "{walletPaid}"
+ },
+ {
+  "text": "تدفع نقداً للسائق",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "{cashToCollect} د.ل",
+  "group": "order_tracking_screen",
+  "vars": "{cashToCollect}"
+ },
+ {
+  "text": "الطلب مدفوع بالكامل — ما تدفعش شي للسائق",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "تدفع نقداً عند الاستلام: {cashToCollect} د.ل",
+  "group": "order_tracking_screen",
+  "vars": "{cashToCollect}"
+ },
+ {
+  "text": "متجر جديد",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "{driverDelivered} توصيلة",
+  "group": "order_tracking_screen",
+  "vars": "{driverDelivered}"
+ },
+ {
+  "text": "سائق جديد · {driverDelivered} توصيلة",
+  "group": "order_tracking_screen",
+  "vars": "{driverDelivered}"
+ },
+ {
+  "text": "شكراً — قيّمت هذا الطلب",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "  ({count} تقييم)",
+  "group": "order_tracking_screen",
+  "vars": "{count}"
+ },
+ {
+  "text": "بانتظار قبول المتجر",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "المتجر قبل الطلب ويحضّره",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "جاهز للاستلام",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "أُسند لسائق",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "السائق استلم الطلب",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "في الطريق إليك",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "تم التسليم",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "جاهز تقريباً الساعة {hour}:{minute}",
+  "group": "order_tracking_screen",
+  "vars": "{hour} {minute}"
+ },
+ {
+  "text": "باقي حوالي {left} دقيقة",
+  "group": "order_tracking_screen",
+  "vars": "{left}"
+ },
+ {
+  "text": "على وشك الجهوزية",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "تعديل الاسم",
+  "group": "profile_screen",
+  "vars": null
+ },
+ {
+  "text": "تم الحفظ",
+  "group": "profile_screen",
+  "vars": null
+ },
+ {
+  "text": "كلمة المرور اختيارية — الدخول العادي برقم الهاتف ورمز التحقق.",
+  "group": "profile_screen",
+  "vars": null
+ },
+ {
+  "text": "كلمة المرور الجديدة",
+  "group": "profile_screen",
+  "vars": null
+ },
+ {
+  "text": "تأكيد كلمة المرور",
+  "group": "profile_screen",
+  "vars": null
+ },
+ {
+  "text": "التأكيد ما يطابقش.",
+  "group": "profile_screen",
+  "vars": null
+ },
+ {
+  "text": "تم تغيير كلمة المرور",
+  "group": "profile_screen",
+  "vars": null
+ },
+ {
+  "text": "تسجيل الخروج",
+  "group": "profile_screen",
+  "vars": null
+ },
+ {
+  "text": "متأكد تبي تخرج من حسابك؟",
+  "group": "profile_screen",
+  "vars": null
+ },
+ {
+  "text": "خروج",
+  "group": "profile_screen",
+  "vars": null
+ },
+ {
+  "text": "حسابي",
+  "group": "profile_screen",
+  "vars": null
+ },
+ {
+  "text": "من نحن وطرق التواصل",
+  "group": "profile_screen",
+  "vars": null
+ },
+ {
+  "text": "{effectivePrice} د.ل",
+  "group": "store_screen",
+  "vars": "{effectivePrice}"
+ },
+ {
+  "text": "وفّر {effectivePrice}",
+  "group": "store_screen",
+  "vars": "{effectivePrice}"
+ },
+ {
+  "text": "ملاحظة على هذا الصنف",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "بدون بصل، حار، مشوي أكثر...",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "متبقي {stockLeft} فقط",
+  "group": "store_screen",
+  "vars": "{stockLeft}"
+ },
+ {
+  "text": "أقصى كمية في الطلب: {maxPerOrder}",
+  "group": "store_screen",
+  "vars": "{maxPerOrder}"
+ },
+ {
+  "text": "أضف · {qty} د.ل",
+  "group": "store_screen",
+  "vars": "{qty}"
+ },
+ {
+  "text": "سلة من متجر ثاني",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "عندك أصناف من «{storeName}». الطلب الواحد من متجر واحد فقط.\n\nتبي نفرّغ السلة ونبدا من جديد؟",
+  "group": "store_screen",
+  "vars": "{storeName}"
+ },
+ {
+  "text": "فرّغ وابدا",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "المتجر",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "موقع المتجر",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "اتصل بالمتجر",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "{count} · {subtotal} د.ل",
+  "group": "store_screen",
+  "vars": "{count} {subtotal}"
+ },
+ {
+  "text": "المتجر مغلق توّا — تقدر تتصفح بس ما تقدرش تطلب",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "أصناف أخرى",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "ما فيش منتجات",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "غير متوفر",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "شحن المحفظة",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "اكتب كود الكرت اللي اشتريته",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "جاري الشحن...",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "شحن",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "اليوم {time}",
+  "group": "wallet_screen",
+  "vars": "{time}"
+ },
+ {
+  "text": "المحفظة",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "رصيدك",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "{balance} د.ل",
+  "group": "wallet_screen",
+  "vars": "{balance}"
+ },
+ {
+  "text": "شحن إلكتروني",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "كرت",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "آخر الحركات",
+  "group": "wallet_screen",
+  "vars": null
+ },
+ {
+  "text": "ما فيش حركات بعد",
+  "group": "wallet_screen",
+  "vars": null
+ }
+]

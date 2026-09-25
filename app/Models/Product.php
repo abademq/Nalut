@@ -14,7 +14,7 @@ class Product extends Model
     protected $fillable = [
         'store_id', 'menu_section_id', 'name', 'description', 'image', 'images',
         'price', 'discount_price', 'is_available', 'sort',
-        'track_stock', 'stock_quantity', 'max_per_order', 'low_stock_alert',
+        'track_stock', 'stock_quantity', 'max_per_order', 'low_stock_alert', 'sold_out_at',
     ];
 
     protected function casts(): array
@@ -26,6 +26,7 @@ class Product extends Model
             'track_stock'    => 'boolean',
             'stock_quantity' => 'integer',
             'images'         => 'array',
+            'sold_out_at'    => 'datetime',
         ];
     }
 
@@ -44,6 +45,15 @@ class Product extends Model
                 $rest = array_values(array_diff((array) $p->images, [$p->getOriginal('image'), $p->image]));
                 $images = array_values(array_filter([$p->image, ...$rest]));
                 $p->images = $images ?: null;
+            }
+
+            // المنتج اللي تخفّى لأنه خلص يرجع يظهر أول ما المخزون يرجع
+            if ($p->sold_out_at && ($p->isDirty('stock_quantity') || $p->isDirty('track_stock'))
+                && (! $p->track_stock || $p->stock_quantity > 0)) {
+                $p->is_available = true;
+                $p->sold_out_at = null;
+            } elseif ($p->sold_out_at && $p->isDirty('is_available') && $p->is_available) {
+                $p->sold_out_at = null;
             }
         });
     }
@@ -103,18 +113,29 @@ class Product extends Model
         $this->refresh();
 
         if ($this->stock_quantity <= 0) {
-            $this->update(['is_available' => false, 'stock_quantity' => 0]);
+            $this->update(['is_available' => false, 'stock_quantity' => 0, 'sold_out_at' => now()]);
         }
     }
 
-    /** إرجاع المخزون لو انلغى الطلب */
+    /**
+     * إرجاع المخزون لو انلغى الطلب.
+     * لو المنتج كان تخفّى تلقائياً لأنه خلص، يرجع يظهر.
+     * (لو المتجر خبّاه بيده ما نلمسوش — sold_out_at يكون فاضي)
+     */
     public function restoreStock(int $quantity): void
     {
-        if (! $this->track_stock) {
+        if (! $this->track_stock || $quantity <= 0) {
             return;
         }
 
-        $this->increment('stock_quantity', $quantity);
+        static::whereKey($this->id)->increment('stock_quantity', $quantity);
+
+        static::whereKey($this->id)
+            ->whereNotNull('sold_out_at')
+            ->where('stock_quantity', '>', 0)
+            ->update(['is_available' => true, 'sold_out_at' => null]);
+
+        $this->refresh();
     }
 
     public function isLowStock(): bool

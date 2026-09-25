@@ -50,7 +50,7 @@ class RechargeCard extends Model
      */
     public static function generateCode(?int $digits = null): string
     {
-        $digits ??= (int) config('wallet.card_digits', 12);
+        $digits ??= (int) \App\Support\Options::get('wallet.card_digits');
 
         do {
             $code = (string) random_int(1, 9);

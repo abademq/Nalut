@@ -14,7 +14,7 @@ class OrderResource extends JsonResource
             'code'           => $this->code,
             'status'         => $this->status->value,
             // بلاغ سائق مفتوح = الحالة تضل، لكن الزبون والمتجر يشوفو «قيد مراجعة الإدارة»
-            'status_label'   => $this->openIssue ? 'قيد مراجعة الإدارة' : $this->status->label(),
+            'status_label'   => $this->openIssue ? \App\Support\Texts::get('status.under_review') : $this->status->label(),
             'under_review'   => (bool) $this->openIssue,
             // تفاصيل البلاغ ورابط الدعم — للسائق صاحب الطلب بس
             'issue'          => $this->when(

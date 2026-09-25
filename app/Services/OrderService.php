@@ -10,6 +10,8 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Support\Options;
+use App\Support\Texts;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -26,7 +28,7 @@ class OrderService
         $store = Store::findOrFail($data['store_id']);
 
         if (! $store->isAcceptingOrders()) {
-            throw ValidationException::withMessages(['store_id' => 'المتجر مغلق توّا.']);
+            throw ValidationException::withMessages(['store_id' => Texts::get('msg.store_closed')]);
         }
 
         $address = $customer->addresses()->findOrFail($data['address_id']);
@@ -37,7 +39,7 @@ class OrderService
 
             if ($subtotal < $store->min_order) {
                 throw ValidationException::withMessages([
-                    'items' => "الحد الأدنى للطلب من هذا المتجر {$store->min_order} د.ل",
+                    'items' => Texts::get('msg.min_order', ['min' => $store->min_order]),
                 ]);
             }
 
@@ -55,7 +57,7 @@ class OrderService
             if (! empty($data['coupon_code'])) {
                 $coupon = Coupon::where('code', $data['coupon_code'])->first();
                 if (! $coupon || ! $coupon->isUsableBy($customer, $subtotal, $store->id)) {
-                    throw ValidationException::withMessages(['coupon_code' => 'الكوبون غير صالح.']);
+                    throw ValidationException::withMessages(['coupon_code' => Texts::get('msg.coupon_invalid')]);
                 }
                 $discount = $coupon->discountFor($subtotal, $deliveryFee);
             }
@@ -73,8 +75,7 @@ class OrderService
 
                 if (($data['payment_method'] ?? null) === 'wallet' && $available < $total) {
                     throw ValidationException::withMessages([
-                        'payment_method' => 'رصيد المحفظة ما يكفيش. المتوفر: '
-                            .number_format($available, 2).' د.ل',
+                        'payment_method' => Texts::get('msg.wallet_insufficient', ['balance' => number_format($available, 2)]),
                     ]);
                 }
             }
@@ -248,14 +249,14 @@ class OrderService
                 $left = (int) Product::whereKey($productId)->value('stock_quantity');
                 throw ValidationException::withMessages([
                     'items' => $left > 0
-                        ? "المتوفر من «{$product->name}» توّا {$left} فقط — حد طلبه قبلك. عدّل الكمية في السلة."
-                        : "«{$product->name}» خلص من المخزن — حد طلب آخر قطعة قبلك.",
+                        ? Texts::get('msg.stock_race_left', ['name' => $product->name, 'left' => $left])
+                        : Texts::get('msg.stock_race_out', ['name' => $product->name]),
                 ]);
             }
 
             // خلص = يختفي من القائمة لين المتجر يعبّيه
             Product::whereKey($productId)->where('stock_quantity', '<=', 0)
-                ->update(['is_available' => false, 'stock_quantity' => 0]);
+                ->update(['is_available' => false, 'stock_quantity' => 0, 'sold_out_at' => now()]);
         }
     }
 
@@ -280,13 +281,13 @@ class OrderService
             // كان يرجع 404 عام — الزبون ما يعرفش إن المنتج خلص وهو في سلته
             if (! $product) {
                 throw ValidationException::withMessages([
-                    'items' => 'منتج في سلتك ما عادش موجود. شيله من السلة.',
+                    'items' => Texts::get('msg.product_missing'),
                 ]);
             }
 
             if (! $product->is_available) {
                 throw ValidationException::withMessages([
-                    'items' => "«{$product->name}» مش متوفر توّا. شيله من السلة.",
+                    'items' => Texts::get('msg.product_unavailable', ['name' => $product->name]),
                 ]);
             }
 
@@ -296,15 +297,15 @@ class OrderService
 
             if ($product->max_per_order && $total > $product->max_per_order) {
                 throw ValidationException::withMessages([
-                    'items' => "أقصى كمية من «{$product->name}» في الطلب الواحد {$product->max_per_order}.",
+                    'items' => Texts::get('msg.max_per_order', ['name' => $product->name, 'max' => $product->max_per_order]),
                 ]);
             }
 
             if ($product->track_stock && $product->stock_quantity < $total) {
                 throw ValidationException::withMessages([
                     'items' => $product->stock_quantity > 0
-                        ? "المتوفر من «{$product->name}» توّا {$product->stock_quantity} فقط."
-                        : "«{$product->name}» خلص من المخزن.",
+                        ? Texts::get('msg.stock_left', ['name' => $product->name, 'left' => $product->stock_quantity])
+                        : Texts::get('msg.stock_out', ['name' => $product->name]),
                 ]);
             }
 
@@ -319,13 +320,13 @@ class OrderService
 
                 if ($option->is_required && count($ids) === 0) {
                     throw ValidationException::withMessages([
-                        'items' => "اختيار «{$option->name}» مطلوب في «{$product->name}».",
+                        'items' => Texts::get('msg.option_required', ['option' => $option->name, 'name' => $product->name]),
                     ]);
                 }
 
                 if (count($ids) > $option->max_choices) {
                     throw ValidationException::withMessages([
-                        'items' => "تجاوزت الحد المسموح في «{$option->name}».",
+                        'items' => Texts::get('msg.option_too_many', ['option' => $option->name]),
                     ]);
                 }
 
@@ -354,7 +355,7 @@ class OrderService
         }
 
         if (empty($lines)) {
-            throw ValidationException::withMessages(['items' => 'السلة فارغة.']);
+            throw ValidationException::withMessages(['items' => Texts::get('msg.cart_empty')]);
         }
 
         return $lines;
@@ -392,7 +393,7 @@ class OrderService
             && in_array($to, [OrderStatus::Preparing, OrderStatus::Ready, OrderStatus::Assigned,
                 OrderStatus::PickedUp, OrderStatus::OnTheWay, OrderStatus::Delivered], true)) {
             throw ValidationException::withMessages([
-                'status' => 'الطلب بانتظار تأكيد الدفع الإلكتروني.',
+                'status' => Texts::get('msg.awaiting_payment'),
             ]);
         }
 
@@ -444,11 +445,7 @@ class OrderService
 
             // إرجاع المخزون لو الطلب انلغى أو فشل
             if (in_array($to, [OrderStatus::Cancelled, OrderStatus::Failed], true)) {
-                foreach ($order->items as $item) {
-                    if ($item->product_id) {
-                        Product::find($item->product_id)?->restoreStock($item->quantity);
-                    }
-                }
+                $this->restoreStock($order);
             }
 
             // استرجاع ما دُفع من المحفظة
@@ -487,6 +484,35 @@ class OrderService
         });
     }
 
+    /**
+     * يرجّع كميات الطلب للمخزون — مرة وحدة بس لكل طلب.
+     * قبل ما السائق يستلم: دائماً. بعد الاستلام: حسب إعداد الإدارة
+     * (البضاعة غالباً طلعت من المتجر ومش راجعة).
+     */
+    private function restoreStock(Order $order): void
+    {
+        if ($order->stock_restored_at) {
+            return;
+        }
+
+        if ($order->picked_up_at && ! \App\Support\Options::get('stock.restore_after_pickup')) {
+            return;
+        }
+
+        $totals = [];
+        foreach ($order->items()->get() as $item) {
+            if ($item->product_id) {
+                $totals[$item->product_id] = ($totals[$item->product_id] ?? 0) + $item->quantity;
+            }
+        }
+
+        foreach ($totals as $productId => $qty) {
+            Product::withTrashed()->find($productId)?->restoreStock($qty);
+        }
+
+        $order->forceFill(['stock_restored_at' => now()])->saveQuietly();
+    }
+
     /** إشعار «طلب جديد» لصاحب المتجر */
     public function notifyStoreNewOrder(Order $order): void
     {
@@ -495,8 +521,8 @@ class OrderService
         if ($owner && NotificationSetting::isEnabled('store', 'pending')) {
             PushService::toUser(
                 $owner,
-                'طلب جديد',
-                "طلب رقم {$order->code} — افتح التطبيق",
+                Texts::get('notify.store.new_order'),
+                Texts::get('notify.store.new_order_body', ['code' => $order->code]),
                 ['type' => 'new_order', 'order_id' => (string) $order->id]
             );
         }
@@ -515,10 +541,10 @@ class OrderService
         $order->update(['ready_at' => now()]);
 
         $data = ['type' => 'order_status', 'order_id' => (string) $order->id, 'status' => 'ready'];
-        $title = "طلب {$order->code}";
+        $title = Texts::get('notify.title', ['code' => $order->code]);
 
         if ($order->driver && NotificationSetting::isEnabled('driver', 'ready')) {
-            PushService::toUser($order->driver, $title, 'الطلب جاهز في المتجر — تقدر تستلمه توّا', $data);
+            PushService::toUser($order->driver, $title, Texts::get('notify.driver.ready'), $data);
         }
 
         if ($order->customer && NotificationSetting::isEnabled('customer', 'ready')) {
@@ -536,7 +562,7 @@ class OrderService
             'status'   => $to->value,
         ];
 
-        $title = "طلب {$order->code}";
+        $title = Texts::get('notify.title', ['code' => $order->code]);
 
         // ===== الزبون =====
         if ($order->customer && NotificationSetting::isEnabled('customer', $to->value)) {
@@ -563,63 +589,38 @@ class OrderService
         }
     }
 
+    /** المتغيرات المشتركة لنصوص الإشعارات */
+    private function vars(Order $order): array
+    {
+        return [
+            'code'     => $order->code,
+            'prep'     => $order->prep_time_minutes ?: Options::get('orders.default_prep_minutes'),
+            'driver'   => $order->driver?->name ?? '',
+            'store'    => $order->store?->name ?? '',
+            'address'  => $order->address_details,
+            'reason'   => $order->cancel_reason ?? '',
+            'earning'  => number_format((float) $order->driver_earning, 2),
+            'distance' => number_format((float) $order->distance_km, 1),
+        ];
+    }
+
     private function customerBody(Order $order, OrderStatus $to): string
     {
-        return match ($to) {
-            OrderStatus::Pending   => 'استلمنا طلبك، بانتظار موافقة المتجر',
-            OrderStatus::Accepted  => $order->prep_time_minutes
-                ? "المتجر قبل طلبك — جاهز خلال {$order->prep_time_minutes} دقيقة"
-                : 'المتجر قبل طلبك',
-            OrderStatus::Preparing => $order->prep_time_minutes
-                ? "المتجر قبل طلبك وبدا التحضير — سيكون جاهز خلال {$order->prep_time_minutes} دقيقة تقديرياً"
-                : 'المتجر قبل طلبك وبدا التحضير',
-            OrderStatus::Ready     => 'طلبك جاهز، السائق في الطريق للمتجر',
-            OrderStatus::Assigned  => $order->driver
-                ? "أُسند طلبك للسائق {$order->driver->name}"
-                : 'أُسند طلبك لسائق',
-            OrderStatus::PickedUp  => 'السائق استلم طلبك من المتجر',
-            OrderStatus::OnTheWay  => 'السائق في الطريق إليك',
-            OrderStatus::Delivered => 'تم تسليم طلبك — شكراً لك',
-            OrderStatus::Cancelled => 'تم إلغاء طلبك'
-                .($order->cancel_reason ? ": {$order->cancel_reason}" : ''),
-            OrderStatus::Failed    => 'ما نجحش تسليم طلبك'
-                .($order->cancel_reason ? ": {$order->cancel_reason}" : ''),
-        };
+        return Texts::get('notify.customer.'.$to->value, $this->vars($order));
     }
 
     private function driverBody(Order $order, OrderStatus $to): string
     {
-        return match ($to) {
-            OrderStatus::Assigned  => "{$order->store?->name} ← {$order->address_details}",
-            OrderStatus::PickedUp  => 'سجّلت استلام الطلب من المتجر',
-            OrderStatus::OnTheWay  => 'أنت في الطريق للزبون',
-            OrderStatus::Delivered => 'تم تسليم الطلب — أجرتك '
-                .number_format((float) $order->driver_earning, 2).' د.ل',
-            OrderStatus::Cancelled => 'الطلب انلغى'
-                .($order->cancel_reason ? ": {$order->cancel_reason}" : ''),
-            OrderStatus::Failed    => 'تم تسجيل فشل التسليم',
-            default                => $to->label(),
-        };
+        $key = 'notify.driver.'.$to->value;
+
+        return array_key_exists($key, Texts::serverDefinitions())
+            ? Texts::get($key, $this->vars($order))
+            : $to->label();
     }
 
     private function storeBody(Order $order, OrderStatus $to): string
     {
-        return match ($to) {
-            OrderStatus::Pending   => 'طلب جديد وصلك — افتح التطبيق',
-            OrderStatus::Accepted  => 'تم قبول الطلب',
-            OrderStatus::Preparing => 'الطلب قيد التحضير',
-            OrderStatus::Ready     => 'الطلب جاهز، بانتظار السائق',
-            OrderStatus::Assigned  => $order->driver
-                ? "السائق {$order->driver->name} في الطريق ليك"
-                : 'أُسند الطلب لسائق',
-            OrderStatus::PickedUp  => 'استلمه السائق وخرج',
-            OrderStatus::OnTheWay  => 'السائق في الطريق للزبون',
-            OrderStatus::Delivered => 'تم تسليم الطلب للزبون',
-            OrderStatus::Cancelled => 'تم إلغاء الطلب'
-                .($order->cancel_reason ? ": {$order->cancel_reason}" : ''),
-            OrderStatus::Failed    => 'فشل تسليم الطلب'
-                .($order->cancel_reason ? ": {$order->cancel_reason}" : ''),
-        };
+        return Texts::get('notify.store.'.$to->value, $this->vars($order));
     }
 
     /**
@@ -637,10 +638,8 @@ class OrderService
             ->with('driverProfile')
             ->get();
 
-        $title = 'طلب جديد متاح';
-        $body  = "{$order->store?->name} — أجرتك "
-            .number_format((float) $order->driver_earning, 2).' د.ل'
-            .' · '.number_format((float) $order->distance_km, 1).' كم';
+        $title = Texts::get('notify.driver.available_title');
+        $body  = Texts::get('notify.driver.available', $this->vars($order));
 
         foreach ($drivers as $driver) {
             if (! $driver->driverProfile?->canAccept($order)) {

@@ -18,20 +18,10 @@ enum OrderStatus: string
     case Cancelled = 'cancelled';
     case Failed    = 'failed';
 
+    /** الاسم الظاهر — قابل للتعديل من لوحة التحكم (النصوص ← حالات الطلب) */
     public function label(): string
     {
-        return match ($this) {
-            self::Pending   => 'بانتظار قبول المتجر',
-            self::Accepted  => 'تم القبول',
-            self::Preparing => 'قيد التحضير',
-            self::Ready     => 'جاهز للاستلام',
-            self::Assigned  => 'أُسند لسائق',
-            self::PickedUp  => 'استلمه السائق',
-            self::OnTheWay  => 'في الطريق إليك',
-            self::Delivered => 'تم التسليم',
-            self::Cancelled => 'ملغي',
-            self::Failed    => 'فشل التسليم',
-        };
+        return \App\Support\Texts::get('status.'.$this->value);
     }
 
     /** @return array<int, OrderStatus> */

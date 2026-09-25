@@ -96,9 +96,9 @@ class GeoService
     /** حساب رسوم التوصيل حسب المنطقة والمسافة */
     public static function deliveryFee(float $distanceKm, ?DeliveryZone $zone = null): float
     {
-        $baseFee    = $zone->base_fee   ?? (float) config('delivery.base_fee', 5);
-        $perKm      = $zone->fee_per_km ?? (float) config('delivery.fee_per_km', 1.5);
-        $freeRadius = (float) config('delivery.free_radius_km', 1);
+        $baseFee    = $zone->base_fee   ?? (float) \App\Support\Options::get('delivery.base_fee');
+        $perKm      = $zone->fee_per_km ?? (float) \App\Support\Options::get('delivery.fee_per_km');
+        $freeRadius = (float) \App\Support\Options::get('delivery.free_radius_km');
 
         $billableKm = max(0, $distanceKm - $freeRadius);
 
@@ -119,7 +119,7 @@ class GeoService
         $zone = self::resolveZone($lat, $lng);
 
         if (! $zone && DeliveryZone::where('is_active', true)->exists()) {
-            throw \Illuminate\Validation\ValidationException::withMessages([$field => self::OUT_OF_COVERAGE]);
+            throw \Illuminate\Validation\ValidationException::withMessages([$field => \App\Support\Texts::get('msg.out_of_coverage')]);
         }
 
         return $zone;

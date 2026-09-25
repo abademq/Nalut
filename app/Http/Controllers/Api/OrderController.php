@@ -98,15 +98,21 @@ class OrderController extends Controller
 
         $request->validate(['reason' => ['nullable', 'string', 'max:200']]);
 
-        // الإلغاء متاح قبل ما المتجر يبدا التحضير فقط
+        // الإلغاء متاح قبل ما المتجر يبدا التحضير فقط — والإدارة تقدر تقفله نهائياً
+        abort_if(
+            \App\Support\Options::get('orders.customer_cancel_until') === 'never',
+            422,
+            \App\Support\Texts::get('msg.cancel_disabled')
+        );
+
         abort_unless(
             $order->status === OrderStatus::Pending,
             422,
-            'المتجر بدا يحضّر طلبك — ما عادش ينلغى. تواصل مع المتجر.'
+            \App\Support\Texts::get('msg.cancel_too_late')
         );
 
         $order = $this->orders->transition($order, OrderStatus::Cancelled, $request->user(), [
-            'reason' => $request->input('reason', 'ألغاه الزبون'),
+            'reason' => $request->input('reason') ?: \App\Support\Texts::get('msg.cancelled_by_customer'),
         ]);
 
         return response()->json(['data' => new OrderResource($order)]);

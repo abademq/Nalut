@@ -23,7 +23,7 @@ class CancelUnpaidOrders extends Command
 
     public function handle(OrderService $orders): int
     {
-        $minutes = (int) config('delivery.unpaid_order_timeout_minutes', 30);
+        $minutes = (int) \App\Support\Options::get('orders.unpaid_timeout_minutes');
 
         $stale = Order::where('status', OrderStatus::Pending->value)
             ->where('payment_method', 'card')
@@ -34,7 +34,7 @@ class CancelUnpaidOrders extends Command
         foreach ($stale as $order) {
             try {
                 $orders->transition($order, OrderStatus::Cancelled, null, [
-                    'reason' => 'ما تمّش الدفع الإلكتروني خلال '.$minutes.' دقيقة',
+                    'reason' => \App\Support\Texts::get('msg.unpaid_cancel_reason', ['minutes' => $minutes]),
                 ]);
             } catch (\Throwable $e) {
                 Log::warning('Auto-cancel failed', ['order' => $order->id, 'error' => $e->getMessage()]);

@@ -93,7 +93,7 @@ class StoreForm
                     ->label('نسبة العمولة %')
                     ->numeric()
                     ->required()
-                    ->default(15)
+                    ->default(fn () => \App\Support\Options::get('delivery.default_commission_percent'))
                     ->minValue(0)
                     ->maxValue(100),
 
@@ -107,7 +107,9 @@ class StoreForm
                     ->label('وقت التحضير (دقيقة)')
                     ->numeric()
                     ->required()
-                    ->default(20),
+                    ->minValue(5)
+                    ->maxValue(180)
+                    ->default(fn () => \App\Support\Options::get('orders.default_prep_minutes')),
 
                 TimePicker::make('opens_at')
                     ->label('وقت الفتح')
