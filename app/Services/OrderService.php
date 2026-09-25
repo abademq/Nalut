@@ -120,12 +120,10 @@ class OrderService
 
             $order->items()->createMany($lines);
 
-            // إنقاص المخزون للمنتجات اللي تتتبّع الكمية
-            foreach ($lines as $line) {
-                if ($line['product_id']) {
-                    Product::find($line['product_id'])?->reduceStock($line['quantity']);
-                }
-            }
+            // إنقاص المخزون — ذرّي: «انقص بس لو الكمية تكفي» في استعلام واحد.
+            // زبونين يطلبو آخر قطعة في نفس اللحظة: واحد ينجح، والثاني يرجعله
+            // خطأ واضح والطلب متاعه ما ينحفظش (الـ transaction ترجع كل شي).
+            $this->reserveStock($lines);
 
             // منو أنشأ الطلب فعلاً: الزبون من التطبيق، أو موظف الإدارة لو طلب يدوي
             $isManual = $actor && $actor->id !== $customer->id;
@@ -225,6 +223,42 @@ class OrderService
         ];
     }
 
+    /** @param  array<int, array{product_id: ?int, quantity: int, name: string}>  $lines */
+    private function reserveStock(array $lines): void
+    {
+        $totals = [];
+        foreach ($lines as $line) {
+            if ($line['product_id']) {
+                $totals[$line['product_id']] = ($totals[$line['product_id']] ?? 0) + $line['quantity'];
+            }
+        }
+
+        foreach ($totals as $productId => $qty) {
+            $product = Product::find($productId);
+            if (! $product?->track_stock) {
+                continue;
+            }
+
+            $updated = Product::whereKey($productId)
+                ->where('track_stock', true)
+                ->where('stock_quantity', '>=', $qty)
+                ->decrement('stock_quantity', $qty);
+
+            if ($updated === 0) {
+                $left = (int) Product::whereKey($productId)->value('stock_quantity');
+                throw ValidationException::withMessages([
+                    'items' => $left > 0
+                        ? "المتوفر من «{$product->name}» توّا {$left} فقط — حد طلبه قبلك. عدّل الكمية في السلة."
+                        : "«{$product->name}» خلص من المخزن — حد طلب آخر قطعة قبلك.",
+                ]);
+            }
+
+            // خلص = يختفي من القائمة لين المتجر يعبّيه
+            Product::whereKey($productId)->where('stock_quantity', '<=', 0)
+                ->update(['is_available' => false, 'stock_quantity' => 0]);
+        }
+    }
+
     /** بناء أسطر الطلب من أسعار قاعدة البيانات — أبداً ما نثق في السعر الجاي من التطبيق */
     private function buildLines(Store $store, array $items): array
     {
@@ -241,8 +275,20 @@ class OrderService
         foreach ($items as $item) {
             $product = Product::with('options.values')
                 ->where('store_id', $store->id)
-                ->where('is_available', true)
-                ->findOrFail($item['product_id']);
+                ->find($item['product_id']);
+
+            // كان يرجع 404 عام — الزبون ما يعرفش إن المنتج خلص وهو في سلته
+            if (! $product) {
+                throw ValidationException::withMessages([
+                    'items' => 'منتج في سلتك ما عادش موجود. شيله من السلة.',
+                ]);
+            }
+
+            if (! $product->is_available) {
+                throw ValidationException::withMessages([
+                    'items' => "«{$product->name}» مش متوفر توّا. شيله من السلة.",
+                ]);
+            }
 
             $quantity = max(1, (int) ($item['quantity'] ?? 1));
 
