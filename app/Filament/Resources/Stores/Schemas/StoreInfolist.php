@@ -47,10 +47,10 @@ class StoreInfolist
                 TextEntry::make('prep_time_minutes')
                     ->numeric(),
                 TextEntry::make('opens_at')
-                    ->time()
+                    ->time(timezone: 'UTC')
                     ->placeholder('-'),
                 TextEntry::make('closes_at')
-                    ->time()
+                    ->time(timezone: 'UTC')
                     ->placeholder('-'),
                 IconEntry::make('is_open')
                     ->boolean(),

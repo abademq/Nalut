@@ -20,9 +20,27 @@ class AuthController extends Controller
             'phone'    => ['required', 'string', 'regex:/^(09[1-6][0-9]{7})$/'],
             // بصمة التطبيق (11 حرف) — تنضاف للرسالة باش أندرويد يعبّي الرمز لحاله
             'app_hash' => ['nullable', 'string', 'regex:/^[A-Za-z0-9+\/]{11}$/'],
+            // signup: حساب جديد · login: دخول برمز — نفحصو الرقم قبل ما نصرفو رسالة
+            'purpose'  => ['nullable', 'in:signup,login'],
+            // sms: الزبون طلب الرمز برسالة نصية (ما وصلهش على واتساب)
+            'channel'  => ['nullable', 'in:sms,whatsapp'],
         ], [], ['phone' => 'رقم الهاتف']);
 
-        $result = $otp->request($data['phone'], $request->ip(), $data['app_hash'] ?? null);
+        $exists = User::where('phone', $data['phone'])->exists();
+
+        if (($data['purpose'] ?? null) === 'signup' && $exists) {
+            throw ValidationException::withMessages([
+                'phone' => 'الرقم هذا مسجّل من قبل. ادخل بكلمة المرور أو برمز التحقق.',
+            ]);
+        }
+
+        if (($data['purpose'] ?? null) === 'login' && ! $exists) {
+            throw ValidationException::withMessages([
+                'phone' => 'ما فيش حساب بهذا الرقم. اختار «إنشاء حساب جديد».',
+            ]);
+        }
+
+        $result = $otp->request($data['phone'], $request->ip(), $data['app_hash'] ?? null, $data['channel'] ?? null);
 
         return response()->json([
             'message'      => 'تم إرسال رمز التحقق.',
@@ -50,6 +68,13 @@ class AuthController extends Controller
         $otp->verify($data['phone'], $data['code']);
 
         $user = User::where('phone', $data['phone'])->first();
+
+        // «إنشاء حساب» برقم مسجّل = غلط، مش دخول صامت
+        if ($user && ($data['create_account'] ?? false)) {
+            throw ValidationException::withMessages([
+                'phone' => 'الرقم هذا مسجّل من قبل. ادخل بكلمة المرور أو برمز التحقق.',
+            ]);
+        }
 
         // التسجيل صريح: ما نفتحش حساب جديد لمّا يكون قاصد يدخل
         if (! $user) {

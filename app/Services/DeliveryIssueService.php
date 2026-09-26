@@ -87,6 +87,16 @@ class DeliveryIssueService
                 ]);
             }
 
+            if ($review) {
+                AdminAlerts::send(
+                    "بلاغ من السائق — {$issue->ticket}",
+                    "{$reason->label}".($note ? " — {$note}" : '')." · الطلب {$order->code} قيد مراجعتك",
+                    \App\Filament\Resources\Orders\OrderResource::getUrl('view', ['record' => $order->id], panel: 'admin'),
+                    'danger',
+                    "issue:{$issue->ticket}"
+                );
+            }
+
             return $issue->fresh(['order.store', 'driver']);
         });
     }
@@ -155,7 +165,13 @@ class DeliveryIssueService
             return null;
         }
 
-        $number = preg_replace('/\D/', '', (string) (AppSettings::values()['support_whatsapp'] ?? ''));
+        // رقم الدعم الفني — ولو فاضي نستعملو واتساب «عن التطبيق»
+        $about = AppSettings::values();
+        $number = preg_replace('/\D/', '', (string) (($about['support_whatsapp'] ?? '') ?: ($about['whatsapp'] ?? '')));
+        // 091xxxxxxx → 21891xxxxxxx
+        if (preg_match('/^09\d{8}$/', $number)) {
+            $number = '218'.substr($number, 1);
+        }
         if ($number === '') {
             return null;
         }

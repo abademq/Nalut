@@ -98,7 +98,7 @@ class StorePanelController extends Controller
 
         $data = $request->validate([
             'status'            => ['required', 'in:preparing,ready,cancelled'],
-            'prep_time_minutes' => ['nullable', 'integer', 'between:5,180'],
+            'prep_time_minutes' => ['nullable', 'integer', 'between:1,600'],
             'reason'            => ['nullable', 'string', 'max:200'],
         ]);
 

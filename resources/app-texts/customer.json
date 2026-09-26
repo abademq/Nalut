@@ -530,6 +530,16 @@
   "vars": null
  },
  {
+  "text": "بعتنالك الرمز على واتساب",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "ما عنديش واتساب — ابعتلي رسالة نصية",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
   "text": "إعادة إرسال الرمز بعد {resendIn} ثانية",
   "group": "login_screen",
   "vars": "{resendIn}"

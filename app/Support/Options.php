@@ -20,7 +20,7 @@ class Options
     {
         return [
             // ===== الطلبات =====
-            'orders.default_prep_minutes' => ['type' => 'int', 'default' => 20, 'min' => 5, 'max' => 180, 'public' => true,
+            'orders.default_prep_minutes' => ['type' => 'int', 'default' => 20, 'min' => 1, 'max' => 600, 'public' => true,
                 'label' => 'مدة التحضير الافتراضية (دقيقة)',
                 'help'  => 'تنحط للمتاجر الجديدة، وتكون مختارة مسبقاً في تطبيق المتجر لو المتجر ما حددش مدته.'],
             'orders.prep_choices' => ['type' => 'list', 'default' => '10,15,20,30,45,60', 'public' => true,
@@ -36,6 +36,27 @@ class Options
             'orders.customer_cancel_until' => ['type' => 'string', 'default' => 'pending', 'public' => true,
                 'choices' => ['pending' => 'قبل ما المتجر يقبل الطلب', 'never' => 'الزبون ما يقدرش يلغي'],
                 'label' => 'الزبون يقدر يلغي طلبه'],
+
+            // ===== رموز التحقق =====
+            'otp.channel' => ['type' => 'string', 'default' => 'sms',
+                'choices' => [
+                    'sms'          => 'رسالة نصية (SMS) بس',
+                    'whatsapp_sms' => 'واتساب أولاً — ولو فشل رسالة نصية',
+                    'whatsapp'     => 'واتساب بس',
+                ],
+                'label' => 'طريقة إرسال رمز التحقق',
+                'help'  => 'واتساب يحتاج إعدادات WHATSAPP_* في .env وقالب تحقق معتمد. الزبون يقدر دائماً يطلب الرمز برسالة نصية.'],
+
+            // ===== التنبيهات الفورية للإدارة =====
+            'alerts.pending_minutes' => ['type' => 'int', 'default' => 10, 'min' => 0, 'max' => 240,
+                'label' => 'نبّهني لو طلب ما تقبلش من المتجر خلال (دقيقة)',
+                'help'  => '0 = بدون تنبيه'],
+            'alerts.no_driver_minutes' => ['type' => 'int', 'default' => 10, 'min' => 0, 'max' => 240,
+                'label' => 'نبّهني لو طلب جاهز وما خذاهش سائق خلال (دقيقة)',
+                'help'  => '0 = بدون تنبيه'],
+            'alerts.phone' => ['type' => 'string', 'default' => '',
+                'label' => 'رقم يوصله التنبيه المهم على واتساب/SMS',
+                'help'  => 'اختياري — يحتاج قالب «تنبيهات الإدارة» في «قوالب الرسائل». فاضي = تنبيه اللوحة بس.'],
 
             // ===== المخزون =====
             'stock.restore_after_pickup' => ['type' => 'bool', 'default' => false,

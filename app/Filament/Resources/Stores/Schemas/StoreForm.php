@@ -86,7 +86,7 @@ class StoreForm
                     ->label('خط الطول')
                     ->numeric()
                     ->required()
-                    ->minValue(-180)->maxValue(180)
+                    ->minValue(-180)->maxValue(600)
                     ->validationMessages(['required' => 'حدّد موقع المتجر على الخريطة.']),
 
                 TextInput::make('commission_percent')
@@ -107,16 +107,19 @@ class StoreForm
                     ->label('وقت التحضير (دقيقة)')
                     ->numeric()
                     ->required()
-                    ->minValue(5)
-                    ->maxValue(180)
+                    ->minValue(1)
+                    ->maxValue(600)
                     ->default(fn () => \App\Support\Options::get('orders.default_prep_minutes')),
 
                 TimePicker::make('opens_at')
                     ->label('وقت الفتح')
+                    // ساعة حائط بتوقيت ليبيا — بدون تحويل منطقة زمنية
+                    ->timezone('UTC')
                     ->seconds(false),
 
                 TimePicker::make('closes_at')
                     ->label('وقت الغلق')
+                    ->timezone('UTC')
                     ->seconds(false),
 
                 Toggle::make('is_open')

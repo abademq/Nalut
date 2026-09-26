@@ -192,7 +192,7 @@ class CustomizationTest extends TestCase
         $this->assertSame([5, 15, 30], $res->json('options')['orders.prep_choices']);
         $this->assertSame('بالهناء والشفاء', $res->json('receipt.customer.footer'));
         $this->assertTrue($res->json('receipt.store.show_phone'));
-        $this->assertFalse($res->json('receipt.customer.show_phone'));
+        $this->assertTrue($res->json('receipt.customer.show_phone')); // نسخة السائق
         $this->assertArrayNotHasKey('banners', $res->json());
 
         // تطبيق الزبون القديم (بدون ?app) يكمّل يوصله الإعلانات
@@ -241,7 +241,7 @@ class CustomizationTest extends TestCase
         $this->actingAs($admin, 'web');
 
         $this->get(OperationsSettings::getUrl())->assertOk()->assertSee('مدة التحضير الافتراضية');
-        $this->get(BrandingSettings::getUrl())->assertOk()->assertSee('نسخة الزبون');
+        $this->get(BrandingSettings::getUrl())->assertOk()->assertSee('نسخة السائق');
         $this->get(AppTextResource::getUrl())->assertOk()->assertSee('حالات الطلب');
     }
 

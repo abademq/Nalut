@@ -40,14 +40,14 @@
   "vars": null
  },
  {
-  "text": "\nتحصّل نقداً: {cashToCollect} د.ل",
-  "group": "available_tab",
-  "vars": "{cashToCollect}"
- },
- {
   "text": "من {storeName}\nإلى {addressDetails}\n\nأجرتك: {deliveryFee} د.ل{cashToCollect}",
   "group": "available_tab",
   "vars": "{storeName} {addressDetails} {deliveryFee} {cashToCollect}"
+ },
+ {
+  "text": "\nتحصّل نقداً: {cashToCollect} د.ل",
+  "group": "available_tab",
+  "vars": "{cashToCollect}"
  },
  {
   "text": "رجوع",
@@ -220,6 +220,16 @@
   "vars": null
  },
  {
+  "text": "بعتنالك الرمز على واتساب",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "ما عنديش واتساب — ابعتلي رسالة نصية",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
   "text": "إعادة إرسال الرمز بعد {resendIn} ثانية",
   "group": "login_screen",
   "vars": "{resendIn}"
@@ -295,14 +305,14 @@
   "vars": null
  },
  {
-  "text": "\nمدفوع من المحفظة {walletPaid} د.ل",
-  "group": "my_orders_tab",
-  "vars": "{walletPaid}"
- },
- {
   "text": "إجمالي الطلب {total} د.ل{walletPaid}\n\nتحصّل نقداً: {cash} د.ل\n\nالمبلغ بيتسجّل عليك لين تسلّمه للإدارة.",
   "group": "my_orders_tab",
   "vars": "{total} {walletPaid} {cash}"
+ },
+ {
+  "text": "\nمدفوع من المحفظة {walletPaid} د.ل",
+  "group": "my_orders_tab",
+  "vars": "{walletPaid}"
  },
  {
   "text": "الطلب مدفوع بالكامل — ما تحصّلش فلوس.",
@@ -351,6 +361,21 @@
  },
  {
   "text": "تم إرسال البلاغ",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "البلاغ وصل للإدارة",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "رقم واتساب الدعم الفني مش مضبوط في لوحة التحكم، فما قدرناش نفتحو المحادثة. الإدارة وصلها تنبيه بالبلاغ.",
+  "group": "my_orders_tab",
+  "vars": null
+ },
+ {
+  "text": "تمام",
   "group": "my_orders_tab",
   "vars": null
  },

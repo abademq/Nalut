@@ -130,7 +130,7 @@
   "vars": null
  },
  {
-  "text": "نسخة الزبون",
+  "text": "نسخة السائق",
   "group": "receipt_widget",
   "vars": null
  },
@@ -140,7 +140,7 @@
   "vars": null
  },
  {
-  "text": "شكراً لطلبك",
+  "text": "راجع الأصناف مع الزبون عند التسليم",
   "group": "receipt_widget",
   "vars": null
  },
@@ -360,6 +360,16 @@
   "vars": null
  },
  {
+  "text": "بعتنالك الرمز على واتساب",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "ما عنديش واتساب — ابعتلي رسالة نصية",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
   "text": "إعادة إرسال الرمز بعد {resendIn} ثانية",
   "group": "login_screen",
   "vars": "{resendIn}"
@@ -435,7 +445,7 @@
   "vars": null
  },
  {
-  "text": "طُبع واصل الزبون",
+  "text": "طُبع واصل السائق",
   "group": "orders_tab",
   "vars": null
  },
@@ -565,7 +575,7 @@
   "vars": null
  },
  {
-  "text": "واصل الزبون",
+  "text": "واصل السائق",
   "group": "orders_tab",
   "vars": null
  },

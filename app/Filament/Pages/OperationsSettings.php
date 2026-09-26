@@ -31,6 +31,8 @@ class OperationsSettings extends Page
 
     private const SECTIONS = [
         'orders'   => 'الطلبات',
+        'otp'      => 'رموز التحقق',
+        'alerts'   => 'التنبيهات الفورية',
         'stock'    => 'المخزون',
         'delivery' => 'التوصيل والعمولة',
         'tracking' => 'التتبّع',

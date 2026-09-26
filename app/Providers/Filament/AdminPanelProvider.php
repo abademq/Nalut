@@ -54,6 +54,14 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            // جرس التنبيهات — يتحدّث كل 15 ثانية
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('15s')
+            // صوت + إشعار المتصفح لما يوصل تنبيه جديد
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::BODY_END,
+                fn () => view('filament.admin-alerts-sound'),
+            );
     }
 }

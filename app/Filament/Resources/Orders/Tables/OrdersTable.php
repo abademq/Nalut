@@ -189,8 +189,8 @@ class OrdersTable
                             ->label('وقت التحضير (دقيقة)')
                             ->numeric()
                             ->default(20)
-                            ->minValue(5)
-                            ->maxValue(180)
+                            ->minValue(1)
+                            ->maxValue(600)
                             ->visible(fn ($get) => $get('status') === OrderStatus::Accepted->value),
 
                         Select::make('driver_id')

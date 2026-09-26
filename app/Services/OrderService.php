@@ -480,6 +480,8 @@ class OrderService
 
             $this->notify($order->fresh(), $to);
 
+            $this->alertAdmins($order->fresh(['store', 'driver']), $to, $actor);
+
             return $order->fresh(['items', 'store', 'driver']);
         });
     }
@@ -511,6 +513,30 @@ class OrderService
         }
 
         $order->forceFill(['stock_restored_at' => now()])->saveQuietly();
+    }
+
+    /** الحالات اللي تحتاج تدخّل الإدارة — تنبيه فوري في اللوحة */
+    private function alertAdmins(Order $order, OrderStatus $to, ?User $actor): void
+    {
+        $url = \App\Filament\Resources\Orders\OrderResource::getUrl('view', ['record' => $order->id], panel: 'admin');
+        $reason = $order->cancel_reason ? " — {$order->cancel_reason}" : '';
+
+        if ($to === OrderStatus::Failed) {
+            AdminAlerts::send(
+                "فشل تسليم الطلب {$order->code}",
+                "السائق: {$order->driver?->name} · المتجر: {$order->store?->name}{$reason}",
+                $url, 'danger', "order-failed:{$order->id}"
+            );
+        }
+
+        // المتجر رفض الطلب
+        if ($to === OrderStatus::Cancelled && $actor?->role === \App\Enums\UserRole::Store) {
+            AdminAlerts::send(
+                "المتجر رفض الطلب {$order->code}",
+                "{$order->store?->name}{$reason}",
+                $url, 'warning', "order-rejected:{$order->id}"
+            );
+        }
     }
 
     /** إشعار «طلب جديد» لصاحب المتجر */

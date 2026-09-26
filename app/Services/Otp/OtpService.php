@@ -20,7 +20,7 @@ class OtpService
     /**
      * @return array{channel: string, code: string, expires_in: int, resend_after: int}
      */
-    public function request(string $phone, ?string $ip = null, ?string $appHash = null): array
+    public function request(string $phone, ?string $ip = null, ?string $appHash = null, ?string $preferChannel = null): array
     {
         $cfg = config('otp');
 
@@ -31,7 +31,7 @@ class OtpService
         if ($test !== null) {
             [$code, $channel] = [$test, 'test'];
         } else {
-            [$code, $channel] = $this->deliver($phone, $cfg, $appHash);
+            [$code, $channel] = $this->deliver($phone, $cfg, $appHash, $preferChannel);
         }
 
         // رمز جديد يلغي أي رمز سابق لنفس الرقم
@@ -106,8 +106,25 @@ class OtpService
     }
 
     /** @return array{0: string, 1: string} [code, channel] */
-    private function deliver(string $phone, array $cfg, ?string $appHash = null): array
+    private function deliver(string $phone, array $cfg, ?string $appHash = null, ?string $preferChannel = null): array
     {
+        // القناة من «إعدادات التشغيل»: sms · whatsapp · whatsapp_sms (واتساب ولو فشل SMS)
+        $mode = (string) \App\Support\Options::get('otp.channel');
+
+        if ($preferChannel !== 'sms' && in_array($mode, ['whatsapp', 'whatsapp_sms'], true)
+            && \App\Services\Messaging\WhatsAppClient::fromConfig()->isConfigured()) {
+            try {
+                return $this->viaWhatsApp($phone, $cfg);
+            } catch (\App\Services\Messaging\MessagingException $e) {
+                Log::warning('OTP WhatsApp failed', ['phone' => $phone, 'error' => $e->getMessage()]);
+
+                if ($mode === 'whatsapp') {
+                    throw new HttpException(503, 'تعذّر إرسال رمز التحقق على واتساب. جرّب «ابعتلي رسالة نصية».');
+                }
+                // whatsapp_sms: نكمّلو بالـ SMS
+            }
+        }
+
         return match ($cfg['driver']) {
             'resala' => $this->viaResala($phone, $cfg, $appHash),
             'log'    => $this->viaLog($phone, $cfg),
@@ -132,6 +149,27 @@ class OtpService
         }
 
         return [$result['pin'], 'sms'];
+    }
+
+    /** رمز على واتساب — قالب Authentication فيه زر «نسخ الرمز» */
+    private function viaWhatsApp(string $phone, array $cfg): array
+    {
+        $code = str_pad((string) random_int(0, 10 ** $cfg['length'] - 1), $cfg['length'], '0', STR_PAD_LEFT);
+        $wa = config('messaging.whatsapp');
+        $to = $this->international($phone);
+
+        try {
+            $id = \App\Services\Messaging\WhatsAppClient::fromConfig()
+                ->sendTemplate($to, $wa['otp_template'], $wa['otp_language'], [$code], [$code]);
+            \App\Models\MessageLog::create(['channel' => 'whatsapp', 'phone' => $to, 'context' => 'otp',
+                'status' => 'sent', 'provider_id' => $id, 'created_at' => now()]);
+        } catch (\App\Services\Messaging\MessagingException $e) {
+            \App\Models\MessageLog::create(['channel' => 'whatsapp', 'phone' => $to, 'context' => 'otp',
+                'status' => 'failed', 'error' => $e->getMessage(), 'created_at' => now()]);
+            throw $e;
+        }
+
+        return [$code, 'whatsapp'];
     }
 
     private function viaLog(string $phone, array $cfg): array

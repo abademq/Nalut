@@ -237,6 +237,8 @@ class DriverController extends Controller
                 ? 'تم إرسال البلاغ — الطلب قيد مراجعة الإدارة'
                 : 'تم تسجيل فشل التسليم',
             'support_url'  => $issues->supportUrl($issue),
+            // السبب مفروض يفتح الدعم — لو الرابط فاضي فرقم الدعم مش مضبوط في اللوحة
+            'support_expected' => (bool) $reason->open_support,
             'data'         => new OrderResource($issue->order->fresh(['store', 'items', 'customer', 'openIssue'])),
         ], 201);
     }

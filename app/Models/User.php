@@ -13,10 +13,10 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements \Filament\Models\Contracts\FilamentUser
 {
-    use HasApiTokens, HasFactory, SoftDeletes;
+    use HasApiTokens, HasFactory, \Illuminate\Notifications\Notifiable, SoftDeletes;
 
     protected $fillable = [
-        'name', 'phone', 'email', 'password', 'role', 'permissions', 'is_active',
+        'name', 'phone', 'email', 'password', 'role', 'permissions', 'is_active', 'marketing_opt_out',
         'avatar', 'fcm_token', 'locale', 'phone_verified_at', 'last_seen_at',
     ];
 

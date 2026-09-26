@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Storage;
 use UnitEnum;
 
 /**
- * الشعار وشكل واصلات الطباعة (نسخة المتجر ونسخة الزبون).
+ * الشعار وشكل واصلات الطباعة (نسخة المتجر ونسخة السائق).
  * أيقونة التطبيق نفسها (اللي على شاشة الهاتف) تنحط في كود التطبيق — أندرويد ما يسمحش بتغييرها عن بعد.
  */
 class BrandingSettings extends Page
@@ -34,16 +34,17 @@ class BrandingSettings extends Page
 
     public ?array $data = [];
 
-    /** نسخة المتجر ونسخة الزبون — نفس الخيارات بقيم افتراضية مختلفة */
+    /** نسخة المتجر ونسخة السائق — نفس الخيارات بقيم افتراضية مختلفة */
     private const COPY_DEFAULTS = [
         'store' => [
             'title' => 'نسخة المتجر', 'footer' => 'راجع الأصناف قبل التسليم',
             'show_customer' => true, 'show_phone' => true, 'show_address' => true, 'show_driver' => true,
             'show_prices' => true, 'show_pieces' => true, 'show_notes' => true, 'show_logo' => false,
         ],
+        // مفتاحها «customer» من الأول — لكنها نسخة السائق: يعرف بيها الطلبية وتفاصيلها
         'customer' => [
-            'title' => 'نسخة الزبون', 'footer' => 'شكراً لطلبك',
-            'show_customer' => true, 'show_phone' => false, 'show_address' => true, 'show_driver' => true,
+            'title' => 'نسخة السائق', 'footer' => 'راجع الأصناف مع الزبون عند التسليم',
+            'show_customer' => true, 'show_phone' => true, 'show_address' => true, 'show_driver' => true,
             'show_prices' => true, 'show_pieces' => true, 'show_notes' => true, 'show_logo' => true,
         ],
     ];
@@ -145,15 +146,15 @@ class BrandingSettings extends Page
                         '0.9' => 'صغير', '1' => 'عادي', '1.15' => 'كبير', '1.3' => 'كبير جداً',
                     ]),
                     Select::make('auto_print')->label('الطباعة التلقائية')->native(false)->required()->options([
-                        'both'     => 'المتجر عند القبول + الزبون لما يجهز',
+                        'both'     => 'المتجر عند القبول + السائق لما يجهز',
                         'store'    => 'نسخة المتجر عند القبول بس',
-                        'customer' => 'نسخة الزبون لما يجهز بس',
+                        'customer' => 'نسخة السائق لما يجهز بس',
                         'none'     => 'بدون — الطباعة يدوية',
                     ]),
                 ]),
             Tabs::make('copies')->tabs([
                 Tab::make('نسخة المتجر')->columns(2)->schema(self::copyFields('store')),
-                Tab::make('نسخة الزبون')->columns(2)->schema(self::copyFields('customer')),
+                Tab::make('نسخة السائق')->columns(2)->schema(self::copyFields('customer')),
             ]),
         ]);
     }
