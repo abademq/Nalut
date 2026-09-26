@@ -570,6 +570,26 @@
   "vars": null
  },
  {
+  "text": "المتاجر",
+  "group": "main_screen",
+  "vars": null
+ },
+ {
+  "text": "طلباتي",
+  "group": "main_screen",
+  "vars": null
+ },
+ {
+  "text": "المحفظة",
+  "group": "main_screen",
+  "vars": null
+ },
+ {
+  "text": "حسابي",
+  "group": "main_screen",
+  "vars": null
+ },
+ {
   "text": "إلغاء الطلب",
   "group": "order_tracking_screen",
   "vars": null
@@ -800,13 +820,13 @@
   "vars": null
  },
  {
-  "text": "حسابي",
+  "text": "من نحن وطرق التواصل",
   "group": "profile_screen",
   "vars": null
  },
  {
-  "text": "من نحن وطرق التواصل",
-  "group": "profile_screen",
+  "text": "الصنف هذا مش متوفر توّا",
+  "group": "store_screen",
   "vars": null
  },
  {
@@ -923,11 +943,6 @@
   "text": "اليوم {time}",
   "group": "wallet_screen",
   "vars": "{time}"
- },
- {
-  "text": "المحفظة",
-  "group": "wallet_screen",
-  "vars": null
  },
  {
   "text": "رصيدك",

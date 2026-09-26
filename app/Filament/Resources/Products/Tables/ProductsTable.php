@@ -89,6 +89,8 @@ class ProductsTable
                 TrashedFilter::make()->label('المحذوفة'),
             ])
             ->recordActions([
+                \App\Filament\Support\ShareLink::make(fn ($record) => route('link.product', ['store' => $record->store_id, 'product' => $record->id]))
+                    ->iconButton()->tooltip('رابط المشاركة'),
                 Action::make('restock')
                     ->label('تعبئة المخزون')
                     ->icon('heroicon-o-plus-circle')

@@ -101,6 +101,7 @@ class StoresTable
                 TrashedFilter::make()->label('المحذوفة'),
             ])
             ->recordActions([
+                \App\Filament\Support\ShareLink::make(fn (Store $record) => route('link.store', $record))->iconButton()->tooltip('رابط المشاركة'),
                 Action::make('toggleOpen')
                     ->label(fn (Store $record) => $record->is_open ? 'غلق المتجر' : 'فتح المتجر')
                     ->icon(fn (Store $record) => $record->is_open ? 'heroicon-o-lock-closed' : 'heroicon-o-lock-open')
