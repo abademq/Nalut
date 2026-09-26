@@ -965,6 +965,31 @@
   "vars": "{productsCount}"
  },
  {
+  "text": "تنبيه المخزون",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "{count} صنف خلص ومخفي عن الزبائن",
+  "group": "products_tab",
+  "vars": "{count}"
+ },
+ {
+  "text": "{count} صنف قرّب يخلص",
+  "group": "products_tab",
+  "vars": "{count}"
+ },
+ {
+  "text": "عرض الكل",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "عرضهم بس",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
   "text": "ابدا بإضافة أقسام قائمتك",
   "group": "products_tab",
   "vars": null
@@ -985,24 +1010,34 @@
   "vars": "{effectivePrice}"
  },
  {
+  "text": "المخزون: {qty}",
+  "group": "products_tab",
+  "vars": "{qty}"
+ },
+ {
   "text": "تعديل",
   "group": "products_tab",
   "vars": null
  },
  {
-  "text": "خلص — مخفي لين تعبّيه",
+  "text": "خلص من المخزن — مخفي عن الزبائن لين تعبّيه",
   "group": "products_tab",
   "vars": null
  },
  {
-  "text": "المخزون: 0",
+  "text": "المخزون صفر",
   "group": "products_tab",
   "vars": null
  },
  {
-  "text": "المخزون: {qty}",
+  "text": "قرّب يخلص — باقي {qty} بس",
   "group": "products_tab",
   "vars": "{qty}"
+ },
+ {
+  "text": "عبّي",
+  "group": "products_tab",
+  "vars": null
  },
  {
   "text": "تسجيل الخروج",

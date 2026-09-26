@@ -65,6 +65,8 @@ class UserForm
                     ->columns(2)
                     ->columnSpanFull()
                     ->bulkToggleable()
+                    // فاضية = صلاحية كاملة (null) — مش مصفوفة فاضية تقفل كل شي
+                    ->dehydrateStateUsing(fn ($state) => filled($state) ? array_values($state) : null)
                     ->visible(fn ($get) => $get('role') === UserRole::Admin->value && \App\Support\Perm::isSuper())
                     ->helperText('لو ما اخترت ولا وحدة، الحساب ياخذ صلاحية كاملة. '
                         .'اختار صلاحيات محددة باش تقيّده.'),

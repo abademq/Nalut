@@ -90,7 +90,8 @@ class User extends Authenticatable implements \Filament\Models\Contracts\Filamen
             return false;
         }
 
-        if ($this->permissions === null) {
+        // null أو فاضية = صلاحية كاملة (نفس اللي مكتوب في فورم المستخدم)
+        if (empty($this->permissions)) {
             return true;
         }
 

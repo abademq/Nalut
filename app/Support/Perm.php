@@ -20,6 +20,6 @@ class Perm
     {
         $u = auth()->user();
 
-        return $u && $u->role === UserRole::Admin && $u->permissions === null;
+        return $u && $u->role === UserRole::Admin && empty($u->permissions);
     }
 }
