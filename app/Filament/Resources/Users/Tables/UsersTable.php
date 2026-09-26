@@ -202,57 +202,7 @@ class UsersTable
                             Notification::make()->title('تم الخصم')->success()->send();
                         }),
 
-                    Action::make('driverSettings')
-                ->authorize(fn () => \App\Support\Perm::can('users.manage'))
-                        ->label('إعدادات السائق')
-                        ->icon('heroicon-o-adjustments-horizontal')
-                        ->color('info')
-                        ->visible(fn (User $record) => $record->role === UserRole::Driver
-                            && $record->driverProfile)
-                        ->fillForm(fn (User $record) => [
-                            'zone_ids'          => $record->driverProfile
-                                ->zones()->pluck('delivery_zones.id')->all(),
-                            'max_active_orders' => $record->driverProfile->max_active_orders,
-                            'multi_order_mode'  => $record->driverProfile->multi_order_mode,
-                        ])
-                        ->schema([
-                            TextInput::make('max_active_orders')
-                                ->label('أقصى عدد طلبات في نفس الوقت')
-                                ->numeric()
-                                ->required()
-                                ->minValue(1)
-                                ->maxValue(20)
-                                ->default(1),
-
-                            Select::make('multi_order_mode')
-                                ->label('وضع تعدد الطلبات')
-                                ->options(DriverProfile::MODES)
-                                ->required()
-                                ->default('single')
-                                ->helperText('«نفس المتجر» مفيدة لمّا يكون فيه طلبات كثيرة '
-                                    .'من مطعم واحد — السائق ياخذهم في مشوار واحد.'),
-
-                            CheckboxList::make('zone_ids')
-                                ->label('مناطق العمل')
-                                ->options(fn () => DeliveryZone::where('is_active', true)
-                                    ->orderBy('name')->pluck('name', 'id'))
-                                ->columns(2)
-                                ->bulkToggleable()
-                                ->helperText('لو ما اخترت ولا وحدة، بتوصله طلبات كل المناطق.'),
-                        ])
-                        ->action(function (User $record, array $data) {
-                            $record->driverProfile->update([
-                                'max_active_orders' => (int) $data['max_active_orders'],
-                                'multi_order_mode'  => $data['multi_order_mode'],
-                            ]);
-
-                            $record->driverProfile->zones()->sync($data['zone_ids'] ?? []);
-
-                            Notification::make()
-                                ->title('تم حفظ إعدادات السائق')
-                                ->success()
-                                ->send();
-                        }),
+                    \App\Filament\Resources\Drivers\DriverCapacity::action(),
 
                     Action::make('approveDriver')
                 ->authorize(fn () => \App\Support\Perm::can('users.manage'))
@@ -282,47 +232,7 @@ class UsersTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    BulkAction::make('applyCapacity')
-                        ->authorize(fn () => \App\Support\Perm::can('users.manage'))
-                        ->label('ضبط سعة الطلبات')
-                        ->icon('heroicon-o-adjustments-horizontal')
-                        ->color('info')
-                        ->modalDescription('يطبّق نفس الإعدادات على كل السائقين المحددين — '
-                            .'استعملها لضبط سياسة عامة مرة وحدة.')
-                        ->schema([
-                            TextInput::make('max_active_orders')
-                                ->label('أقصى عدد طلبات في نفس الوقت')
-                                ->numeric()
-                                ->required()
-                                ->minValue(1)
-                                ->maxValue(20),
-
-                            Select::make('multi_order_mode')
-                                ->label('وضع تعدد الطلبات')
-                                ->options(DriverProfile::MODES)
-                                ->required(),
-                        ])
-                        ->action(function ($records, array $data) {
-                            $count = 0;
-
-                            foreach ($records as $record) {
-                                if (! $record->driverProfile) {
-                                    continue;
-                                }
-
-                                $record->driverProfile->update([
-                                    'max_active_orders' => (int) $data['max_active_orders'],
-                                    'multi_order_mode'  => $data['multi_order_mode'],
-                                ]);
-
-                                $count++;
-                            }
-
-                            Notification::make()
-                                ->title("تم تحديث {$count} سائق")
-                                ->success()
-                                ->send();
-                        }),
+                    \App\Filament\Resources\Drivers\DriverCapacity::bulkAction(),
 
                     DeleteBulkAction::make()->label('حذف'),
                 ]),

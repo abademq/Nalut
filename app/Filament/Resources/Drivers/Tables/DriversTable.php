@@ -60,6 +60,21 @@ class DriversTable
                         default             => 'danger',
                     }),
 
+                TextColumn::make('capacity')
+                    ->label('السعة')
+                    ->state(function (User $record) {
+                        $p = $record->driverProfile;
+                        if (! $p) {
+                            return '—';
+                        }
+
+                        return match ($p->multi_order_mode) {
+                            'single'     => 'طلب واحد',
+                            'same_store' => "{$p->max_active_orders} من نفس المتجر",
+                            default      => "{$p->max_active_orders} من أي متجر",
+                        };
+                    }),
+
                 TextColumn::make('location_age')
                     ->label('آخر موقع')
                     ->state(function (User $record) {
@@ -182,6 +197,7 @@ class DriversTable
                         fn ($w) => $w->where('balance', '>', 0))),
             ])
             ->recordActions([
+                \App\Filament\Resources\Drivers\DriverCapacity::action()->iconButton()->tooltip('إعدادات الطلبات والمناطق'),
                 ActionGroup::make([
                     Action::make('approve')
                 ->authorize(fn () => \App\Support\Perm::can('users.manage'))
@@ -274,6 +290,11 @@ class DriversTable
                                 ->success()
                                 ->send();
                         }),
+                ]),
+            ])
+            ->toolbarActions([
+                \Filament\Actions\BulkActionGroup::make([
+                    \App\Filament\Resources\Drivers\DriverCapacity::bulkAction(),
                 ]),
             ]);
     }

@@ -13,6 +13,8 @@ class Coupon extends Model
         'usage_limit', 'used_count', 'per_user_limit', 'starts_at', 'ends_at', 'is_active',
     ];
 
+    protected $attributes = ['value' => 0, 'min_order' => 0, 'used_count' => 0];
+
     protected function casts(): array
     {
         return [
