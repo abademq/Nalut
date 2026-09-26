@@ -95,6 +95,8 @@ class BrandingSettings extends Page
             'font_scale' => (float) Setting::get('receipt.font_scale', self::GLOBAL_DEFAULTS['receipt.font_scale']),
             'auto_print' => (string) Setting::get('receipt.auto_print', self::GLOBAL_DEFAULTS['receipt.auto_print']),
             'logo_url'   => self::logoUrl(),
+            // تصميم الواصل الكامل من «مصمم الواصل» — التطبيقات الجديدة تطبع بيه
+            'layouts'    => \App\Support\ReceiptLayout::all(),
         ] + $copies;
     }
 
@@ -139,12 +141,10 @@ class BrandingSettings extends Page
                         ->helperText('PNG بخلفية شفافة أو بيضاء، مربّع تقريباً (512×512). للطباعة يتحوّل أبيض وأسود.'),
                 ]),
             Section::make('الواصلات')
-                ->columns(3)
+                ->description(new \Illuminate\Support\HtmlString(
+                    'شكل الواصل كامل (الترتيب، الأحجام، الهوامش، النصوص) يتعدّل من '
+                    .'<a href="'.ReceiptDesigner::getUrl().'" style="color:#d97706;font-weight:700;text-decoration:underline">مصمم الواصل</a>.'))
                 ->schema([
-                    TextInput::make('header')->label('السطر تحت اسم المتجر')->maxLength(60),
-                    Select::make('font_scale')->label('حجم الخط')->native(false)->required()->options([
-                        '0.9' => 'صغير', '1' => 'عادي', '1.15' => 'كبير', '1.3' => 'كبير جداً',
-                    ]),
                     Select::make('auto_print')->label('الطباعة التلقائية')->native(false)->required()->options([
                         'both'     => 'المتجر عند القبول + السائق لما يجهز',
                         'store'    => 'نسخة المتجر عند القبول بس',
@@ -152,10 +152,6 @@ class BrandingSettings extends Page
                         'none'     => 'بدون — الطباعة يدوية',
                     ]),
                 ]),
-            Tabs::make('copies')->tabs([
-                Tab::make('نسخة المتجر')->columns(2)->schema(self::copyFields('store')),
-                Tab::make('نسخة السائق')->columns(2)->schema(self::copyFields('customer')),
-            ]),
         ]);
     }
 
@@ -164,16 +160,7 @@ class BrandingSettings extends Page
         $s = $this->form->getState();
 
         Setting::put('brand.logo', (string) ($s['logo'] ?? ''));
-        Setting::put('receipt.header', (string) ($s['header'] ?? ''));
-        Setting::put('receipt.font_scale', (string) $s['font_scale']);
         Setting::put('receipt.auto_print', (string) $s['auto_print']);
-
-        foreach (self::COPY_DEFAULTS as $copy => $defaults) {
-            foreach ($defaults as $key => $default) {
-                $value = $s[$copy][$key] ?? $default;
-                Setting::put("receipt.$copy.$key", is_bool($default) ? ($value ? '1' : '0') : (string) $value);
-            }
-        }
 
         Notification::make()->title('تم الحفظ — الواصلات الجاية تطلع بالشكل الجديد')->success()->send();
     }

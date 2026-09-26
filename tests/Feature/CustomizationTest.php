@@ -267,17 +267,15 @@ class CustomizationTest extends TestCase
         $admin = User::create(['name' => 'مدير', 'phone' => '0910000000', 'role' => UserRole::Admin->value, 'is_active' => true]);
         $this->actingAs($admin, 'web');
 
+        // الترتيب والنصوص والأحجام ولّت في «مصمم الواصل» — هني الطباعة التلقائية والشعار بس
         \Livewire\Livewire::test(BrandingSettings::class)
-            ->set('data.header', 'أسرع توصيل في نالوت')
-            ->set('data.store.show_prices', false)
             ->set('data.auto_print', 'store')
             ->call('save')
             ->assertHasNoErrors();
 
         $r = BrandingSettings::receipt();
-        $this->assertSame('أسرع توصيل في نالوت', $r['header']);
-        $this->assertFalse($r['store']['show_prices']);
-        $this->assertTrue($r['customer']['show_prices']);
         $this->assertSame('store', $r['auto_print']);
+        $this->assertNotEmpty($r['layouts']['store']['blocks']);
+        $this->assertNotEmpty($r['layouts']['customer']['blocks']);
     }
 }

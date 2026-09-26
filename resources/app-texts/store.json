@@ -135,21 +135,6 @@
   "vars": null
  },
  {
-  "text": "راجع الأصناف قبل التسليم",
-  "group": "receipt_widget",
-  "vars": null
- },
- {
-  "text": "راجع الأصناف مع الزبون عند التسليم",
-  "group": "receipt_widget",
-  "vars": null
- },
- {
-  "text": "ملاحظة: {note}",
-  "group": "receipt_widget",
-  "vars": "{note}"
- },
- {
   "text": "إجمالي القطع",
   "group": "receipt_widget",
   "vars": null
@@ -165,6 +150,11 @@
   "vars": null
  },
  {
+  "text": "الخصم",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
   "text": "مدفوع من المحفظة",
   "group": "receipt_widget",
   "vars": null
@@ -175,14 +165,9 @@
   "vars": null
  },
  {
-  "text": "{total} د.ل",
+  "text": "يُحصّل نقداً:",
   "group": "receipt_widget",
-  "vars": "{total}"
- },
- {
-  "text": "يُحصّل نقداً: {cashToCollect} د.ل",
-  "group": "receipt_widget",
-  "vars": "{cashToCollect}"
+  "vars": null
  },
  {
   "text": "مدفوع بالكامل — لا تحصّل فلوس",
@@ -190,34 +175,69 @@
   "vars": null
  },
  {
-  "text": "الزبون: {customerName}",
+  "text": "الزبون:",
   "group": "receipt_widget",
-  "vars": "{customerName}"
+  "vars": null
  },
  {
-  "text": "الهاتف: {customerPhone}",
+  "text": "الهاتف:",
   "group": "receipt_widget",
-  "vars": "{customerPhone}"
+  "vars": null
  },
  {
-  "text": "العنوان: {addressDetails}",
+  "text": "العنوان:",
   "group": "receipt_widget",
-  "vars": "{addressDetails}"
+  "vars": null
  },
  {
-  "text": "علامة: {addressLandmark}",
+  "text": "علامة:",
   "group": "receipt_widget",
-  "vars": "{addressLandmark}"
+  "vars": null
  },
  {
-  "text": "السائق: {driverName}",
+  "text": "السائق:",
   "group": "receipt_widget",
-  "vars": "{driverName}"
+  "vars": null
  },
  {
-  "text": "ملاحظة الزبون: {notes}",
+  "text": "ملاحظة الزبون:",
   "group": "receipt_widget",
-  "vars": "{notes}"
+  "vars": null
+ },
+ {
+  "text": "راجع الأصناف قبل التسليم",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "راجع الأصناف مع الزبون عند التسليم",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "نقداً عند الاستلام",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "محفظة إلكترونية",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "بطاقة مصرفية",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "د.ل",
+  "group": "receipt_widget",
+  "vars": null
+ },
+ {
+  "text": "ملاحظة: {note}",
+  "group": "receipt_widget",
+  "vars": "{note}"
  },
  {
   "text": "ما نقدرش نوصل للخادم.",
@@ -400,6 +420,16 @@
   "vars": null
  },
  {
+  "text": "الزبون: {customerName}",
+  "group": "order_history_screen",
+  "vars": "{customerName}"
+ },
+ {
+  "text": "السائق: {driverName}",
+  "group": "order_history_screen",
+  "vars": "{driverName}"
+ },
+ {
   "text": "التوصيل",
   "group": "order_history_screen",
   "vars": null
@@ -568,6 +598,11 @@
   "text": "{lineTotal} د.ل",
   "group": "orders_tab",
   "vars": "{lineTotal}"
+ },
+ {
+  "text": "ملاحظة الزبون: {notes}",
+  "group": "orders_tab",
+  "vars": "{notes}"
  },
  {
   "text": "الإجمالي {total} د.ل",
