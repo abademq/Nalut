@@ -14,8 +14,15 @@ class OrderResource extends JsonResource
             'code'           => $this->code,
             'status'         => $this->status->value,
             // بلاغ سائق مفتوح = الحالة تضل، لكن الزبون والمتجر يشوفو «قيد مراجعة الإدارة»
-            'status_label'   => $this->openIssue ? \App\Support\Texts::get('status.under_review') : $this->status->label(),
+            'status_label'   => match (true) {
+                (bool) $this->openIssue            => \App\Support\Texts::get('status.under_review'),
+                $this->awaiting_customer_at !== null => \App\Support\Texts::get('status.awaiting_customer'),
+                default                              => $this->status->label(),
+            },
             'under_review'   => (bool) $this->openIssue,
+            // المتجر علّم أصناف مش متوفرة — الطلب يستنى رد الزبون
+            'awaiting_customer'        => $this->awaiting_customer_at !== null,
+            'substitution_deadline_at' => $this->substitution_deadline_at,
             // تفاصيل البلاغ ورابط الدعم — للسائق صاحب الطلب بس
             'issue'          => $this->when(
                 $this->openIssue && $request->user()?->id === $this->driver_id,
@@ -37,6 +44,9 @@ class OrderResource extends JsonResource
             'subtotal'       => (float) $this->subtotal,
             'delivery_fee'   => (float) $this->delivery_fee,
             'discount'       => (float) $this->discount,
+            'points_used'     => (int) $this->points_used,
+            'points_discount' => (float) $this->points_discount,
+            'points_awarded'  => (int) $this->points_awarded,
             'total'          => (float) $this->total,
             'distance_km'    => (float) $this->distance_km,
             'notes'          => $this->notes,
@@ -76,7 +86,9 @@ class OrderResource extends JsonResource
             ] : null),
             'items'          => $this->whenLoaded('items', fn () => $this->items->map(fn ($i) => [
                 'id'         => $i->id,
+                'product_id' => $i->product_id,
                 'name'       => $i->name,
+                'is_unavailable' => (bool) $i->is_unavailable,
                 'quantity'   => $i->quantity,
                 'unit_price' => (float) $i->unit_price,
                 'options'    => $i->options,

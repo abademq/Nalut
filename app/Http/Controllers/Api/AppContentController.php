@@ -35,6 +35,10 @@ class AppContentController extends Controller
 
         if ($app === 'customer') {
             $out['banners'] = Banner::live()->get()->map->toApp()->values();
+            // أقسام التطبيق (مطاعم، متاجر...) وشريط العروض العام
+            $out['sections'] = \App\Models\AppSection::where('is_active', true)->with('types')->orderBy('sort')->get()
+                ->map->toApp()->values();
+            $out['announcements'] = \App\Models\Announcement::live()->whereNull('store_id')->get()->map->toApp()->values();
         }
 
         if ($app === 'store') {

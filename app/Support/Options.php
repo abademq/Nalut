@@ -58,6 +58,30 @@ class Options
                 'label' => 'رقم يوصله التنبيه المهم على واتساب/SMS',
                 'help'  => 'اختياري — يحتاج قالب «تنبيهات الإدارة» في «قوالب الرسائل». فاضي = تنبيه اللوحة بس.'],
 
+            'orders.substitution_timeout_minutes' => ['type' => 'int', 'default' => 10, 'min' => 1, 'max' => 120,
+                'label' => 'مهلة رد الزبون على «صنف مش متوفر» (دقيقة)',
+                'help'  => 'لو الزبون ما ردّش خلال المدة: الطلب يكمّل بدون الأصناف الناقصة (ولو ما بقى شي ينلغى).'],
+
+            // ===== نقاط الولاء =====
+            'points.enabled' => ['type' => 'bool', 'default' => false, 'public' => true,
+                'label' => 'تفعيل نظام النقاط'],
+            'points.earn_mode' => ['type' => 'string', 'default' => 'per_amount', 'public' => true,
+                'choices' => ['per_amount' => 'حسب قيمة الطلب', 'per_order' => 'عدد ثابت لكل طلب'],
+                'label' => 'طريقة كسب النقاط'],
+            'points.earn_rate' => ['type' => 'float', 'default' => 1, 'min' => 0, 'max' => 10000, 'public' => true,
+                'label' => 'النقاط المكتسبة',
+                'help'  => '«حسب القيمة»: نقاط لكل 1 د.ل من قيمة الأصناف · «لكل طلب»: عدد النقاط لكل طلب مكتمل'],
+            'points.min_order' => ['type' => 'float', 'default' => 0, 'min' => 0, 'max' => 10000,
+                'label' => 'أقل قيمة طلب يكسب نقاط (د.ل)'],
+            'points.redeem_mode' => ['type' => 'string', 'default' => 'wallet', 'public' => true,
+                'choices' => ['wallet' => 'تتحوّل لفلوس في المحفظة', 'checkout' => 'يدفع بيها مباشرة في الطلب'],
+                'label' => 'استعمال النقاط (خيار واحد بس)'],
+            'points.point_value' => ['type' => 'float', 'default' => 0.01, 'min' => 0.0001, 'max' => 100, 'public' => true,
+                'label' => 'قيمة النقطة الوحدة (د.ل)',
+                'help'  => 'مثلاً 0.01 = كل 100 نقطة بدينار'],
+            'points.min_redeem' => ['type' => 'int', 'default' => 100, 'min' => 1, 'max' => 1000000, 'public' => true,
+                'label' => 'أقل عدد نقاط للاستعمال'],
+
             // ===== المخزون =====
             'stock.restore_after_pickup' => ['type' => 'bool', 'default' => false,
                 'label' => 'إرجاع المخزون للطلبات اللي فشلت بعد ما استلمها السائق',

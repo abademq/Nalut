@@ -19,7 +19,7 @@ class MessageTemplate extends Model
         return ['params' => 'array', 'is_active' => 'boolean'];
     }
 
-    public const CHANNELS = ['whatsapp' => 'واتساب', 'sms' => 'رسالة نصية (SMS)'];
+    public const CHANNELS = ['whatsapp' => 'واتساب', 'sms' => 'رسالة نصية (SMS)', 'push' => 'إشعار التطبيق'];
 
     public const PURPOSES = [
         'marketing' => 'تسويق',

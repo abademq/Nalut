@@ -33,6 +33,7 @@ class OperationsSettings extends Page
         'orders'   => 'الطلبات',
         'otp'      => 'رموز التحقق',
         'alerts'   => 'التنبيهات الفورية',
+        'points'   => 'نقاط الولاء',
         'stock'    => 'المخزون',
         'delivery' => 'التوصيل والعمولة',
         'tracking' => 'التتبّع',
@@ -89,7 +90,7 @@ class OperationsSettings extends Page
                     isset($def['choices'])    => Select::make($name)->options($def['choices'])->native(false)->required(),
                     in_array($def['type'], ['int', 'float'], true) => TextInput::make($name)->numeric()->required()
                         ->minValue($def['min'] ?? null)->maxValue($def['max'] ?? null)
-                        ->step($def['type'] === 'float' ? 0.01 : 1),
+                        ->step($def['type'] === 'float' ? 'any' : 1),
                     $def['type'] === 'lines'  => Textarea::make($name)->rows(5)->required()->columnSpanFull(),
                     $def['type'] === 'list'   => TextInput::make($name)->required()
                         ->regex('/^\s*\d+(\s*[,،]\s*\d+)*\s*$/u')

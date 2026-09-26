@@ -51,6 +51,9 @@ class CheckStuckOrders extends Command
                 ));
         }
 
+        // «صنف مش متوفر»: الزبون ما ردّش خلال المهلة — الطلب يكمّل بدونه
+        app(\App\Services\SubstitutionService::class)->expireDue();
+
         return self::SUCCESS;
     }
 }

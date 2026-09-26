@@ -54,6 +54,13 @@ class UsersTable
                         UserRole::Customer => 'gray',
                     }),
 
+                TextColumn::make('points_balance')
+                    ->label('النقاط')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable()
+                    ->visible(fn () => \App\Services\PointsService::enabled()),
+
                 TextColumn::make('wallet.balance')
                     ->label('الرصيد')
                     ->formatStateUsing(fn ($state) => number_format((float) ($state ?? 0), 2).' د.ل')
@@ -200,6 +207,22 @@ class UsersTable
                             );
 
                             Notification::make()->title('تم الخصم')->success()->send();
+                        }),
+
+                    Action::make('adjustPoints')
+                        ->authorize(fn () => \App\Support\Perm::can('finance.manage'))
+                        ->label('تعديل النقاط')
+                        ->icon('heroicon-o-star')
+                        ->color('warning')
+                        ->visible(fn (User $record) => $record->role === UserRole::Customer)
+                        ->modalDescription(fn (User $record) => 'الرصيد الحالي: '.$record->points_balance.' نقطة')
+                        ->schema([
+                            TextInput::make('points')->label('النقاط (+ زيادة · − خصم)')->numeric()->required()->integer(),
+                            TextInput::make('note')->label('السبب')->maxLength(120),
+                        ])
+                        ->action(function (User $record, array $data) {
+                            app(\App\Services\PointsService::class)->adjust($record, (int) $data['points'], $data['note'] ?? null, auth()->user());
+                            Notification::make()->title('تم — الرصيد: '.$record->fresh()->points_balance.' نقطة')->success()->send();
                         }),
 
                     \App\Filament\Resources\Drivers\DriverCapacity::action(),

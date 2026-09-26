@@ -102,6 +102,13 @@ class StorePanelController extends Controller
             'reason'            => ['nullable', 'string', 'max:200'],
         ]);
 
+        // الطلب يستنى رد الزبون على الأصناف الناقصة — المتجر يقدر يرفض بس
+        if ($order->awaiting_customer_at && $data['status'] !== 'cancelled') {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'status' => \App\Support\Texts::get('msg.substitution_pending'),
+            ]);
+        }
+
         // السائق خذا الطلب قبل ما المتجر يضغط «جاهز» (انقضت مدة التحضير):
         // الحالة تضل «أُسند لسائق»، لكن نسجّلو إن الأكل جاهز ونبلّغو السائق
         if ($data['status'] === 'ready' && $order->status === OrderStatus::Assigned) {
@@ -114,6 +121,21 @@ class StorePanelController extends Controller
                 $data
             );
         }
+
+        return response()->json(['data' => new OrderResource($order->load(['items', 'customer']))]);
+    }
+
+    /** أصناف مش متوفرة: تتقفل، والزبون يختار يكمّل بدونها أو يعدّل طلبه */
+    public function unavailableItems(Request $request, Order $order, \App\Services\SubstitutionService $subs): JsonResponse
+    {
+        abort_unless($order->store_id === $this->store($request)->id, 403);
+
+        $data = $request->validate([
+            'item_ids'   => ['required', 'array', 'min:1'],
+            'item_ids.*' => ['integer'],
+        ]);
+
+        $order = $subs->markUnavailable($order, $data['item_ids'], $request->user());
 
         return response()->json(['data' => new OrderResource($order->load(['items', 'customer']))]);
     }

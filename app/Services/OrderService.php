@@ -63,6 +63,13 @@ class OrderService
             }
 
             $total      = round($subtotal + $deliveryFee - $discount, 2);
+
+            // نقاط الولاء (لو الإدارة مختارة «يدفع بيها مباشرة») — تنخصم قبل المحفظة
+            [$pointsUsed, $pointsDiscount] = ($data['use_points'] ?? false)
+                ? app(PointsService::class)->checkoutDiscount($customer, $total)
+                : [0, 0.0];
+            $total = round($total - $pointsDiscount, 2);
+
             $commission = round($subtotal * ($store->commission_percent / 100), 2);
 
             // الدفع من المحفظة (كامل أو جزئي)
@@ -99,6 +106,8 @@ class OrderService
                 'subtotal'          => $subtotal,
                 'delivery_fee'      => $deliveryFee,
                 'discount'          => $discount,
+                'points_used'       => $pointsUsed,
+                'points_discount'   => $pointsDiscount,
                 'total'             => $total,
                 'commission_amount' => $commission,
                 'store_earning'     => round($subtotal - $commission, 2),
@@ -120,6 +129,8 @@ class OrderService
             }
 
             $order->items()->createMany($lines);
+
+            app(PointsService::class)->redeemOnOrder($customer, $order, $pointsUsed);
 
             // إنقاص المخزون — ذرّي: «انقص بس لو الكمية تكفي» في استعلام واحد.
             // زبونين يطلبو آخر قطعة في نفس اللحظة: واحد ينجح، والثاني يرجعله
@@ -202,6 +213,11 @@ class OrderService
 
         $total = round($subtotal + $deliveryFee - $discount, 2);
 
+        $points = app(PointsService::class);
+        [$pointsAvailable, $pointsAvailableDiscount] = $points->checkoutDiscount($customer, $total);
+        [$pointsUsed, $pointsDiscount] = ($data['use_points'] ?? false) ? [$pointsAvailable, $pointsAvailableDiscount] : [0, 0.0];
+        $total = round($total - $pointsDiscount, 2);
+
         $walletBalance = app(WalletService::class)->balance($customer);
         $walletPaid    = 0.0;
 
@@ -221,6 +237,12 @@ class OrderService
             'wallet_paid'     => round($walletPaid, 2),
             'cash_due'        => round($total - $walletPaid, 2),
             'coupon_error'    => $couponError,
+            'points_balance'  => (int) $customer->points_balance,
+            // كم نقطة وكم دينار يقدر يستعمل في الطلب هذا (0 لو النقاط تتحوّل للمحفظة بس)
+            'points_available'          => $pointsAvailable,
+            'points_available_discount' => $pointsAvailableDiscount,
+            'points_used'     => $pointsUsed,
+            'points_discount' => $pointsDiscount,
         ];
     }
 
@@ -443,9 +465,15 @@ class OrderService
                 'created_at'  => now(),
             ]);
 
-            // إرجاع المخزون لو الطلب انلغى أو فشل
+            // إرجاع المخزون والنقاط لو الطلب انلغى أو فشل
             if (in_array($to, [OrderStatus::Cancelled, OrderStatus::Failed], true)) {
                 $this->restoreStock($order);
+                app(PointsService::class)->refund($order);
+            }
+
+            // نقاط الولاء على الطلب المكتمل
+            if ($to === OrderStatus::Delivered) {
+                app(PointsService::class)->award($order->fresh('customer'));
             }
 
             // استرجاع ما دُفع من المحفظة

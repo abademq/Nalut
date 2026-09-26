@@ -20,6 +20,7 @@ class Order extends Model
         'discount', 'total', 'commission_amount', 'store_earning', 'driver_earning',
         'distance_km', 'notes', 'prep_time_minutes', 'accepted_at', 'ready_at', 'drivers_notified_at',
         'picked_up_at', 'delivered_at', 'cancelled_at', 'cancel_reason', 'cancelled_by',
+        'points_used', 'points_discount', 'awaiting_customer_at', 'substitution_deadline_at',
     ];
 
     protected function casts(): array
@@ -43,6 +44,9 @@ class Order extends Model
             'delivered_at'   => 'datetime',
             'cancelled_at'   => 'datetime',
             'stock_restored_at' => 'datetime',
+            'awaiting_customer_at'     => 'datetime',
+            'substitution_deadline_at' => 'datetime',
+            'points_discount'          => 'float',
         ];
     }
 

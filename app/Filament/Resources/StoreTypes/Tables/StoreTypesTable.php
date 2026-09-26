@@ -18,6 +18,7 @@ class StoreTypesTable
             ->defaultSort('sort')
             ->columns([
                 TextColumn::make('name')->label('النوع')->searchable()->weight('bold'),
+                TextColumn::make('section.name')->label('القسم')->badge()->placeholder('—'),
                 TextColumn::make('stores_count')->label('عدد المتاجر')->counts('stores')->badge(),
                 TextColumn::make('sort')->label('الترتيب')->sortable(),
                 IconColumn::make('is_active')->label('مفعّل')->boolean(),

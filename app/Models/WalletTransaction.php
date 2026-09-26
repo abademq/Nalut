@@ -19,6 +19,7 @@ class WalletTransaction extends Model
         'settlement'     => 'تسوية نقدية',
         'adjustment'     => 'تعديل يدوي',
         'topup_online'   => 'دفع إلكتروني',
+        'points'         => 'تحويل نقاط',
     ];
 
     protected $fillable = [

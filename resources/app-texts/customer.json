@@ -10,6 +10,56 @@
   "vars": "{statusCode}"
  },
  {
+  "text": "الأصناف هذي مش متوفرة توّا",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "تفضية السلة؟",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "سلتك فيها أصناف من {store}. نفضّوها ونحطو الأصناف الجديدة؟",
+  "group": "extras",
+  "vars": "{store}"
+ },
+ {
+  "text": "لا",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "نعم",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "مش متوفر توّا: {items}",
+  "group": "extras",
+  "vars": "{items}"
+ },
+ {
+  "text": "، ",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "ما نقدرش نوصل للخادم.",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "شيل من المفضلة",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "زيد للمفضلة",
+  "group": "extras",
+  "vars": null
+ },
+ {
   "text": "توصيل نالوت",
   "group": "main",
   "vars": null
@@ -81,11 +131,6 @@
  },
  {
   "text": "اكتب وصف العنوان (الحي، الشارع...)",
-  "group": "address_picker_screen",
-  "vars": null
- },
- {
-  "text": "ما نقدرش نوصل للخادم.",
   "group": "address_picker_screen",
   "vars": null
  },
@@ -295,6 +340,16 @@
   "vars": null
  },
  {
+  "text": "استعمل نقاطي",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "{points} نقطة = خصم {amount} د.ل",
+  "group": "cart_screen",
+  "vars": "{points} {amount}"
+ },
+ {
   "text": "كود خصم (اختياري)",
   "group": "cart_screen",
   "vars": null
@@ -321,6 +376,11 @@
  },
  {
   "text": "الخصم",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "خصم النقاط",
   "group": "cart_screen",
   "vars": null
  },
@@ -355,14 +415,64 @@
   "vars": null
  },
  {
-  "text": "{count} صنف · {subtotal} د.ل",
-  "group": "home_screen",
-  "vars": "{count} {subtotal}"
+  "text": "انضاف {name} للسلة",
+  "group": "favorites_screen",
+  "vars": "{name}"
+ },
+ {
+  "text": "المفضلة",
+  "group": "favorites_screen",
+  "vars": null
+ },
+ {
+  "text": "المتاجر",
+  "group": "favorites_screen",
+  "vars": null
+ },
+ {
+  "text": "الأصناف",
+  "group": "favorites_screen",
+  "vars": null
  },
  {
   "text": "إعادة المحاولة",
-  "group": "home_screen",
+  "group": "favorites_screen",
   "vars": null
+ },
+ {
+  "text": "اضغط ♡ في أي متجر باش يظهر هني",
+  "group": "favorites_screen",
+  "vars": null
+ },
+ {
+  "text": "مفتوح توّا",
+  "group": "favorites_screen",
+  "vars": null
+ },
+ {
+  "text": "مغلق حالياً",
+  "group": "favorites_screen",
+  "vars": null
+ },
+ {
+  "text": "اضغط ♡ في أي صنف باش يظهر هني",
+  "group": "favorites_screen",
+  "vars": null
+ },
+ {
+  "text": "د.ل",
+  "group": "favorites_screen",
+  "vars": null
+ },
+ {
+  "text": "مش متوفر",
+  "group": "favorites_screen",
+  "vars": null
+ },
+ {
+  "text": "{count} صنف · {subtotal} د.ل",
+  "group": "home_screen",
+  "vars": "{count} {subtotal}"
  },
  {
   "text": "دوّر على متجر...",
@@ -396,16 +506,6 @@
  },
  {
   "text": "ما فيش متاجر",
-  "group": "home_screen",
-  "vars": null
- },
- {
-  "text": "مفتوح توّا",
-  "group": "home_screen",
-  "vars": null
- },
- {
-  "text": "مغلق حالياً",
   "group": "home_screen",
   "vars": null
  },
@@ -570,11 +670,6 @@
   "vars": null
  },
  {
-  "text": "المتاجر",
-  "group": "main_screen",
-  "vars": null
- },
- {
   "text": "طلباتي",
   "group": "main_screen",
   "vars": null
@@ -640,6 +735,46 @@
   "vars": null
  },
  {
+  "text": "تعديل الطلب",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "بنلغيو الطلب هذا ونرجعو الأصناف المتوفرة لسلتك باش تعدّل وتبدّل وتطلب من جديد. متأكد؟",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "متأكد تبي تلغي الطلب؟",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "فيه أصناف مش متوفرة عند المتجر",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "لو ما رديتش خلال {minutes} دقيقة نكمّلو الطلب بدونهم",
+  "group": "order_tracking_screen",
+  "vars": "{minutes}"
+ },
+ {
+  "text": "كمّل الطلب بدونهم",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "عدّل الطلب",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "إلغاء",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
   "text": "الطلب",
   "group": "order_tracking_screen",
   "vars": null
@@ -665,14 +800,14 @@
   "vars": null
  },
  {
-  "text": "الأصناف",
-  "group": "order_tracking_screen",
-  "vars": null
- },
- {
   "text": "{lineTotal} د.ل",
   "group": "order_tracking_screen",
   "vars": "{lineTotal}"
+ },
+ {
+  "text": "خصم النقاط ({points} نقطة)",
+  "group": "order_tracking_screen",
+  "vars": "{points}"
  },
  {
   "text": "مدفوع من المحفظة",
@@ -720,7 +855,17 @@
   "vars": "{driverDelivered}"
  },
  {
+  "text": "كسبت {points} نقطة من هذا الطلب",
+  "group": "order_tracking_screen",
+  "vars": "{points}"
+ },
+ {
   "text": "شكراً — قيّمت هذا الطلب",
+  "group": "order_tracking_screen",
+  "vars": null
+ },
+ {
+  "text": "اطلب نفس الطلب مرة ثانية",
   "group": "order_tracking_screen",
   "vars": null
  },
@@ -768,6 +913,86 @@
   "text": "جاهز خلال {minutes} دقيقة تقريباً",
   "group": "order_tracking_screen",
   "vars": "{minutes}"
+ },
+ {
+  "text": "تحويل النقاط للمحفظة",
+  "group": "points_screen",
+  "vars": null
+ },
+ {
+  "text": "عدد النقاط",
+  "group": "points_screen",
+  "vars": null
+ },
+ {
+  "text": "= {amount} د.ل",
+  "group": "points_screen",
+  "vars": "{amount}"
+ },
+ {
+  "text": "لازم بين {min} و {max} نقطة",
+  "group": "points_screen",
+  "vars": "{min} {max}"
+ },
+ {
+  "text": "تم التحويل",
+  "group": "points_screen",
+  "vars": null
+ },
+ {
+  "text": "حوّل",
+  "group": "points_screen",
+  "vars": null
+ },
+ {
+  "text": "نقاطي",
+  "group": "points_screen",
+  "vars": null
+ },
+ {
+  "text": "نقطة · تساوي {amount} د.ل",
+  "group": "points_screen",
+  "vars": "{amount}"
+ },
+ {
+  "text": "نظام النقاط موقف حالياً",
+  "group": "points_screen",
+  "vars": null
+ },
+ {
+  "text": "تاخذ {rate} نقطة على كل طلب يوصلك",
+  "group": "points_screen",
+  "vars": "{rate}"
+ },
+ {
+  "text": "تاخذ {rate} نقطة على كل 1 د.ل",
+  "group": "points_screen",
+  "vars": "{rate}"
+ },
+ {
+  "text": "حوّل نقاطك لفلوس في محفظتك (أقل شي {min} نقطة)",
+  "group": "points_screen",
+  "vars": "{min}"
+ },
+ {
+  "text": "استعمل نقاطك كخصم وقت الطلب من السلة (أقل شي {min} نقطة)",
+  "group": "points_screen",
+  "vars": "{min}"
+ },
+ {
+  "text": "حوّل للمحفظة",
+  "group": "points_screen",
+  "vars": null
+ },
+ {
+  "text": "السجل",
+  "group": "points_screen",
+  "vars": null
+ },
+ {
+  "text": "ما فيش حركات",
+  "group": "points_screen",
+  "vars": null
  },
  {
   "text": "تعديل الاسم",
@@ -905,6 +1130,11 @@
   "vars": null
  },
  {
+  "text": "سلات جاهزة",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
   "text": "أصناف أخرى",
   "group": "store_screen",
   "vars": null
@@ -913,6 +1143,16 @@
   "text": "ما فيش منتجات",
   "group": "store_screen",
   "vars": null
+ },
+ {
+  "text": "{count} أصناف",
+  "group": "store_screen",
+  "vars": "{count}"
+ },
+ {
+  "text": "{price} د.ل",
+  "group": "store_screen",
+  "vars": "{price}"
  },
  {
   "text": "غير متوفر",

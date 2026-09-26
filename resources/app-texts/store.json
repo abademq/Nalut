@@ -560,6 +560,11 @@
   "vars": null
  },
  {
+  "text": "مش متوفر",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
   "text": "{lineTotal} د.ل",
   "group": "orders_tab",
   "vars": "{lineTotal}"
@@ -576,6 +581,41 @@
  },
  {
   "text": "واصل السائق",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "شن الأصناف الغير متوفرة؟",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "الأصناف اللي تختارها تتسكّر من القائمة، والزبون يختار يكمّل بدونها أو يعدّل طلبه.",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "إلغاء",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "بلّغ الزبون",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "تم تبليغ الزبون — ننتظرو رده",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "ننتظرو رد الزبون على الأصناف الغير متوفرة",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "صنف مش متوفر",
   "group": "orders_tab",
   "vars": null
  },

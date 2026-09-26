@@ -54,11 +54,31 @@ class CampaignResource extends Resource
     {
         return $schema->components([
             TextInput::make('title')->label('اسم الحملة')->required()->maxLength(120),
-            Select::make('message_template_id')->label('القالب')->required()->native(false)
+            Select::make('channel')->label('نوع الحملة')->options(Campaign::CHANNELS)->required()->default('template')->native(false)->live(),
+            Select::make('target_role')->label('للتطبيق')->options(Campaign::ROLES)->default('customer')->native(false)->live()
+                ->visible(fn ($get) => $get('channel') === 'push'),
+            TextInput::make('push_title')->label('عنوان الإشعار')->maxLength(120)
+                ->required(fn ($get) => $get('channel') === 'push')
+                ->visible(fn ($get) => $get('channel') === 'push')
+                ->helperText('{name} = اسم المستلم'),
+            Textarea::make('push_body')->label('نص الإشعار')->rows(3)->maxLength(500)
+                ->required(fn ($get) => $get('channel') === 'push')
+                ->visible(fn ($get) => $get('channel') === 'push'),
+            TextInput::make('push_link')->label('يفتح على (رابط مشاركة — اختياري)')->maxLength(255)
+                ->placeholder('https://api.dar-almaqam.com.ly/s/5')
+                ->helperText('انسخه من 🔗 في المتاجر/المنتجات أو من «روابط التطبيق». يشتغل في تطبيق الزبون.')
+                ->visible(fn ($get) => $get('channel') === 'push' && $get('target_role') === 'customer'),
+            Select::make('message_template_id')->label('القالب')->native(false)
+                ->required(fn ($get) => $get('channel') !== 'push')
+                ->visible(fn ($get) => $get('channel') !== 'push')
                 ->options(fn () => MessageTemplate::where('is_active', true)->whereIn('purpose', ['marketing', 'general'])
                     ->get()->mapWithKeys(fn ($t) => [$t->id => "{$t->name} — ".(MessageTemplate::CHANNELS[$t->channel] ?? $t->channel)]))
                 ->helperText('القوالب من «قوالب الرسائل». المتغيّر {name} = اسم الزبون.'),
-            Select::make('audience')->label('لمنو؟')->options(Campaign::AUDIENCES)->required()->default('all')->native(false)->live(),
+            Select::make('audience')->label('لمنو؟')->required()->default('all')->native(false)->live()
+                ->options(fn ($get) => $get('channel') === 'push'
+                    ? collect(Campaign::AUDIENCES)->except('numbers')->all()
+                    : Campaign::AUDIENCES)
+                ->visible(fn ($get) => $get('channel') !== 'push' || $get('target_role') === 'customer'),
             TextInput::make('audience_params.days')->label('عدد الأيام')->numeric()->default(30)->minValue(1)
                 ->visible(fn ($get) => in_array($get('audience'), ['active', 'inactive'], true)),
             Select::make('audience_params.store_id')->label('المتجر')->native(false)->searchable()
@@ -78,8 +98,11 @@ class CampaignResource extends Resource
             ->poll('10s')
             ->columns([
                 TextColumn::make('title')->label('الحملة')->weight('bold')->searchable(),
-                TextColumn::make('template.name')->label('القالب')
-                    ->description(fn (Campaign $r) => MessageTemplate::CHANNELS[$r->template?->channel] ?? ''),
+                TextColumn::make('template.name')->label('القالب / الإشعار')
+                    ->state(fn (Campaign $r) => $r->channel === 'push' ? $r->push_title : $r->template?->name)
+                    ->description(fn (Campaign $r) => $r->channel === 'push'
+                        ? 'إشعار — '.(Campaign::ROLES[$r->target_role] ?? '')
+                        : (MessageTemplate::CHANNELS[$r->template?->channel] ?? '')),
                 TextColumn::make('audience')->label('الجمهور')->formatStateUsing(fn ($state) => Campaign::AUDIENCES[$state] ?? $state),
                 TextColumn::make('status')->label('الحالة')->badge()
                     ->formatStateUsing(fn ($state) => Campaign::STATUSES[$state] ?? $state)

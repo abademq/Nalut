@@ -51,6 +51,15 @@ Route::prefix('v1')->group(function () {
             Route::get('orders/{order}/track', [OrderController::class, 'track']);
             Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
             Route::post('orders/{order}/rate', [OrderController::class, 'rate']);
+
+            // المفضلة، إعادة الطلب، السلات الجاهزة، النقاط، والأصناف الناقصة
+            Route::get('favorites', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'favorites']);
+            Route::post('favorites/toggle', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'toggleFavorite']);
+            Route::post('orders/{order}/reorder', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'reorder']);
+            Route::post('orders/{order}/substitution', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'substitution']);
+            Route::get('ready-carts/{readyCart}', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'readyCart']);
+            Route::get('points', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'points']);
+            Route::post('points/convert', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'convertPoints']);
         });
 
         // ---------- المتجر ----------
@@ -60,6 +69,7 @@ Route::prefix('v1')->group(function () {
             Route::get('orders', [StorePanelController::class, 'orders']);
             Route::get('reports/daily', [StorePanelController::class, 'dailyReport']);
             Route::post('orders/{order}/status', [StorePanelController::class, 'updateOrderStatus']);
+            Route::post('orders/{order}/unavailable-items', [StorePanelController::class, 'unavailableItems']);
             Route::get('products', [StorePanelController::class, 'products']);
             Route::post('products', [StorePanelController::class, 'storeProduct']);
             Route::post('products/{product}', [StorePanelController::class, 'updateProduct']);

@@ -19,6 +19,7 @@ class ProductResource extends JsonResource
             'price'          => (float) $this->price,
             'discount_price' => $this->discount_price ? (float) $this->discount_price : null,
             'is_available'   => (bool) $this->is_available,
+            'is_favorite'    => \App\Support\FavoriteIds::has($request->user(), \App\Models\Product::class, $this->id),
             // المخزون: التطبيق يحدّ الكمية ويكتب «متبقي X» — والمتجر يحتاجهم في فورم التعديل
             'track_stock'     => (bool) $this->track_stock,
             'stock_quantity'  => $this->track_stock ? (int) $this->stock_quantity : null,

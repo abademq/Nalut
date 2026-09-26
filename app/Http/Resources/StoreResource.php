@@ -26,6 +26,7 @@ class StoreResource extends JsonResource
             'rating_avg'        => (float) $this->rating_avg,
             'rating_count'      => $this->rating_count,
             'is_accepting'      => $this->isAcceptingOrders(),
+            'is_favorite'       => \App\Support\FavoriteIds::has($request->user(), \App\Models\Store::class, $this->id),
             'distance_km'       => $this->when(isset($this->distance_km), fn () => $this->distance_km),
             'sections'          => $this->whenLoaded('sections', fn () => $this->sections->map(fn ($s) => [
                 'id' => $s->id, 'name' => $s->name,
