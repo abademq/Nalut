@@ -77,7 +77,7 @@ class User extends Authenticatable implements \Filament\Models\Contracts\Filamen
         }
 
         return $this->driverProfile ?? tap($this->driverProfile()->create(['is_approved' => false, 'is_online' => false]),
-            fn () => $this->load('driverProfile'));
+            fn ($profile) => $this->setRelation('driverProfile', $profile));
     }
 
     /** عنده الدور هذا؟ (من ضمن أدواره كلها) */

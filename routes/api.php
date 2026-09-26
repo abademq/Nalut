@@ -25,6 +25,8 @@ Route::prefix('v1')->group(function () {
 
         Route::get('me', [AuthController::class, 'me']);
         Route::put('me', [AuthController::class, 'updateProfile']);
+        Route::get('me/delete', [AuthController::class, 'deletionCheck']);
+        Route::post('me/delete', [AuthController::class, 'deleteAccount'])->middleware('throttle:10,1');
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('wallet', [WalletController::class, 'show']);
         Route::get('wallet/transactions', [WalletController::class, 'transactions']);

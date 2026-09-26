@@ -197,6 +197,60 @@ class AuthController extends Controller
         return response()->json(['user' => $this->userPayload($request->user()->fresh(), $this->app($request))]);
     }
 
+    /** قبل الحذف: التطبيق يوري الموانع ويعرف لو يطلب كلمة المرور ولا رمز */
+    public function deletionCheck(Request $request, \App\Services\AccountDeletionService $svc): JsonResponse
+    {
+        $user = $request->user();
+
+        return response()->json([
+            'blockers'     => $svc->blockers($user),
+            'needs_admin'  => $svc->needsAdmin($user),
+            'has_password' => filled($user->password),
+            'wallet'       => app(\App\Services\WalletService::class)->balance($user),
+            'points'       => (int) $user->points_balance,
+        ]);
+    }
+
+    /**
+     * حذف الحساب — بعد التأكيد بكلمة المرور أو رمز تحقق على نفس الرقم.
+     * حساب متجر/إدارة: يوصل طلب للإدارة بدل الحذف المباشر.
+     */
+    public function deleteAccount(Request $request, OtpService $otp, \App\Services\AccountDeletionService $svc): JsonResponse
+    {
+        $data = $request->validate([
+            'password' => ['nullable', 'string'],
+            'code'     => ['nullable', 'string'],
+            'reason'   => ['nullable', 'string', 'max:500'],
+        ]);
+        $user = $request->user();
+
+        if (filled($data['password'] ?? null)) {
+            if (blank($user->password) || ! Hash::check($data['password'], $user->password)) {
+                throw ValidationException::withMessages(['password' => 'كلمة المرور غير صحيحة.']);
+            }
+        } elseif (filled($data['code'] ?? null)) {
+            $otp->verify($user->phone, $data['code']);
+        } else {
+            throw ValidationException::withMessages(['password' => 'أكّد بكلمة المرور أو برمز التحقق.']);
+        }
+
+        if ($svc->needsAdmin($user)) {
+            $svc->requestByAdmin($user, $data['reason'] ?? null);
+
+            return response()->json([
+                'status'  => 'requested',
+                'message' => 'وصل طلبك للإدارة. حسابات المتاجر تنحذف بعد تسوية المنتجات والمستحقات، ونتواصلوا معاك خلال أيام.',
+            ], 202);
+        }
+
+        $svc->delete($user, $data['reason'] ?? null);
+
+        return response()->json([
+            'status'  => 'deleted',
+            'message' => 'تم حذف حسابك. نتمنولك التوفيق 🌿',
+        ]);
+    }
+
     public function logout(Request $request): JsonResponse
     {
         $request->user()->currentAccessToken()->delete();

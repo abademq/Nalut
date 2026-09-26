@@ -30,6 +30,7 @@ class LogApiActivity
         'POST api/v1/auth/login'                         => 'تسجيل دخول بكلمة المرور',
         'POST api/v1/logout'                             => 'تسجيل خروج',
         'PUT api/v1/me'                                  => 'تعديل الحساب',
+        'POST api/v1/me/delete'                          => 'حذف الحساب',
         'POST api/v1/wallet/redeem'                      => 'شحن المحفظة بكرت',
         'POST api/v1/payments/otp/send'                  => 'دفع إلكتروني: طلب رمز',
         'POST api/v1/payments/otp/confirm'               => 'دفع إلكتروني: تأكيد',

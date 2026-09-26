@@ -95,6 +95,141 @@
   "vars": null
  },
  {
+  "text": "بعتنالك رمز على {phone}",
+  "group": "delete_account_screen",
+  "vars": "{phone}"
+ },
+ {
+  "text": "اكتب الرمز اللي وصلك",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "اكتب كلمة المرور",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "متأكد؟",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "حسابك بيتحذف نهائياً وما يمكنش ترجعه.",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "لا، رجوع",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "احذف حسابي",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "تمام",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "حذف الحساب",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "شن اللي ينحذف",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "اسمك ورقم هاتفك وكلمة المرور",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "العناوين والمفضلة والسلات المحفوظة",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "الإشعارات وسجل استعمالك للتطبيق",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "شن اللي يقعد",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "سجل الطلبات والحركات المالية بدون اسمك ولا رقمك (للمحاسبة)",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "عندك {wallet} د.ل في المحفظة و{points} نقطة — يضيعوا مع الحذف.",
+  "group": "delete_account_screen",
+  "vars": "{wallet} {points}"
+ },
+ {
+  "text": "حسابات المتاجر تنحذف عن طريق الإدارة بعد تسوية المنتجات والمستحقات. الطلب يوصلهم مباشرة ويتواصلوا معاك.",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "ما تقدرش تحذف الحساب توّا:",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "ليش تبي تحذف حسابك؟ (اختياري)",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "كلمة المرور للتأكيد",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "ابعثلي رمز تحقق للتأكيد",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "رمز التحقق",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "أكّد بكلمة المرور",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "نسيت كلمة المرور؟ أكّد برمز تحقق",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "فاهم إن الحذف نهائي وما يمكنش التراجع عنه",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "أرسل طلب الحذف",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
+  "text": "احذف حسابي نهائياً",
+  "group": "delete_account_screen",
+  "vars": null
+ },
+ {
   "text": "أرباحي",
   "group": "earnings_tab",
   "vars": null
@@ -211,11 +346,6 @@
  },
  {
   "text": "رقم الهاتف",
-  "group": "login_screen",
-  "vars": null
- },
- {
-  "text": "رمز التحقق",
   "group": "login_screen",
   "vars": null
  },
@@ -381,11 +511,6 @@
  },
  {
   "text": "رقم واتساب الدعم الفني مش مضبوط في لوحة التحكم، فما قدرناش نفتحو المحادثة. الإدارة وصلها تنبيه بالبلاغ.",
-  "group": "my_orders_tab",
-  "vars": null
- },
- {
-  "text": "تمام",
   "group": "my_orders_tab",
   "vars": null
  },
