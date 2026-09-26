@@ -184,6 +184,12 @@ class UsersTable
                 ActionGroup::make([
                     EditAction::make()->label('تعديل'),
 
+                    Action::make('activity')
+                        ->label('سجل النشاط')
+                        ->icon('heroicon-o-clipboard-document-list')
+                        ->visible(fn () => \App\Support\Perm::can('logs.view'))
+                        ->url(fn (User $record) => \App\Filament\Resources\ActivityLogs\ActivityLogResource::filteredUrl(['user_id' => ['value' => $record->id]])),
+
                     Action::make('deduct')
                 ->authorize(fn () => \App\Support\Perm::can('finance.manage'))
                         ->label('خصم من المحفظة')

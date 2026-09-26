@@ -17,6 +17,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => EnsureRole::class,
         ]);
 
+        // سجل النشاط: كل عملية من التطبيقات
+        $middleware->api(append: \App\Http\Middleware\LogApiActivity::class);
+
         // ما فيش مسار باسم login — بدونه أي طلب API بدون توكن يطيح بخطأ 500 بدل 401
         $middleware->redirectGuestsTo(
             fn ($request) => $request->is('api/*') ? null : '/admin/login'

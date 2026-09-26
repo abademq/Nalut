@@ -535,12 +535,12 @@
   "vars": "{count} {subtotal}"
  },
  {
-  "text": "دوّر على متجر...",
+  "text": "الكل",
   "group": "home_screen",
   "vars": null
  },
  {
-  "text": "الكل",
+  "text": "دوّر على متجر...",
   "group": "home_screen",
   "vars": null
  },

@@ -123,6 +123,13 @@ class OrdersTable
             ->recordActions([
                 ViewAction::make()->label('عرض'),
 
+                Action::make('activity')
+                    ->label('السجل')
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->color('gray')
+                    ->visible(fn () => \App\Support\Perm::can('logs.view'))
+                    ->url(fn ($record) => \App\Filament\Resources\ActivityLogs\ActivityLogResource::filteredUrl(['order_id' => ['value' => $record->id]])),
+
                 // بلاغ سائق مفتوح: الإدارة تقرر مصير الطلب
                 Action::make('resolveIssue')
                     ->authorize(fn () => \App\Support\Perm::can('orders.manage'))

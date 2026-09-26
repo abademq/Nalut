@@ -35,6 +35,7 @@ class OperationsSettings extends Page
         'alerts'   => 'التنبيهات الفورية',
         'points'   => 'نقاط الولاء',
         'carts'    => 'سلات الزبون المحفوظة',
+        'logs'     => 'سجل النشاط',
         'stock'    => 'المخزون',
         'delivery' => 'التوصيل والعمولة',
         'tracking' => 'التتبّع',

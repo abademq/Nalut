@@ -20,6 +20,9 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
 
+        // أحداث من داخل التطبيقات لسجل النشاط (دفعات)
+        Route::post('activity', [\App\Http\Controllers\Api\ActivityController::class, 'store'])->middleware('throttle:30,1');
+
         Route::get('me', [AuthController::class, 'me']);
         Route::put('me', [AuthController::class, 'updateProfile']);
         Route::post('logout', [AuthController::class, 'logout']);

@@ -18,3 +18,6 @@ Schedule::command('campaigns:send-due')->everyMinute()->withoutOverlapping();
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// سجل النشاط: مسح الأقدم من مدة الاحتفاظ
+Schedule::command('activity:prune')->dailyAt('03:30')->withoutOverlapping();

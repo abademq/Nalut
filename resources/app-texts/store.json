@@ -415,6 +415,11 @@
   "vars": null
  },
  {
+  "text": "من السجل",
+  "group": "order_history_screen",
+  "vars": null
+ },
+ {
   "text": "طُبعت الفاتورة",
   "group": "order_history_screen",
   "vars": null
