@@ -53,7 +53,7 @@ class DriverResource extends Resource
     /** عدد المتاحين توّا في شارة القائمة */
     public static function getNavigationBadge(): ?string
     {
-        $count = User::where('role', 'driver')
+        $count = User::withRole('driver')
             ->whereHas('driverProfile', fn ($q) => $q->where('is_online', true))
             ->count();
 
@@ -63,7 +63,7 @@ class DriverResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()
-            ->where('role', 'driver')
+            ->withRole('driver')
             ->with(['driverProfile.zones', 'wallet']);
     }
 

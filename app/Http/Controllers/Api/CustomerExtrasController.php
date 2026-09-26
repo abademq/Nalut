@@ -79,6 +79,77 @@ class CustomerExtrasController extends Controller
         return response()->json($carts->build($order->store, $lines));
     }
 
+    // ===== سلات الزبون المحفوظة =====
+
+    public function savedCarts(Request $request): JsonResponse
+    {
+        $carts = \App\Models\SavedCart::with('store')
+            ->where('user_id', $request->user()->id)
+            ->whereHas('store', fn ($q) => $q->where('is_active', true))
+            ->latest('updated_at')->get();
+
+        return response()->json([
+            'enabled' => (bool) Options::get('carts.saved_enabled'),
+            'max'     => (int) Options::get('carts.saved_max'),
+            'data'    => $carts->map->toApp()->values(),
+        ]);
+    }
+
+    public function saveCart(Request $request): JsonResponse
+    {
+        abort_unless((bool) Options::get('carts.saved_enabled'), 403, 'حفظ السلات موقف حالياً.');
+
+        $data = $request->validate([
+            'name'                 => ['required', 'string', 'max:60'],
+            'store_id'             => ['required', 'integer', 'exists:stores,id'],
+            'items'                => ['required', 'array', 'min:1', 'max:50'],
+            'items.*.product_id'   => ['required', 'integer'],
+            'items.*.quantity'     => ['required', 'integer', 'min:1', 'max:999'],
+            'items.*.note'         => ['nullable', 'string', 'max:200'],
+        ], [], ['name' => 'اسم السلة']);
+
+        $user = $request->user();
+        $max = (int) Options::get('carts.saved_max');
+
+        if (\App\Models\SavedCart::where('user_id', $user->id)->count() >= $max) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'name' => "وصلت للحد ($max سلات). امسح سلة قديمة وعاود.",
+            ]);
+        }
+
+        // الأصناف لازم تكون من نفس المتجر
+        $valid = Product::where('store_id', $data['store_id'])
+            ->whereIn('id', array_column($data['items'], 'product_id'))->pluck('id')->all();
+        $items = collect($data['items'])->filter(fn ($i) => in_array((int) $i['product_id'], $valid, true))
+            ->map(fn ($i) => ['product_id' => (int) $i['product_id'], 'quantity' => (int) $i['quantity'], 'note' => $i['note'] ?? null])
+            ->values()->all();
+
+        abort_if($items === [], 422, 'الأصناف مش من المتجر هذا.');
+
+        $cart = \App\Models\SavedCart::create([
+            'user_id' => $user->id, 'store_id' => $data['store_id'], 'name' => $data['name'], 'items' => $items,
+        ]);
+
+        return response()->json(['message' => 'تم حفظ السلة', 'data' => $cart->load('store')->toApp()], 201);
+    }
+
+    /** يرجع أصناف السلة بالأسعار والتوفّر الحالي — التطبيق يعبّي بيها السلة */
+    public function savedCart(Request $request, \App\Models\SavedCart $savedCart, CartBuilder $carts): JsonResponse
+    {
+        abort_unless($savedCart->user_id === $request->user()->id, 404);
+        $savedCart->touch();
+
+        return response()->json($carts->build($savedCart->store, $savedCart->lines()));
+    }
+
+    public function deleteSavedCart(Request $request, \App\Models\SavedCart $savedCart): JsonResponse
+    {
+        abort_unless($savedCart->user_id === $request->user()->id, 404);
+        $savedCart->delete();
+
+        return response()->json(['message' => 'تم مسح السلة']);
+    }
+
     public function readyCart(ReadyCart $readyCart, CartBuilder $carts): JsonResponse
     {
         abort_unless($readyCart->is_active && $readyCart->store?->is_active, 404);

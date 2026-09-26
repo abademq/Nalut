@@ -18,8 +18,9 @@ class UserInfolist
                 TextEntry::make('email')
                     ->label('Email address')
                     ->placeholder('-'),
-                TextEntry::make('role')
-                    ->badge(),
+                TextEntry::make('roles')
+                    ->label('الأدوار')
+                    ->getStateUsing(fn ($record) => $record->rolesLabel()),
                 IconEntry::make('is_active')
                     ->boolean(),
                 TextEntry::make('avatar')

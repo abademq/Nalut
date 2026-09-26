@@ -43,15 +43,16 @@ class UsersTable
                     ->searchable()
                     ->copyable(),
 
-                TextColumn::make('role')
-                    ->label('الدور')
+                TextColumn::make('roles')
+                    ->label('الأدوار')
                     ->badge()
-                    ->formatStateUsing(fn (UserRole $state) => $state->label())
-                    ->color(fn (UserRole $state) => match ($state) {
-                        UserRole::Admin    => 'danger',
-                        UserRole::Store    => 'warning',
-                        UserRole::Driver   => 'info',
-                        UserRole::Customer => 'gray',
+                    ->getStateUsing(fn (User $record) => $record->roleValues())
+                    ->formatStateUsing(fn ($state) => UserRole::tryFrom((string) $state)?->label() ?? $state)
+                    ->color(fn ($state) => match ((string) $state) {
+                        'admin'  => 'danger',
+                        'store'  => 'warning',
+                        'driver' => 'info',
+                        default  => 'gray',
                     }),
 
                 TextColumn::make('points_balance')
@@ -123,7 +124,11 @@ class UsersTable
                     ->label('الدور')
                     ->options(fn () => collect(UserRole::cases())
                         ->mapWithKeys(fn ($r) => [$r->value => $r->label()])
-                        ->all()),
+                        ->all())
+                    // يلقى الحساب حتى لو الدور إضافي مش أساسي
+                    ->query(fn ($query, array $data) => filled($data['value'] ?? null)
+                        ? $query->withRole($data['value'])
+                        : $query),
 
                 TrashedFilter::make()->label('المحذوفين'),
             ])
@@ -214,7 +219,7 @@ class UsersTable
                         ->label('تعديل النقاط')
                         ->icon('heroicon-o-star')
                         ->color('warning')
-                        ->visible(fn (User $record) => $record->role === UserRole::Customer)
+                        ->visible(fn (User $record) => $record->hasRole(UserRole::Customer))
                         ->modalDescription(fn (User $record) => 'الرصيد الحالي: '.$record->points_balance.' نقطة')
                         ->schema([
                             TextInput::make('points')->label('النقاط (+ زيادة · − خصم)')->numeric()->required()->integer(),
@@ -232,7 +237,7 @@ class UsersTable
                         ->label('اعتماد السائق')
                         ->icon('heroicon-o-check-badge')
                         ->color('success')
-                        ->visible(fn (User $record) => $record->role === UserRole::Driver
+                        ->visible(fn (User $record) => $record->hasRole(UserRole::Driver)
                             && $record->driverProfile
                             && ! $record->driverProfile->is_approved)
                         ->requiresConfirmation()
@@ -243,7 +248,7 @@ class UsersTable
 
                     Action::make('toggleActive')
                 ->authorize(fn ($record) => \App\Support\Perm::can('users.manage')
-                    && ($record->role !== \App\Enums\UserRole::Admin || \App\Support\Perm::isSuper()))
+                    && (! $record->hasRole(\App\Enums\UserRole::Admin) || \App\Support\Perm::isSuper()))
                         ->label(fn (User $record) => $record->is_active ? 'إيقاف الحساب' : 'تفعيل الحساب')
                         ->icon(fn (User $record) => $record->is_active ? 'heroicon-o-no-symbol' : 'heroicon-o-check')
                         ->color(fn (User $record) => $record->is_active ? 'danger' : 'success')

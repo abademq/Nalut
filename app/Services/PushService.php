@@ -20,16 +20,29 @@ class PushService
 {
     private const SCOPE = 'https://www.googleapis.com/auth/firebase.messaging';
 
-    public static function toUser(?User $user, string $title, string $body, array $data = []): void
+    /**
+     * $app: أي تطبيق يوصله الإشعار (customer|driver|store) — نفس الحساب ممكن يكون زبون وسائق.
+     * بدونه ناخذو الدور الأساسي للحساب.
+     */
+    public static function toUser(?User $user, string $title, string $body, array $data = [], ?string $app = null): bool
     {
-        if (! $user?->fcm_token) {
-            return;
+        if (! $user) {
+            return false;
         }
 
-        self::sendRaw($user->fcm_token, $title, $body, $data);
+        $app ??= $user->role?->value ?? 'customer';
+        $token = $user->pushTokenFor($app);
+
+        if (! $token) {
+            return false;
+        }
+
+        self::sendRaw($token, $title, $body, $data, $app);
+
+        return true;
     }
 
-    public static function sendRaw(string $token, string $title, string $body, array $data = []): void
+    public static function sendRaw(string $token, string $title, string $body, array $data = [], string $app = 'customer'): void
     {
         $projectId = config('services.fcm.project_id');
 
@@ -61,10 +74,8 @@ class PushService
                         'data'    => $stringData,
                         'android' => [
                             'priority'     => 'high',
-                            'notification' => [
-                                'channel_id' => 'orders',
-                                'sound'      => 'new_order',
-                            ],
+                            // القناة والنغمة حسب «أصوات الإشعارات» في لوحة التحكم
+                            'notification' => \App\Support\Sounds::android($app),
                         ],
                         'apns' => [
                             'payload' => [
@@ -83,6 +94,10 @@ class PushService
                 // التوكن صار غير صالح — نمسحه باش ما نحاولش فيه كل مرة
                 if (in_array($response->status(), [400, 404], true)) {
                     User::where('fcm_token', $token)->update(['fcm_token' => null]);
+                    User::whereNotNull('fcm_tokens')->whereRaw('CAST(fcm_tokens AS CHAR) LIKE ?', ['%'.$token.'%'])->get()
+                        ->each(fn (User $u) => $u->forceFill([
+                            'fcm_tokens' => array_filter($u->fcm_tokens ?? [], fn ($t) => $t !== $token) ?: null,
+                        ])->saveQuietly());
                 }
             }
         } catch (\Throwable $e) {

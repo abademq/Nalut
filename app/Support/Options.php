@@ -62,6 +62,12 @@ class Options
                 'label' => 'مهلة رد الزبون على «صنف مش متوفر» (دقيقة)',
                 'help'  => 'لو الزبون ما ردّش خلال المدة: الطلب يكمّل بدون الأصناف الناقصة (ولو ما بقى شي ينلغى).'],
 
+            // ===== سلات الزبون المحفوظة =====
+            'carts.saved_enabled' => ['type' => 'bool', 'default' => true, 'public' => true,
+                'label' => 'الزبون يقدر يحفظ سلته ويطلبها بعدين'],
+            'carts.saved_max' => ['type' => 'int', 'default' => 10, 'min' => 1, 'max' => 50, 'public' => true,
+                'label' => 'أقصى عدد سلات محفوظة لكل زبون'],
+
             // ===== نقاط الولاء =====
             'points.enabled' => ['type' => 'bool', 'default' => false, 'public' => true,
                 'label' => 'تفعيل نظام النقاط'],

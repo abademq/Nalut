@@ -170,7 +170,8 @@ class OrderService
                     $customer,
                     "طلب {$order->code}",
                     'استلمنا طلبك، بانتظار موافقة المتجر',
-                    ['type' => 'order_status', 'order_id' => (string) $order->id]
+                    ['type' => 'order_status', 'order_id' => (string) $order->id],
+                    'customer'
                 );
             }
 
@@ -558,7 +559,7 @@ class OrderService
         }
 
         // المتجر رفض الطلب
-        if ($to === OrderStatus::Cancelled && $actor?->role === \App\Enums\UserRole::Store) {
+        if ($to === OrderStatus::Cancelled && $actor && $order->store && $actor->id === $order->store->user_id) {
             AdminAlerts::send(
                 "المتجر رفض الطلب {$order->code}",
                 "{$order->store?->name}{$reason}",
@@ -577,7 +578,8 @@ class OrderService
                 $owner,
                 Texts::get('notify.store.new_order'),
                 Texts::get('notify.store.new_order_body', ['code' => $order->code]),
-                ['type' => 'new_order', 'order_id' => (string) $order->id]
+                ['type' => 'new_order', 'order_id' => (string) $order->id],
+                'store'
             );
         }
     }
@@ -598,11 +600,11 @@ class OrderService
         $title = Texts::get('notify.title', ['code' => $order->code]);
 
         if ($order->driver && NotificationSetting::isEnabled('driver', 'ready')) {
-            PushService::toUser($order->driver, $title, Texts::get('notify.driver.ready'), $data);
+            PushService::toUser($order->driver, $title, Texts::get('notify.driver.ready'), $data, 'driver');
         }
 
         if ($order->customer && NotificationSetting::isEnabled('customer', 'ready')) {
-            PushService::toUser($order->customer, $title, $this->customerBody($order, OrderStatus::Ready), $data);
+            PushService::toUser($order->customer, $title, $this->customerBody($order, OrderStatus::Ready), $data, 'customer');
         }
 
         return $order->fresh(['items', 'store', 'driver']);
@@ -620,19 +622,19 @@ class OrderService
 
         // ===== الزبون =====
         if ($order->customer && NotificationSetting::isEnabled('customer', $to->value)) {
-            PushService::toUser($order->customer, $title, $this->customerBody($order, $to), $data);
+            PushService::toUser($order->customer, $title, $this->customerBody($order, $to), $data, 'customer');
         }
 
         // ===== السائق المسند =====
         // ملاحظة: قبل الإسناد ما فيش سائق نبعتله، فالحالات الأولى
         // ما توصلش حتى لو مفتاحها مفتوح.
         if ($order->driver && NotificationSetting::isEnabled('driver', $to->value)) {
-            PushService::toUser($order->driver, $title, $this->driverBody($order, $to), $data);
+            PushService::toUser($order->driver, $title, $this->driverBody($order, $to), $data, 'driver');
         }
 
         // ===== المتجر =====
         if ($order->store?->owner && NotificationSetting::isEnabled('store', $to->value)) {
-            PushService::toUser($order->store->owner, $title, $this->storeBody($order, $to), $data);
+            PushService::toUser($order->store->owner, $title, $this->storeBody($order, $to), $data, 'store');
         }
 
         // ===== السائقين المتاحين: طلب جاهز للاستلام =====
@@ -683,7 +685,7 @@ class OrderService
      */
     private function notifyAvailableDrivers(Order $order): void
     {
-        $drivers = User::where('role', 'driver')
+        $drivers = User::withRole('driver')
             ->where('is_active', true)
             ->whereNotNull('fcm_token')
             ->whereHas('driverProfile', fn ($q) => $q
@@ -703,7 +705,7 @@ class OrderService
             PushService::toUser($driver, $title, $body, [
                 'type'     => 'order_available',
                 'order_id' => (string) $order->id,
-            ]);
+            ], 'driver');
         }
 
         $order->update(['drivers_notified_at' => now()]);

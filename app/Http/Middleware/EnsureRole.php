@@ -12,7 +12,7 @@ class EnsureRole
     {
         $user = $request->user();
 
-        if (! $user || ! in_array($user->role->value, $roles, true)) {
+        if (! $user || ! collect($roles)->contains(fn ($r) => $user->hasRole($r))) {
             return response()->json(['message' => 'غير مصرّح لك بهذا الإجراء.'], 403);
         }
 

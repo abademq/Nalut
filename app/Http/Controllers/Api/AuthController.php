@@ -95,7 +95,7 @@ class AuthController extends Controller
             $user = User::create([
                 'name'      => $data['name'],
                 'phone'     => $data['phone'],
-                'role'      => $data['role'] ?? UserRole::Customer->value,
+                'role'      => $data['role'] ?? ($this->app($request) === 'driver' ? 'driver' : UserRole::Customer->value),
                 'is_active' => true,
                 'password'  => isset($data['password'])
                     ? Hash::make($data['password'])
@@ -107,15 +107,18 @@ class AuthController extends Controller
             throw ValidationException::withMessages(['phone' => 'الحساب موقوف، تواصل مع الإدارة.']);
         }
 
+        $app = $this->app($request);
+        $this->ensureAppRole($user, $app);
+
         $user->forceFill([
             'phone_verified_at' => $user->phone_verified_at ?? now(),
             'last_seen_at'      => now(),
-            'fcm_token'         => $data['fcm_token'] ?? $user->fcm_token,
         ])->save();
+        $user->setPushToken($app, $data['fcm_token'] ?? null);
 
         return response()->json([
             'token' => $user->createToken('mobile')->plainTextToken,
-            'user'  => $this->userPayload($user),
+            'user'  => $this->userPayload($user, $app),
         ]);
     }
 
@@ -157,19 +160,19 @@ class AuthController extends Controller
             ]);
         }
 
-        if (! empty($data['fcm_token'])) {
-            $user->update(['fcm_token' => $data['fcm_token']]);
-        }
+        $app = $this->app($request);
+        $this->ensureAppRole($user, $app);
+        $user->setPushToken($app, $data['fcm_token'] ?? null);
 
         return response()->json([
             'token' => $user->createToken('app')->plainTextToken,
-            'user'  => $this->userPayload($user),
+            'user'  => $this->userPayload($user, $app),
         ]);
     }
 
     public function me(Request $request): JsonResponse
     {
-        return response()->json(['user' => $this->userPayload($request->user())]);
+        return response()->json(['user' => $this->userPayload($request->user(), $this->app($request))]);
     }
 
     public function updateProfile(Request $request): JsonResponse
@@ -181,13 +184,17 @@ class AuthController extends Controller
             'fcm_token' => ['nullable', 'string'],
         ]);
 
+        // توكن الإشعارات ينحفظ للتطبيق اللي بعته (زبون/سائق) — نفس الحساب ممكن يستعمل الزوز
+        $request->user()->setPushToken($this->app($request), $data['fcm_token'] ?? null);
+        unset($data['fcm_token']);
+
         // الحقول الفاضية ما تمسحش القيم الموجودة
         $request->user()->update(array_filter(
             $data,
             fn ($v) => $v !== null && $v !== ''
         ));
 
-        return response()->json(['user' => $this->userPayload($request->user()->fresh())]);
+        return response()->json(['user' => $this->userPayload($request->user()->fresh(), $this->app($request))]);
     }
 
     public function logout(Request $request): JsonResponse
@@ -197,7 +204,43 @@ class AuthController extends Controller
         return response()->json(['message' => 'تم تسجيل الخروج.']);
     }
 
-    private function userPayload(User $user): array
+    /** التطبيق اللي يطلب: X-App أو app — customer|driver|store */
+    private function app(Request $request): ?string
+    {
+        $app = $request->header('X-App') ?: $request->input('app');
+
+        return in_array($app, User::APPS, true) ? $app : null;
+    }
+
+    /**
+     * نفس الرقم يقدر يكون زبون وسائق ومتجر.
+     * تطبيق الزبون: أي حساب يدخل وياخذ دور زبون تلقائياً.
+     * السائق والمتجر: الدور يعطيه المدير من لوحة التحكم بس.
+     */
+    private function ensureAppRole(User $user, ?string $app): void
+    {
+        if (! $app || $user->hasRole($app)) {
+            if ($app === 'driver') {
+                $user->ensureDriverProfile();
+            }
+
+            return;
+        }
+
+        if ($app === UserRole::Customer->value) {
+            $user->addRole(UserRole::Customer);
+
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'phone' => $app === 'driver'
+                ? 'الحساب هذا مش مسجّل كسائق. تواصل مع الإدارة باش يضيفولك دور السائق.'
+                : 'الحساب هذا مش مسجّل كمتجر. تواصل مع الإدارة.',
+        ]);
+    }
+
+    private function userPayload(User $user, ?string $app = null): array
     {
         $user->loadMissing(['store', 'driverProfile']);
 
@@ -205,7 +248,9 @@ class AuthController extends Controller
             'id'       => $user->id,
             'name'     => $user->name,
             'phone'    => $user->phone,
-            'role'     => $user->role->value,
+            // الدور حسب التطبيق اللي داخل منه — والقائمة كاملة في roles
+            'role'     => $app && $user->hasRole($app) ? $app : $user->role->value,
+            'roles'    => $user->roleValues(),
             'avatar'   => $user->avatar ? asset('storage/'.$user->avatar) : null,
             'store_id' => $user->store?->id,
             'driver'   => $user->driverProfile ? [

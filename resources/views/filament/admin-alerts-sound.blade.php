@@ -1,6 +1,6 @@
 {{-- تنبيه فوري: صوت + إشعار المتصفح لما يوصل تنبيه جديد للإدارة --}}
 @auth
-@if (auth()->user()->role === \App\Enums\UserRole::Admin)
+@if (auth()->user()->hasRole(\App\Enums\UserRole::Admin))
 <script>
 (() => {
     if (window.__nalutAlerts) return;
@@ -9,7 +9,16 @@
     let lastId = null;
     let ready = false;
 
+    // الصوت من «أصوات الإشعارات» في لوحة التحكم — بدونه نغمة قصيرة
+    const soundUrl = @json(\App\Support\Sounds::url('admin'));
+    const audio = soundUrl ? new Audio(soundUrl) : null;
+
     function beep() {
+        if (audio) {
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+            return;
+        }
         try {
             const ctx = new (window.AudioContext || window.webkitAudioContext)();
             [0, 0.25].forEach((t) => {

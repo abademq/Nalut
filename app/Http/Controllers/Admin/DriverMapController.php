@@ -25,7 +25,7 @@ class DriverMapController extends Controller
             403
         );
 
-        $drivers = User::where('role', 'driver')
+        $drivers = User::withRole('driver')
             ->with(['driverProfile.zones', 'wallet'])
             ->get();
 

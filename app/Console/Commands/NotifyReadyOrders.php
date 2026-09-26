@@ -43,7 +43,7 @@ class NotifyReadyOrders extends Command
             return self::SUCCESS;
         }
 
-        $drivers = User::where('role', 'driver')
+        $drivers = User::withRole('driver')
             ->where('is_active', true)
             ->whereNotNull('fcm_token')
             ->whereHas('driverProfile', fn ($q) => $q
@@ -66,7 +66,8 @@ class NotifyReadyOrders extends Command
                     "{$order->store?->name} — أجرتك "
                         .number_format((float) $order->driver_earning, 2).' د.ل'
                         .' · '.number_format((float) $order->distance_km, 1).' كم',
-                    ['type' => 'order_available', 'order_id' => (string) $order->id]
+                    ['type' => 'order_available', 'order_id' => (string) $order->id],
+                    'driver'
                 );
 
                 $sent++;

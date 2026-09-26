@@ -60,6 +60,51 @@
   "vars": null
  },
  {
+  "text": "{product} من {store}",
+  "group": "extras",
+  "vars": "{product} {store}"
+ },
+ {
+  "text": "احفظ السلة",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "تلقاها في «سلاتي المحفوظة» وتطلبها بضغطة وقت ما تبي.",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "اسم السلة",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "مثلاً: عشاء الجمعة",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "إلغاء",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "اكتب اسم للسلة",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "تم حفظ السلة",
+  "group": "extras",
+  "vars": null
+ },
+ {
+  "text": "احفظ",
+  "group": "extras",
+  "vars": null
+ },
+ {
   "text": "توصيل نالوت",
   "group": "main",
   "vars": null
@@ -73,6 +118,16 @@
   "text": "إشعار في الخلفية: {messageId}",
   "group": "push",
   "vars": "{messageId}"
+ },
+ {
+  "text": "الطلبات ({tone})",
+  "group": "push",
+  "vars": "{tone}"
+ },
+ {
+  "text": "تحديثات حالة طلبك",
+  "group": "push",
+  "vars": null
  },
  {
   "text": "فشل تسجيل توكن الإشعارات: {value}",
@@ -286,6 +341,11 @@
  },
  {
   "text": "السلة فاضية",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
+  "text": "سلاتي المحفوظة",
   "group": "cart_screen",
   "vars": null
  },
@@ -770,11 +830,6 @@
   "vars": null
  },
  {
-  "text": "إلغاء",
-  "group": "order_tracking_screen",
-  "vars": null
- },
- {
   "text": "الطلب",
   "group": "order_tracking_screen",
   "vars": null
@@ -1050,7 +1105,47 @@
   "vars": null
  },
  {
+  "text": "مسح السلة؟",
+  "group": "saved_carts_screen",
+  "vars": null
+ },
+ {
+  "text": "نمسحو «{name}» من سلاتك المحفوظة؟",
+  "group": "saved_carts_screen",
+  "vars": "{name}"
+ },
+ {
+  "text": "امسح",
+  "group": "saved_carts_screen",
+  "vars": null
+ },
+ {
+  "text": "جهّز سلتك من أي متجر واضغط «احفظ السلة» فوق — تلقاها هني وتطلبها بضغطة.",
+  "group": "saved_carts_screen",
+  "vars": null
+ },
+ {
+  "text": "{count} صنف مش متوفر توّا — ينطلب الباقي",
+  "group": "saved_carts_screen",
+  "vars": "{count}"
+ },
+ {
+  "text": "{total} د.ل",
+  "group": "saved_carts_screen",
+  "vars": "{total}"
+ },
+ {
+  "text": "اطلبها",
+  "group": "saved_carts_screen",
+  "vars": null
+ },
+ {
   "text": "الصنف هذا مش متوفر توّا",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "شارك الصنف",
   "group": "store_screen",
   "vars": null
  },
@@ -1106,6 +1201,11 @@
  },
  {
   "text": "المتجر",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "شارك المتجر",
   "group": "store_screen",
   "vars": null
  },

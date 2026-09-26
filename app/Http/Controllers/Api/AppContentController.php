@@ -31,6 +31,8 @@ class AppContentController extends Controller
             // التعديلات بس: {النص الأصلي: النص الجديد}
             'texts'    => (object) Texts::overrides($app),
             'options'  => (object) Options::publicValues(),
+            // صوت الإشعارات من «أصوات الإشعارات»: النغمة (داخل التطبيق) ورابط الصوت الخاص
+            'sound'    => \App\Support\Sounds::forApp($app),
         ];
 
         if ($app === 'customer') {

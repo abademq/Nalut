@@ -66,7 +66,8 @@ class SubstitutionService
                 $order->customer,
                 Texts::get('notify.title', ['code' => $order->code]),
                 Texts::get('notify.customer.substitution', ['items' => $items->pluck('name')->implode('، '), 'minutes' => $minutes]),
-                ['type' => 'order_status', 'order_id' => (string) $order->id, 'status' => 'substitution']
+                ['type' => 'order_status', 'order_id' => (string) $order->id, 'status' => 'substitution'],
+                'customer'
             );
         }
 
@@ -135,7 +136,7 @@ class SubstitutionService
             if ($order->store?->owner) {
                 PushService::toUser($order->store->owner, Texts::get('notify.title', ['code' => $order->code]),
                     Texts::get('notify.store.substitution_continue'),
-                    ['type' => 'order_status', 'order_id' => (string) $order->id]);
+                    ['type' => 'order_status', 'order_id' => (string) $order->id], 'store');
             }
 
             return $order->fresh(['items', 'store', 'driver']);

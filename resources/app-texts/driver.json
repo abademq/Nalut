@@ -25,6 +25,16 @@
   "vars": "{messageId}"
  },
  {
+  "text": "الطلبات ({tone})",
+  "group": "push",
+  "vars": "{tone}"
+ },
+ {
+  "text": "إشعارات الطلبات المسندة والتحديثات",
+  "group": "push",
+  "vars": null
+ },
+ {
   "text": "فشل تسجيل توكن الإشعارات: {value}",
   "group": "push",
   "vars": "{value}"

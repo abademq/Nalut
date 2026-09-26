@@ -34,7 +34,7 @@ class CreateOrder extends CreateRecord
         return $schema->components([
             Select::make('customer_id')
                 ->label('الزبون')
-                ->options(fn () => User::where('role', 'customer')
+                ->options(fn () => User::withRole('customer')
                     ->where('is_active', true)
                     ->get()
                     ->mapWithKeys(fn ($u) => [$u->id => "{$u->name} — {$u->phone}"]))

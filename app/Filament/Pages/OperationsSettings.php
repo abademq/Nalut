@@ -34,6 +34,7 @@ class OperationsSettings extends Page
         'otp'      => 'رموز التحقق',
         'alerts'   => 'التنبيهات الفورية',
         'points'   => 'نقاط الولاء',
+        'carts'    => 'سلات الزبون المحفوظة',
         'stock'    => 'المخزون',
         'delivery' => 'التوصيل والعمولة',
         'tracking' => 'التتبّع',

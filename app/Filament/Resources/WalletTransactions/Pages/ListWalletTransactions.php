@@ -32,7 +32,7 @@ class ListWalletTransactions extends ListRecords
                             ->orderBy('name')
                             ->get()
                             ->mapWithKeys(fn ($u) => [
-                                $u->id => "{$u->name} — {$u->phone} ({$u->role->label()})",
+                                $u->id => "{$u->name} — {$u->phone} ({$u->rolesLabel()})",
                             ]))
                         ->searchable()
                         ->required()
@@ -82,7 +82,7 @@ class ListWalletTransactions extends ListRecords
                 ->schema([
                     Select::make('user_id')
                         ->label('الحساب')
-                        ->options(fn () => User::whereIn('role', ['store', 'driver'])
+                        ->options(fn () => User::where(fn ($query) => $query->withRole('store')->orWhere(fn ($w) => $w->withRole('driver')))
                             ->orderBy('name')
                             ->get()
                             ->mapWithKeys(fn ($u) => [

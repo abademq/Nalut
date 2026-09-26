@@ -13,7 +13,7 @@ class AlertsController extends Controller
     public function poll(Request $request): JsonResponse
     {
         $user = $request->user();
-        abort_unless($user && $user->role === UserRole::Admin, 403);
+        abort_unless($user && $user->hasRole(UserRole::Admin), 403);
 
         $latest = $user->unreadNotifications()->latest()->first();
 

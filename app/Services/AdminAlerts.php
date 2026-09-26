@@ -29,7 +29,7 @@ class AdminAlerts
 
         try {
             // كل إداري يشوف الطلبات
-            $admins = User::where('role', UserRole::Admin->value)->where('is_active', true)->get()
+            $admins = User::withRole(UserRole::Admin)->where('is_active', true)->get()
                 ->filter(fn (User $u) => $u->hasPermission('orders.view'));
 
             if ($admins->isNotEmpty()) {

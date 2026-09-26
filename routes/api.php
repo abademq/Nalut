@@ -58,6 +58,10 @@ Route::prefix('v1')->group(function () {
             Route::post('orders/{order}/reorder', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'reorder']);
             Route::post('orders/{order}/substitution', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'substitution']);
             Route::get('ready-carts/{readyCart}', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'readyCart']);
+            Route::get('saved-carts', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'savedCarts']);
+            Route::post('saved-carts', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'saveCart']);
+            Route::get('saved-carts/{savedCart}', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'savedCart']);
+            Route::delete('saved-carts/{savedCart}', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'deleteSavedCart']);
             Route::get('points', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'points']);
             Route::post('points/convert', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'convertPoints']);
         });

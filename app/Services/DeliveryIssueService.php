@@ -76,7 +76,8 @@ class DeliveryIssueService
                         $order->customer,
                         Texts::get('notify.title', ['code' => $order->code]),
                         Texts::get('notify.customer.under_review'),
-                        ['type' => 'order_status', 'order_id' => (string) $order->id, 'status' => 'review']
+                        ['type' => 'order_status', 'order_id' => (string) $order->id, 'status' => 'review'],
+                        'customer'
                     );
                 }
             } else {
@@ -128,7 +129,8 @@ class DeliveryIssueService
             match ($resolution) {
                 'continue'  => $issue->driver && PushService::toUser(
                     $issue->driver, Texts::get('notify.title', ['code' => $order->code]), Texts::get('notify.driver.review_continue'),
-                    ['type' => 'order_status', 'order_id' => (string) $order->id]
+                    ['type' => 'order_status', 'order_id' => (string) $order->id],
+                    'driver'
                 ),
                 'reassign'  => $this->reassign($order, $admin, $reason),
                 'failed'    => $this->orders->transition($order, OrderStatus::Failed, $admin, ['reason' => $reason, 'force' => true]),
@@ -150,7 +152,7 @@ class DeliveryIssueService
         if ($old) {
             PushService::toUser($old, Texts::get('notify.title', ['code' => $order->code]), Texts::get('notify.driver.reassigned_away'), [
                 'type' => 'order_status', 'order_id' => (string) $order->id,
-            ]);
+            ], 'driver');
         }
     }
 

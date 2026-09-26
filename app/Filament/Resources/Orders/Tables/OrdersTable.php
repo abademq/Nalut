@@ -195,7 +195,7 @@ class OrdersTable
 
                         Select::make('driver_id')
                             ->label('السائق')
-                            ->options(fn () => User::where('role', 'driver')
+                            ->options(fn () => User::withRole('driver')
                                 ->where('is_active', true)
                                 ->pluck('name', 'id'))
                             ->searchable()

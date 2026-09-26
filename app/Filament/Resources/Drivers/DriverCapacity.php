@@ -69,7 +69,7 @@ class DriverCapacity
             ->label('إعدادات الطلبات والمناطق')
             ->icon('heroicon-o-adjustments-horizontal')
             ->color('info')
-            ->visible(fn (User $record) => $record->role === UserRole::Driver && $record->driverProfile)
+            ->visible(fn (User $record) => $record->hasRole(UserRole::Driver) && $record->driverProfile)
             ->fillForm(fn (User $record) => [
                 'zone_ids'          => $record->driverProfile->zones()->pluck('delivery_zones.id')->all(),
                 'max_active_orders' => $record->driverProfile->max_active_orders,

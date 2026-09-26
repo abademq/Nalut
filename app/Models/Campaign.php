@@ -67,10 +67,12 @@ class Campaign extends Model
         $role = $this->channel === 'push' ? ($this->target_role ?: 'customer') : 'customer';
 
         $q = User::query()
-            ->where('role', $role)
+            ->withRole($role)
             ->where('is_active', true)
             ->where('marketing_opt_out', false)
-            ->when($this->channel === 'push', fn ($w) => $w->whereNotNull('fcm_token'), fn ($w) => $w->whereNotNull('phone'));
+            ->when($this->channel === 'push',
+                fn ($w) => $w->where(fn ($t) => $t->whereNotNull('fcm_tokens')->orWhereNotNull('fcm_token')),
+                fn ($w) => $w->whereNotNull('phone'));
 
         // السائقين والمتاجر: الكل بس
         if ($role !== 'customer') {
@@ -149,14 +151,17 @@ class Campaign extends Model
             'context_id' => $this->id, 'created_at' => now()];
 
         try {
-            \App\Services\PushService::toUser(
+            $sent = \App\Services\PushService::toUser(
                 $user,
                 \App\Support\Texts::fill((string) $this->push_title, $vars),
                 \App\Support\Texts::fill((string) $this->push_body, $vars),
-                array_filter(['type' => 'promo', 'campaign_id' => (string) $this->id, 'link' => $this->push_link])
+                array_filter(['type' => 'promo', 'campaign_id' => (string) $this->id, 'link' => $this->push_link]),
+                $this->target_role ?: 'customer'
             );
 
-            return MessageLog::create($log + ['status' => 'sent']);
+            return MessageLog::create($log + ($sent
+                ? ['status' => 'sent']
+                : ['status' => 'failed', 'error' => 'ما عندوش التطبيق هذا (ما فيش توكن إشعارات)']));
         } catch (\Throwable $e) {
             return MessageLog::create($log + ['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 500)]);
         }

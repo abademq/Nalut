@@ -21,7 +21,7 @@ class StoreForm
             ->components([
                 Select::make('user_id')
                     ->label('صاحب المتجر')
-                    ->options(fn () => User::where('role', 'store')->pluck('name', 'id'))
+                    ->options(fn () => User::withRole('store')->pluck('name', 'id'))
                     ->searchable()
                     ->required()
                     ->helperText('لازم يكون حساب دوره «متجر»'),

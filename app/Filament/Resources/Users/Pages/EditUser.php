@@ -22,4 +22,10 @@ class EditUser extends EditRecord
             RestoreAction::make(),
         ];
     }
+
+    /** دور سائق جديد؟ ملف السائق ينشأ (يستنى «اعتماد السائق») */
+    protected function afterSave(): void
+    {
+        $this->record->ensureDriverProfile();
+    }
 }

@@ -25,7 +25,7 @@ class WalletTransactionsTable
                 TextColumn::make('wallet.user.name')
                     ->label('الحساب')
                     ->searchable()
-                    ->description(fn (WalletTransaction $record) => $record->wallet?->user?->role?->label()),
+                    ->description(fn (WalletTransaction $record) => $record->wallet?->user?->rolesLabel()),
 
                 TextColumn::make('type')
                     ->label('نوع الحركة')

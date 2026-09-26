@@ -20,7 +20,7 @@ class DriverController extends Controller
 
     private function profile(Request $request)
     {
-        $profile = $request->user()->driverProfile ?? abort(403, 'ملف السائق غير موجود.');
+        $profile = $request->user()->ensureDriverProfile() ?? abort(403, 'ملف السائق غير موجود.');
         abort_unless($profile->is_approved, 403, 'حسابك لسه ما تمش اعتماده من الإدارة.');
 
         return $profile;

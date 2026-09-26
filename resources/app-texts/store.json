@@ -980,12 +980,12 @@
   "vars": "{count}"
  },
  {
-  "text": "عرض الكل",
+  "text": "عرض كل الأصناف",
   "group": "products_tab",
   "vars": null
  },
  {
-  "text": "عرضهم بس",
+  "text": "عرض الأصناف هذي بس",
   "group": "products_tab",
   "vars": null
  },
@@ -1020,22 +1020,22 @@
   "vars": null
  },
  {
-  "text": "خلص من المخزن — مخفي عن الزبائن لين تعبّيه",
+  "text": "خلص من المخزن",
   "group": "products_tab",
   "vars": null
  },
  {
-  "text": "المخزون صفر",
-  "group": "products_tab",
-  "vars": null
- },
- {
-  "text": "قرّب يخلص — باقي {qty} بس",
+  "text": "قرّب يخلص — باقي {qty}",
   "group": "products_tab",
   "vars": "{qty}"
  },
  {
-  "text": "عبّي",
+  "text": "مخفي عن الزبائن لين تزيد الكمية. اضغط هني باش تعبّيه.",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "اضغط هني باش تزيد الكمية.",
   "group": "products_tab",
   "vars": null
  },

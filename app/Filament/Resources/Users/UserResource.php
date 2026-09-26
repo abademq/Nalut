@@ -49,7 +49,7 @@ class UserResource extends Resource
     public static function canEdit($record): bool
     {
         return Perm::can('users.manage')
-            && ($record->role !== UserRole::Admin || Perm::isSuper());
+            && (! $record->hasRole(UserRole::Admin) || Perm::isSuper());
     }
 
     public static function canDelete($record): bool
