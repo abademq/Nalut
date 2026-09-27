@@ -12,7 +12,6 @@ use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -71,9 +70,20 @@ class ProductsTable
                     ->placeholder('بدون حد')
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                IconColumn::make('is_available')
-                    ->label('متوفر')
-                    ->boolean(),
+                // حالة وحدة واضحة بدل «متوفر ✓/✗»: متوفر · قرّب يخلص · نفد (يرجع مع الكمية) · موقوف (بالإيد)
+                TextColumn::make('state')
+                    ->label('الحالة')
+                    ->badge()
+                    ->state(fn (Product $record) => $record->state())
+                    ->formatStateUsing(fn ($state) => Product::STATE_LABELS[$state] ?? $state)
+                    ->color(fn ($state) => match ($state) {
+                        'available' => 'success', 'low' => 'warning', 'sold_out' => 'danger', default => 'gray',
+                    })
+                    ->tooltip(fn (Product $record) => match ($record->state()) {
+                        'sold_out' => 'الكمية صفر — يتفتح لحاله أول ما تزيد الكمية',
+                        'stopped' => 'مقفول بالإيد — يقعد مقفول لين تفتحه',
+                        default => null,
+                    }),
             ])
             ->filters([
                 SelectFilter::make('store_id')
@@ -116,7 +126,7 @@ class ProductsTable
                     }),
 
                 Action::make('toggleAvailable')
-                    ->label(fn (Product $record) => $record->is_available ? 'إيقاف' : 'إتاحة')
+                    ->label(fn (Product $record) => $record->is_available ? 'إيقاف' : 'فتح للطلب')
                     ->icon(fn (Product $record) => $record->is_available ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
                     ->color(fn (Product $record) => $record->is_available ? 'gray' : 'success')
                     ->action(function (Product $record) {

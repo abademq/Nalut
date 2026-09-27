@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Options;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -95,6 +96,42 @@ class Product extends Model
     {
         return (bool) $this->track_stock && (int) $this->stock_quantity <= 0;
     }
+
+    /**
+     * حالة المنتج — مرجع واحد للّوحة والتطبيقات والموقع:
+     *
+     *   available  متوفر
+     *   low        متوفر لكن الكمية قرّبت تخلص (تحت «تنبيه عند الكمية»)
+     *   sold_out   نفد: يتتبّع كمية ووصلت صفر — يتفتح لحاله أول ما تنضاف كمية
+     *   stopped    موقوف: المتجر (أو الإدارة) قفله بإيده — يقعد مقفول لين يفتحوه، حتى لو فيه كمية
+     */
+    public function state(): string
+    {
+        if ($this->isOutOfStock()) {
+            return 'sold_out';
+        }
+        if (! $this->is_available) {
+            return 'stopped';
+        }
+        if ($this->track_stock && (int) $this->stock_quantity <= $this->lowStockLevel()) {
+            return 'low';
+        }
+
+        return 'available';
+    }
+
+    /** «قرّب يخلص» تحت الرقم هذا: تنبيه المنتج، ولو فاضي الإعداد العام */
+    public function lowStockLevel(): int
+    {
+        return (int) ($this->low_stock_alert ?? rescue(fn () => Options::get('stock.low_label_at'), 5, false));
+    }
+
+    public const STATE_LABELS = [
+        'available' => 'متوفر',
+        'low' => 'قرّب يخلص',
+        'sold_out' => 'نفد',
+        'stopped' => 'موقوف',
+    ];
 
     public const OUT_OF_STOCK_MESSAGE = 'المنتج هذا خلص. زيد كمية جديدة أول باش تقدر تفتحه للطلب.';
 

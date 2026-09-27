@@ -18,6 +18,11 @@ class OrderResource extends JsonResource
         $viewer = OrderMoney::viewer($request);
 
         if (! in_array($viewer, ['store', 'driver'], true)) {
+            // الطلب خلص (وصل أو انلغى): رقم السائق ما يقعدش عند الزبون
+            if ($viewer === 'customer' && $this->status->isFinal() && is_array($data['driver'] ?? null)) {
+                $data['driver']['phone'] = null;
+            }
+
             return $data;
         }
 

@@ -393,11 +393,14 @@ function productCard(p, storeOpen) {
   const off = !p.is_available;
   return `<div class="product ${off ? 'off' : ''}" data-product="${p.id}">
     <div class="ph">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : '🍽️'}
-      ${off ? `<span class="tag ${p.sold_out ? '' : 'grey'}">${p.sold_out ? 'نفد' : 'موقوف'}</span>` : ''}</div>
+      ${off ? `<span class="tag ${p.sold_out ? '' : 'grey'}">${p.sold_out ? 'نفد' : 'مش متوفر'}</span>` : ''}</div>
     <div class="pinfo">
       <div class="n">${esc(p.name)}</div>
       ${p.description ? `<div class="d">${esc(p.description)}</div>` : ''}
-      ${p.options?.length && !off ? '<div class="tiny" style="color:var(--ok)">فيه إضافات</div>' : ''}
+      ${p.sold_out ? '<div class="tiny" style="color:var(--err)">نفد — تقدر تشوف التفاصيل والصور</div>'
+        : off ? '<div class="tiny muted">مش متوفر توّا</div>'
+          : p.state === 'low' && p.stock_quantity != null ? `<div class="tiny" style="color:var(--warn);font-weight:700">باقي ${p.stock_quantity} بس</div>`
+            : p.options?.length ? '<div class="tiny" style="color:var(--ok)">فيه إضافات</div>' : ''}
       <div class="bottom">
         <div><span class="price">${money(effPrice(p))}</span> ${hasDiscount(p) ? `<span class="strike">${num(p.price).toFixed(2)}</span>` : ''}</div>
         ${!off && storeOpen ? `<div class="row" style="gap:6px">${q ? `<span class="qtybadge">×${q}</span>` : ''}<button class="addbtn" aria-label="أضف">+</button></div>` : ''}

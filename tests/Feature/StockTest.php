@@ -134,4 +134,30 @@ class StockTest extends TestCase
         $this->postJson('/api/v1/store/products', ['name' => 'x', 'price' => 5, 'track_stock' => true, 'stock_quantity' => 0, 'is_available' => true])
             ->assertStatus(422);
     }
+
+    public function test_product_states_are_clear(): void
+    {
+        $p = $this->product->fresh(); // بكمية 2
+        $p->update(['low_stock_alert' => 2]);
+        $this->assertSame('low', $p->fresh()->state());
+
+        $p->update(['stock_quantity' => 10]);
+        $this->assertSame('available', $p->fresh()->state());
+
+        // موقوف بالإيد: يقعد موقوف حتى مع كمية
+        $p->update(['is_available' => false]);
+        $this->assertSame('stopped', $p->fresh()->state());
+        $p->update(['stock_quantity' => 20]);
+        $this->assertSame('stopped', $p->fresh()->state());
+
+        // نفد: الكمية صفر — حتى لو كان موقوف قبلها
+        $p->update(['stock_quantity' => 0]);
+        $this->assertSame('sold_out', $p->fresh()->state());
+
+        // منتج بدون تتبّع: يا متوفر يا موقوف
+        $q = $this->store->products()->create(['name' => 'قهوة', 'price' => 3, 'is_available' => true]);
+        $this->assertSame('available', $q->state());
+        $q->update(['is_available' => false]);
+        $this->assertSame('stopped', $q->fresh()->state());
+    }
 }

@@ -196,4 +196,17 @@ class SettlementsTest extends TestCase
         $o->update(['is_paid' => true]);
         $this->assertSame(0.0, OrderMoney::cashToCollect($o->fresh()));
     }
+
+    public function test_customer_does_not_see_driver_phone_after_order_ends(): void
+    {
+        $o = $this->delivered('P1');
+        $o->update(['status' => OrderStatus::PickedUp, 'delivered_at' => null]);
+        $this->actingAs($this->customer, 'sanctum')->getJson("/api/v1/orders/{$o->id}")
+            ->assertJsonPath('data.driver.phone', $this->driver->phone);
+
+        $o->update(['status' => OrderStatus::Delivered]);
+        $this->getJson("/api/v1/orders/{$o->id}")->assertJsonPath('data.driver.phone', null)
+            ->assertJsonPath('data.driver.name', $this->driver->name);
+        $this->assertNull(collect($this->getJson('/api/v1/orders')->json('data'))->firstWhere('id', $o->id)['driver']['phone'] ?? null);
+    }
 }

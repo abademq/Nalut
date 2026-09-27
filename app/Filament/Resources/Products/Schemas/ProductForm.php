@@ -81,7 +81,8 @@ class ProductForm
                     // منتج بكمية وخلص: يتفتح تلقائياً أول ما تزيد الكمية
                     ->disabled(fn ($get) => $get('track_stock') && (int) $get('stock_quantity') <= 0)
                     ->helperText(fn ($get) => $get('track_stock') && (int) $get('stock_quantity') <= 0
-                        ? 'الكمية صفر — زيد الكمية والمنتج يتفتح تلقائياً.' : null)
+                        ? 'نفد: الكمية صفر — زيد الكمية والمنتج يتفتح تلقائياً.'
+                        : 'مطفي = «موقوف»: يبان للزبائن «مش متوفر» ويقعد مقفول لين تفتحه أنت.')
                     ->columnSpanFull(),
 
                 // ===== المخزون =====

@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\OrderStatus;
-use App\Enums\UserRole;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -43,14 +42,15 @@ class SubstitutionService
             foreach ($items as $item) {
                 $item->update(['is_unavailable' => true]);
 
-                // الصنف يتقفل تلقائياً — ما حدش ثاني يطلبه لين المتجر يرجّعه
+                // المتجر قال «مش متوفر» = الصنف يولّي «موقوف» (ما حدش ثاني يطلبه) لين المتجر يفتحه —
+                // الكمية المحجوزة ترجع للمخزون عادي لو الزبون كمّل بدونه
                 if ($item->product_id) {
                     Product::whereKey($item->product_id)->update(['is_available' => false]);
                 }
             }
 
             $order->update([
-                'awaiting_customer_at'     => now(),
+                'awaiting_customer_at' => now(),
                 'substitution_deadline_at' => now()->addMinutes($minutes),
             ]);
 
@@ -115,15 +115,15 @@ class SubstitutionService
             }
 
             $order->update([
-                'subtotal'                 => $subtotal,
-                'discount'                 => $discount,
-                'points_discount'          => $pointsDiscount,
-                'total'                    => $total,
-                'wallet_paid'              => $walletPaid,
-                'is_paid'                  => $walletPaid >= $total ? true : $order->is_paid,
-                'commission_amount'        => $commission,
-                'store_earning'            => round($subtotal - $commission, 2),
-                'awaiting_customer_at'     => null,
+                'subtotal' => $subtotal,
+                'discount' => $discount,
+                'points_discount' => $pointsDiscount,
+                'total' => $total,
+                'wallet_paid' => $walletPaid,
+                'is_paid' => $walletPaid >= $total ? true : $order->is_paid,
+                'commission_amount' => $commission,
+                'store_earning' => round($subtotal - $commission, 2),
+                'awaiting_customer_at' => null,
                 'substitution_deadline_at' => null,
             ]);
 

@@ -1270,7 +1270,7 @@
   "vars": null
  },
  {
-  "text": "أوقفه لمّا يخلص مؤقتاً",
+  "text": "مطفي = «موقوف»: الزبائن يشوفوه «مش متوفر» لين تفتحه أنت",
   "group": "product_form_screen",
   "vars": null
  },
@@ -1450,6 +1450,16 @@
   "vars": null
  },
  {
+  "text": "نفد — يتفتح لحاله لما تزيد الكمية",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "موقوف — أنت قفلته، يرجع لما تفتحه",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
   "text": "{effectivePrice} د.ل",
   "group": "products_tab",
   "vars": "{effectivePrice}"
@@ -1463,6 +1473,16 @@
   "text": "{n} مجموعة إضافات",
   "group": "products_tab",
   "vars": "{n}"
+ },
+ {
+  "text": "مفتوح",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "مقفول",
+  "group": "products_tab",
+  "vars": null
  },
  {
   "text": "تعديل",
