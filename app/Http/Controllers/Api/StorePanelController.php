@@ -250,6 +250,10 @@ class StorePanelController extends Controller
         [$data['images']] = $this->resolveImages($request, [], $store->id);
         unset($data['image'], $data['remove_images'], $data['main_image']);
 
+        if (($data['is_available'] ?? true) && ($data['track_stock'] ?? false) && (int) ($data['stock_quantity'] ?? 0) <= 0) {
+            throw ValidationException::withMessages(['stock_quantity' => 'اكتب الكمية المتوفرة (أكثر من صفر) أو طفّي «تتبّع الكمية».']);
+        }
+
         $product = $store->products()->create($data);
 
         return response()->json(['data' => new ProductResource($product)], 201);
@@ -278,6 +282,11 @@ class StorePanelController extends Controller
         unset($data['image'], $data['images'], $data['remove_images'], $data['main_image']);
 
         $product->fill(array_filter($data, fn ($v) => ! is_null($v)));
+
+        // يبي يفتحه وهو خالص: لازم كمية جديدة
+        if ($request->boolean('is_available') && $product->isOutOfStock()) {
+            throw ValidationException::withMessages(['is_available' => Product::OUT_OF_STOCK_MESSAGE]);
+        }
 
         // القسم لازم يقبل null: «بدون قسم» = نفك المنتج من قسمه
         if ($request->exists('menu_section_id')) {

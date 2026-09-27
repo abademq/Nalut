@@ -119,7 +119,15 @@ class ProductsTable
                     ->label(fn (Product $record) => $record->is_available ? 'إيقاف' : 'إتاحة')
                     ->icon(fn (Product $record) => $record->is_available ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
                     ->color(fn (Product $record) => $record->is_available ? 'gray' : 'success')
-                    ->action(fn (Product $record) => $record->update(['is_available' => ! $record->is_available])),
+                    ->action(function (Product $record) {
+                        // خالص: ما يتفتحش إلا بعد «تعبئة المخزون»
+                        if (! $record->is_available && $record->isOutOfStock()) {
+                            Notification::make()->title('المنتج خلص')->body(Product::OUT_OF_STOCK_MESSAGE)->warning()->send();
+
+                            return;
+                        }
+                        $record->update(['is_available' => ! $record->is_available]);
+                    }),
 
                 ViewAction::make()->label('عرض'),
                 EditAction::make()->label('تعديل'),

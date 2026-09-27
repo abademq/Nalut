@@ -19,6 +19,7 @@ class StockTest extends TestCase
     use RefreshDatabase;
 
     private Store $store;
+
     private Product $product;
 
     protected function setUp(): void
@@ -106,5 +107,31 @@ class StockTest extends TestCase
         $this->getJson('/api/v1/store/products')->assertOk()
             ->assertJsonPath('data.0.track_stock', true)
             ->assertJsonPath('data.0.stock_quantity', 2);
+    }
+
+    public function test_sold_out_product_opens_only_with_new_stock(): void
+    {
+        $owner = $this->store->owner ?? User::find($this->store->user_id);
+        $this->product->update(['stock_quantity' => 0]);
+        $p = $this->product->fresh();
+        $this->assertFalse($p->is_available);
+
+        // من الكود أو اللوحة: ما يتفتحش
+        $p->update(['is_available' => true]);
+        $this->assertFalse($p->fresh()->is_available);
+
+        // من تطبيق المتجر: رسالة واضحة
+        Sanctum::actingAs($owner);
+        $this->postJson("/api/v1/store/products/{$p->id}", ['is_available' => true])
+            ->assertStatus(422)->assertJsonPath('errors.is_available.0', Product::OUT_OF_STOCK_MESSAGE);
+
+        // كمية جديدة: يتفتح
+        $this->postJson("/api/v1/store/products/{$p->id}", ['stock_quantity' => 5, 'is_available' => true])->assertOk()
+            ->assertJsonPath('data.is_available', true);
+        $this->assertNull($p->fresh()->sold_out_at);
+
+        // منتج جديد بكمية صفر ومفتوح: مرفوض
+        $this->postJson('/api/v1/store/products', ['name' => 'x', 'price' => 5, 'track_stock' => true, 'stock_quantity' => 0, 'is_available' => true])
+            ->assertStatus(422);
     }
 }

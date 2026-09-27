@@ -20,13 +20,13 @@ class Product extends Model
     protected function casts(): array
     {
         return [
-            'price'          => 'float',
+            'price' => 'float',
             'discount_price' => 'float',
-            'is_available'   => 'boolean',
-            'track_stock'    => 'boolean',
+            'is_available' => 'boolean',
+            'track_stock' => 'boolean',
             'stock_quantity' => 'integer',
-            'images'         => 'array',
-            'sold_out_at'    => 'datetime',
+            'images' => 'array',
+            'sold_out_at' => 'datetime',
         ];
     }
 
@@ -54,6 +54,12 @@ class Product extends Model
                 $p->sold_out_at = null;
             } elseif ($p->sold_out_at && $p->isDirty('is_available') && $p->is_available) {
                 $p->sold_out_at = null;
+            }
+
+            // منتج بكمية وخلص: ما يتفتحش إلا بكمية جديدة (من أي مكان: التطبيق، اللوحة، أو الكود)
+            if ($p->isOutOfStock() && $p->is_available) {
+                $p->is_available = false;
+                $p->sold_out_at ??= now();
             }
         });
     }
@@ -83,6 +89,14 @@ class Product extends Model
     {
         return (float) ($this->discount_price ?: $this->price);
     }
+
+    /** يتتبّع الكمية وخلص — ما يتفتحش للطلب لين تنضاف كمية */
+    public function isOutOfStock(): bool
+    {
+        return (bool) $this->track_stock && (int) $this->stock_quantity <= 0;
+    }
+
+    public const OUT_OF_STOCK_MESSAGE = 'المنتج هذا خلص. زيد كمية جديدة أول باش تقدر تفتحه للطلب.';
 
     /** هل يقدر الزبون يطلب الكمية هذي؟ */
     public function canOrder(int $quantity): bool

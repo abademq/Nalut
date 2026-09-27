@@ -78,6 +78,10 @@ class ProductForm
                 Toggle::make('is_available')
                     ->label('متوفر للطلب')
                     ->default(true)
+                    // منتج بكمية وخلص: يتفتح تلقائياً أول ما تزيد الكمية
+                    ->disabled(fn ($get) => $get('track_stock') && (int) $get('stock_quantity') <= 0)
+                    ->helperText(fn ($get) => $get('track_stock') && (int) $get('stock_quantity') <= 0
+                        ? 'الكمية صفر — زيد الكمية والمنتج يتفتح تلقائياً.' : null)
                     ->columnSpanFull(),
 
                 // ===== المخزون =====
@@ -91,6 +95,7 @@ class ProductForm
 
                 TextInput::make('stock_quantity')
                     ->label('الكمية المتوفرة')
+                    ->live(onBlur: true)
                     ->numeric()
                     ->default(0)
                     ->minValue(0)

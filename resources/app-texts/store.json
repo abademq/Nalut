@@ -1265,6 +1265,11 @@
   "vars": null
  },
  {
+  "text": "الكمية صفر — اكتب كمية جديدة تحت والمنتج يتفتح تلقائياً",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
   "text": "أوقفه لمّا يخلص مؤقتاً",
   "group": "product_form_screen",
   "vars": null
@@ -1313,6 +1318,31 @@
   "text": "إضافة المنتج",
   "group": "product_form_screen",
   "vars": null
+ },
+ {
+  "text": "المنتج خلص. زيد كمية جديدة باش يتفتح للطلب.",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "الكمية توّا {qty}. كم تبي تزيد؟",
+  "group": "products_tab",
+  "vars": "{qty}"
+ },
+ {
+  "text": "الكمية المضافة",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "زيد",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "الكمية توّا {qty} — المنتج مفتوح للطلب",
+  "group": "products_tab",
+  "vars": "{qty}"
  },
  {
   "text": "حذف المنتج",
