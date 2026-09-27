@@ -105,6 +105,166 @@
   "vars": null
  },
  {
+  "text": "اكتب اسم لكل مجموعة إضافات.",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "المجموعة «{name}» فاضية — ضيف عنصر واحد على الأقل.",
+  "group": "options_editor",
+  "vars": "{name}"
+ },
+ {
+  "text": "سعر «{name}» مش صحيح.",
+  "group": "options_editor",
+  "vars": "{name}"
+ },
+ {
+  "text": "إضافات",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "الزبون يختار أكثر من وحدة — زيادة صوص، سيخ كباب إضافي...",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "خيار واحد",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "الزبون يختار وحدة بس — الحجم، نوع الخبز...",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "الحجم",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "عادي",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "الإضافات",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "الإضافات والخيارات",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "مثلاً: زيادة صوص (مجاناً، مرة وحدة) · سيخ كباب إضافي (5 د.ل، لحد 3) · الحجم (صغير/كبير).",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "ضيف مجموعة إضافات",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "اسم المجموعة",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "حذف المجموعة",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "أكثر من وحدة",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "وحدة بس",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "إجباري",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "الزبون لازم يختار (مثل الحجم)",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "لازم يختار وحدة على الأقل",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "أقصى عدد إضافات مختلفة",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "عنصر جديد",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "الاسم",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "كبير",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "زيادة صوص",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "السعر",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "مجاناً",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "د.ل",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "يتزاد لحد",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "(مرة وحدة)",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "مرات",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
+  "text": "متوفر",
+  "group": "options_editor",
+  "vars": null
+ },
+ {
   "text": "ما نقدرش نتصل بالطابعة. تأكد إنها مقترنة ومفتوحة.",
   "group": "receipt_service",
   "vars": null
@@ -226,11 +386,6 @@
  },
  {
   "text": "بطاقة مصرفية",
-  "group": "receipt_widget",
-  "vars": null
- },
- {
-  "text": "د.ل",
   "group": "receipt_widget",
   "vars": null
  },
@@ -995,11 +1150,6 @@
   "vars": null
  },
  {
-  "text": "السعر",
-  "group": "product_form_screen",
-  "vars": null
- },
- {
   "text": "السعر (د.ل) *",
   "group": "product_form_screen",
   "vars": null
@@ -1145,7 +1295,7 @@
   "vars": null
  },
  {
-  "text": "{count} صنف خلص ومخفي عن الزبائن",
+  "text": "{count} صنف خلص — يبان للزبائن «نفد» وما يتطلبش",
   "group": "products_tab",
   "vars": "{count}"
  },
@@ -1190,6 +1340,11 @@
   "vars": "{qty}"
  },
  {
+  "text": "{n} مجموعة إضافات",
+  "group": "products_tab",
+  "vars": "{n}"
+ },
+ {
   "text": "تعديل",
   "group": "products_tab",
   "vars": null
@@ -1205,7 +1360,7 @@
   "vars": "{qty}"
  },
  {
-  "text": "مخفي عن الزبائن لين تزيد الكمية. اضغط هني باش تعبّيه.",
+  "text": "يبان للزبائن «نفد» وما يتطلبش لين تزيد الكمية. اضغط هني باش تعبّيه.",
   "group": "products_tab",
   "vars": null
  },

@@ -1,27 +1,31 @@
 <?php
 
+use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\AppContentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogController;
+use App\Http\Controllers\Api\CustomerExtrasController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\OrderController;
-use App\Http\Controllers\Api\WalletController;
-use App\Http\Controllers\Api\StorePanelController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\StorePanelController;
+use App\Http\Controllers\Api\WalletController;
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
 
     // ---------- عام ----------
-    Route::post('auth/otp', [AuthController::class, 'requestOtp'])->middleware('throttle:10,1');
-    Route::post('auth/verify', [AuthController::class, 'verifyOtp'])->middleware('throttle:10,1');
-    Route::post('auth/login', [AuthController::class, 'login']);
-    Route::get('app/content', [\App\Http\Controllers\Api\AppContentController::class, 'show']);
+    // appcheck: يتأكد إن الطلب من تطبيقنا (Firebase App Check) — حسب الإعداد
+    Route::post('auth/otp', [AuthController::class, 'requestOtp'])->middleware(['throttle:10,1', 'appcheck']);
+    Route::post('auth/verify', [AuthController::class, 'verifyOtp'])->middleware(['throttle:10,1', 'appcheck']);
+    Route::post('auth/login', [AuthController::class, 'login'])->middleware(['throttle:10,1', 'appcheck']);
+    Route::get('app/content', [AppContentController::class, 'show']);
 
     Route::middleware('auth:sanctum')->group(function () {
 
         // أحداث من داخل التطبيقات لسجل النشاط (دفعات)
-        Route::post('activity', [\App\Http\Controllers\Api\ActivityController::class, 'store'])->middleware('throttle:30,1');
+        Route::post('activity', [ActivityController::class, 'store'])->middleware('throttle:30,1');
 
         Route::get('me', [AuthController::class, 'me']);
         Route::put('me', [AuthController::class, 'updateProfile']);
@@ -32,12 +36,10 @@ Route::prefix('v1')->group(function () {
         Route::get('wallet/transactions', [WalletController::class, 'transactions']);
         Route::post('wallet/redeem', [WalletController::class, 'redeem']);
         Route::get('payments/gateways', [PaymentController::class, 'gateways']);
-        Route::post('payments/otp/send', [PaymentController::class, 'sendOtp']);
+        Route::post('payments/otp/send', [PaymentController::class, 'sendOtp'])->middleware('appcheck');
         Route::post('payments/otp/confirm', [PaymentController::class, 'confirmOtp']);
         Route::post('payments/checkout', [PaymentController::class, 'checkout']);
         Route::get('payments/{id}/status', [PaymentController::class, 'status']);
-
-
 
         // ---------- الزبون ----------
         Route::middleware('role:customer')->group(function () {
@@ -50,7 +52,7 @@ Route::prefix('v1')->group(function () {
             Route::get('stores/{store}', [CatalogController::class, 'show']);
 
             Route::get('orders', [OrderController::class, 'index']);
-            Route::post('orders', [OrderController::class, 'store']);
+            Route::post('orders', [OrderController::class, 'store'])->middleware('appcheck');
             Route::post('orders/quote', [OrderController::class, 'quote']);
             Route::get('orders/{order}', [OrderController::class, 'show']);
             Route::get('orders/{order}/track', [OrderController::class, 'track']);
@@ -58,17 +60,17 @@ Route::prefix('v1')->group(function () {
             Route::post('orders/{order}/rate', [OrderController::class, 'rate']);
 
             // المفضلة، إعادة الطلب، السلات الجاهزة، النقاط، والأصناف الناقصة
-            Route::get('favorites', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'favorites']);
-            Route::post('favorites/toggle', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'toggleFavorite']);
-            Route::post('orders/{order}/reorder', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'reorder']);
-            Route::post('orders/{order}/substitution', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'substitution']);
-            Route::get('ready-carts/{readyCart}', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'readyCart']);
-            Route::get('saved-carts', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'savedCarts']);
-            Route::post('saved-carts', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'saveCart']);
-            Route::get('saved-carts/{savedCart}', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'savedCart']);
-            Route::delete('saved-carts/{savedCart}', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'deleteSavedCart']);
-            Route::get('points', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'points']);
-            Route::post('points/convert', [\App\Http\Controllers\Api\CustomerExtrasController::class, 'convertPoints']);
+            Route::get('favorites', [CustomerExtrasController::class, 'favorites']);
+            Route::post('favorites/toggle', [CustomerExtrasController::class, 'toggleFavorite']);
+            Route::post('orders/{order}/reorder', [CustomerExtrasController::class, 'reorder']);
+            Route::post('orders/{order}/substitution', [CustomerExtrasController::class, 'substitution']);
+            Route::get('ready-carts/{readyCart}', [CustomerExtrasController::class, 'readyCart']);
+            Route::get('saved-carts', [CustomerExtrasController::class, 'savedCarts']);
+            Route::post('saved-carts', [CustomerExtrasController::class, 'saveCart']);
+            Route::get('saved-carts/{savedCart}', [CustomerExtrasController::class, 'savedCart']);
+            Route::delete('saved-carts/{savedCart}', [CustomerExtrasController::class, 'deleteSavedCart']);
+            Route::get('points', [CustomerExtrasController::class, 'points']);
+            Route::post('points/convert', [CustomerExtrasController::class, 'convertPoints']);
         });
 
         // ---------- المتجر ----------
@@ -82,6 +84,7 @@ Route::prefix('v1')->group(function () {
             Route::get('products', [StorePanelController::class, 'products']);
             Route::post('products', [StorePanelController::class, 'storeProduct']);
             Route::post('products/{product}', [StorePanelController::class, 'updateProduct']);
+            Route::put('products/{product}/options', [StorePanelController::class, 'syncProductOptions']);
             Route::delete('products/{product}', [StorePanelController::class, 'destroyProduct']);
             Route::get('sections', [StorePanelController::class, 'sections']);
             Route::post('sections', [StorePanelController::class, 'storeSection']);

@@ -10,6 +10,11 @@
   "vars": "{statusCode}"
  },
  {
+  "text": "، ",
+  "group": "cart",
+  "vars": null
+ },
+ {
   "text": "الأصناف هذي مش متوفرة توّا",
   "group": "extras",
   "vars": null
@@ -38,11 +43,6 @@
   "text": "مش متوفر توّا: {items}",
   "group": "extras",
   "vars": "{items}"
- },
- {
-  "text": "، ",
-  "group": "extras",
-  "vars": null
  },
  {
   "text": "ما نقدرش نوصل للخادم.",
@@ -1280,6 +1280,26 @@
   "vars": null
  },
  {
+  "text": "نفد — يرجع قريب إن شاء الله",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "مش متوفر توّا",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "المتجر مغلق توّا",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "وصلت للحد المسموح من الصنف هذا",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
   "text": "شارك الصنف",
   "group": "store_screen",
   "vars": null
@@ -1315,9 +1335,44 @@
   "vars": "{maxPerOrder}"
  },
  {
+  "text": "اختار «{option}» أول",
+  "group": "store_screen",
+  "vars": "{option}"
+ },
+ {
   "text": "أضف · {qty} د.ل",
   "group": "store_screen",
   "vars": "{qty}"
+ },
+ {
+  "text": "مجاناً",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "+{price} د.ل",
+  "group": "store_screen",
+  "vars": "{price}"
+ },
+ {
+  "text": "إجباري",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "اختياري",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "اختياري · لحد {n}",
+  "group": "store_screen",
+  "vars": "{n}"
+ },
+ {
+  "text": "لحد {n}",
+  "group": "store_screen",
+  "vars": "{n}"
  },
  {
   "text": "سلة من متجر ثاني",
@@ -1390,7 +1445,27 @@
   "vars": "{price}"
  },
  {
+  "text": "نفد",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "موقوف",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "نفد — تقدر تشوف التفاصيل والصور",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
   "text": "غير متوفر",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "فيه إضافات",
   "group": "store_screen",
   "vars": null
  },

@@ -15,12 +15,33 @@ class OrderItem extends Model
     protected function casts(): array
     {
         return [
-            'options'       => 'array',
-            'unit_price'    => 'float',
+            'options' => 'array',
+            'unit_price' => 'float',
             'options_price' => 'float',
-            'line_total'    => 'float',
+            'line_total' => 'float',
             'is_unavailable' => 'boolean',
         ];
+    }
+
+    /** «الإضافات: زيادة صوص، سيخ كباب ×2 · الحجم: كبير» — للعرض في اللوحة والواصل */
+    public function optionsText(string $sep = ' · '): string
+    {
+        return collect($this->options ?? [])
+            ->groupBy(fn ($o) => is_array($o) ? (string) ($o['option'] ?? '') : '')
+            ->map(function ($group, $option) {
+                $values = $group->map(function ($o) {
+                    if (! is_array($o)) {
+                        return (string) $o;
+                    }
+                    $qty = (int) ($o['qty'] ?? 1);
+
+                    return ($o['value'] ?? '').($qty > 1 ? " ×$qty" : '');
+                })->filter()->implode('، ');
+
+                return $option !== '' ? "$option: $values" : $values;
+            })
+            ->filter()
+            ->implode($sep);
     }
 
     public function order(): BelongsTo

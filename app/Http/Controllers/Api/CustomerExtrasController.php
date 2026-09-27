@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\ProductResource;
@@ -11,13 +12,16 @@ use App\Models\Order;
 use App\Models\PointsTransaction;
 use App\Models\Product;
 use App\Models\ReadyCart;
+use App\Models\SavedCart;
 use App\Models\Store;
 use App\Services\CartBuilder;
+use App\Services\OrderService;
 use App\Services\PointsService;
 use App\Services\SubstitutionService;
 use App\Support\Options;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 /** المفضلة، إعادة الطلب، السلات الجاهزة، النقاط، والرد على الأصناف الناقصة */
 class CustomerExtrasController extends Controller
@@ -31,16 +35,16 @@ class CustomerExtrasController extends Controller
         $stores = Store::visible()->with('type')
             ->whereIn('id', $favs->where('favoritable_type', Store::class)->pluck('favoritable_id'))->get();
 
-        $products = Product::with('store')
+        $products = Product::with(['store', 'options.values'])
             ->whereIn('id', $favs->where('favoritable_type', Product::class)->pluck('favoritable_id'))
             ->whereHas('store', fn ($q) => $q->where('is_active', true))
             ->get();
 
         return response()->json([
-            'stores'   => StoreResource::collection($stores),
+            'stores' => StoreResource::collection($stores),
             'products' => $products->map(fn (Product $p) => [
                 'product' => new ProductResource($p),
-                'store'   => ['id' => $p->store->id, 'name' => $p->store->name],
+                'store' => ['id' => $p->store->id, 'name' => $p->store->name],
             ]),
         ]);
     }
@@ -49,7 +53,7 @@ class CustomerExtrasController extends Controller
     {
         $data = $request->validate([
             'type' => ['required', 'in:store,product'],
-            'id'   => ['required', 'integer'],
+            'id' => ['required', 'integer'],
         ]);
 
         $class = $data['type'] === 'store' ? Store::class : Product::class;
@@ -73,8 +77,22 @@ class CustomerExtrasController extends Controller
     {
         abort_unless($order->customer_id === $request->user()->id, 403);
 
-        $lines = $order->items()->where('is_unavailable', false)->whereNotNull('product_id')->get()
-            ->map(fn ($i) => ['product_id' => $i->product_id, 'quantity' => $i->quantity, 'note' => $i->note])->all();
+        $items = $order->items()->where('is_unavailable', false)->whereNotNull('product_id')->get();
+        $products = Product::with('options.values')->whereIn('id', $items->pluck('product_id'))->get()->keyBy('id');
+
+        // الإضافات محفوظة في الطلب بالاسم — نرجعوها لأرقامها الحالية
+        $lines = $items->map(function ($i) use ($products) {
+            $options = [];
+            foreach ((array) $i->options as $o) {
+                $option = $products->get($i->product_id)?->options->firstWhere('name', $o['option'] ?? null);
+                $value = $option?->values->firstWhere('name', $o['value'] ?? null);
+                if ($value) {
+                    $options[] = ['id' => $value->id, 'qty' => (int) ($o['qty'] ?? 1)];
+                }
+            }
+
+            return ['product_id' => $i->product_id, 'quantity' => $i->quantity, 'note' => $i->note, 'options' => $options];
+        })->all();
 
         return response()->json($carts->build($order->store, $lines));
     }
@@ -83,15 +101,15 @@ class CustomerExtrasController extends Controller
 
     public function savedCarts(Request $request): JsonResponse
     {
-        $carts = \App\Models\SavedCart::with('store')
+        $carts = SavedCart::with('store')
             ->where('user_id', $request->user()->id)
             ->whereHas('store', fn ($q) => $q->where('is_active', true))
             ->latest('updated_at')->get();
 
         return response()->json([
             'enabled' => (bool) Options::get('carts.saved_enabled'),
-            'max'     => (int) Options::get('carts.saved_max'),
-            'data'    => $carts->map->toApp()->values(),
+            'max' => (int) Options::get('carts.saved_max'),
+            'data' => $carts->map->toApp()->values(),
         ]);
     }
 
@@ -100,19 +118,22 @@ class CustomerExtrasController extends Controller
         abort_unless((bool) Options::get('carts.saved_enabled'), 403, 'حفظ السلات موقف حالياً.');
 
         $data = $request->validate([
-            'name'                 => ['required', 'string', 'max:60'],
-            'store_id'             => ['required', 'integer', 'exists:stores,id'],
-            'items'                => ['required', 'array', 'min:1', 'max:50'],
-            'items.*.product_id'   => ['required', 'integer'],
-            'items.*.quantity'     => ['required', 'integer', 'min:1', 'max:999'],
-            'items.*.note'         => ['nullable', 'string', 'max:200'],
+            'name' => ['required', 'string', 'max:60'],
+            'store_id' => ['required', 'integer', 'exists:stores,id'],
+            'items' => ['required', 'array', 'min:1', 'max:50'],
+            'items.*.product_id' => ['required', 'integer'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:999'],
+            'items.*.note' => ['nullable', 'string', 'max:200'],
+            'items.*.options' => ['nullable', 'array', 'max:40'],
+            'items.*.options.*.id' => ['required', 'integer'],
+            'items.*.options.*.qty' => ['nullable', 'integer', 'min:1', 'max:20'],
         ], [], ['name' => 'اسم السلة']);
 
         $user = $request->user();
         $max = (int) Options::get('carts.saved_max');
 
-        if (\App\Models\SavedCart::where('user_id', $user->id)->count() >= $max) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+        if (SavedCart::where('user_id', $user->id)->count() >= $max) {
+            throw ValidationException::withMessages([
                 'name' => "وصلت للحد ($max سلات). امسح سلة قديمة وعاود.",
             ]);
         }
@@ -121,12 +142,13 @@ class CustomerExtrasController extends Controller
         $valid = Product::where('store_id', $data['store_id'])
             ->whereIn('id', array_column($data['items'], 'product_id'))->pluck('id')->all();
         $items = collect($data['items'])->filter(fn ($i) => in_array((int) $i['product_id'], $valid, true))
-            ->map(fn ($i) => ['product_id' => (int) $i['product_id'], 'quantity' => (int) $i['quantity'], 'note' => $i['note'] ?? null])
+            ->map(fn ($i) => ['product_id' => (int) $i['product_id'], 'quantity' => (int) $i['quantity'], 'note' => $i['note'] ?? null,
+                'options' => collect(OrderService::selectedOptions($i))->map(fn ($n, $id) => ['id' => $id, 'qty' => $n])->values()->all()])
             ->values()->all();
 
         abort_if($items === [], 422, 'الأصناف مش من المتجر هذا.');
 
-        $cart = \App\Models\SavedCart::create([
+        $cart = SavedCart::create([
             'user_id' => $user->id, 'store_id' => $data['store_id'], 'name' => $data['name'], 'items' => $items,
         ]);
 
@@ -134,7 +156,7 @@ class CustomerExtrasController extends Controller
     }
 
     /** يرجع أصناف السلة بالأسعار والتوفّر الحالي — التطبيق يعبّي بيها السلة */
-    public function savedCart(Request $request, \App\Models\SavedCart $savedCart, CartBuilder $carts): JsonResponse
+    public function savedCart(Request $request, SavedCart $savedCart, CartBuilder $carts): JsonResponse
     {
         abort_unless($savedCart->user_id === $request->user()->id, 404);
         $savedCart->touch();
@@ -142,7 +164,7 @@ class CustomerExtrasController extends Controller
         return response()->json($carts->build($savedCart->store, $savedCart->lines()));
     }
 
-    public function deleteSavedCart(Request $request, \App\Models\SavedCart $savedCart): JsonResponse
+    public function deleteSavedCart(Request $request, SavedCart $savedCart): JsonResponse
     {
         abort_unless($savedCart->user_id === $request->user()->id, 404);
         $savedCart->delete();
@@ -164,19 +186,19 @@ class CustomerExtrasController extends Controller
         $user = $request->user();
 
         return response()->json([
-            'enabled'      => PointsService::enabled(),
-            'balance'      => (int) $user->points_balance,
-            'value'        => PointsService::money((int) $user->points_balance),
-            'point_value'  => PointsService::value(),
-            'redeem_mode'  => Options::get('points.redeem_mode'),
-            'min_redeem'   => (int) Options::get('points.min_redeem'),
-            'earn_mode'    => Options::get('points.earn_mode'),
-            'earn_rate'    => (float) Options::get('points.earn_rate'),
-            'history'      => PointsTransaction::where('user_id', $user->id)->latest('id')->limit(50)->get()
+            'enabled' => PointsService::enabled(),
+            'balance' => (int) $user->points_balance,
+            'value' => PointsService::money((int) $user->points_balance),
+            'point_value' => PointsService::value(),
+            'redeem_mode' => Options::get('points.redeem_mode'),
+            'min_redeem' => (int) Options::get('points.min_redeem'),
+            'earn_mode' => Options::get('points.earn_mode'),
+            'earn_rate' => (float) Options::get('points.earn_rate'),
+            'history' => PointsTransaction::where('user_id', $user->id)->latest('id')->limit(50)->get()
                 ->map(fn ($t) => [
                     'points' => $t->points, 'type' => $t->type,
-                    'label'  => PointsTransaction::TYPES[$t->type] ?? $t->type,
-                    'note'   => $t->note, 'at' => $t->created_at,
+                    'label' => PointsTransaction::TYPES[$t->type] ?? $t->type,
+                    'note' => $t->note, 'at' => $t->created_at,
                 ]),
         ]);
     }
@@ -189,7 +211,7 @@ class CustomerExtrasController extends Controller
 
         return response()->json([
             'message' => 'تحوّلت '.$data['points'].' نقطة لـ '.number_format($amount, 2).' د.ل في محفظتك',
-            'amount'  => $amount,
+            'amount' => $amount,
             'balance' => (int) $request->user()->fresh()->points_balance,
         ]);
     }
@@ -212,7 +234,7 @@ class CustomerExtrasController extends Controller
         }
 
         $order->update(['awaiting_customer_at' => null, 'substitution_deadline_at' => null]);
-        $order = app(\App\Services\OrderService::class)->transition($order, \App\Enums\OrderStatus::Cancelled,
+        $order = app(OrderService::class)->transition($order, OrderStatus::Cancelled,
             $request->user(), ['reason' => 'ألغاه الزبون (أصناف مش متوفرة)', 'force' => true]);
 
         return response()->json(['data' => new OrderResource($order)]);

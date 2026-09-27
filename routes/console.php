@@ -1,8 +1,10 @@
 <?php
 
+use App\Support\Traffic;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+
 Schedule::command('orders:notify-ready')->everyMinute();
 
 // طلبات البطاقة اللي ما اندفعتش خلال المهلة تنلغى
@@ -21,3 +23,6 @@ Artisan::command('inspire', function () {
 
 // سجل النشاط: مسح الأقدم من مدة الاحتفاظ
 Schedule::command('activity:prune')->dailyAt('03:30')->withoutOverlapping();
+// حالة السيرفر: ملفات عدّاد الطلبات الأقدم من المدة المحددة
+Schedule::call(fn () => Traffic::prune())->name('traffic-prune')->hourly();
+Schedule::command('server:check')->everyFiveMinutes()->withoutOverlapping();

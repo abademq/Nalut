@@ -22,17 +22,17 @@ class Options
             // ===== الطلبات =====
             'orders.default_prep_minutes' => ['type' => 'int', 'default' => 20, 'min' => 1, 'max' => 600, 'public' => true,
                 'label' => 'مدة التحضير الافتراضية (دقيقة)',
-                'help'  => 'تنحط للمتاجر الجديدة، وتكون مختارة مسبقاً في تطبيق المتجر لو المتجر ما حددش مدته.'],
+                'help' => 'تنحط للمتاجر الجديدة، وتكون مختارة مسبقاً في تطبيق المتجر لو المتجر ما حددش مدته.'],
             'orders.prep_choices' => ['type' => 'list', 'default' => '10,15,20,30,45,60', 'public' => true,
                 'label' => 'خيارات مدة التحضير في تطبيق المتجر',
-                'help'  => 'أرقام بالدقائق مفصولة بفاصلة — مثلاً: 10,15,20,30,45,60'],
+                'help' => 'أرقام بالدقائق مفصولة بفاصلة — مثلاً: 10,15,20,30,45,60'],
             'orders.unpaid_timeout_minutes' => ['type' => 'int', 'default' => config('delivery.unpaid_order_timeout_minutes', 30), 'min' => 5, 'max' => 1440,
                 'label' => 'مهلة الدفع الإلكتروني (دقيقة)',
-                'help'  => 'الطلب المدفوع بالبطاقة ينلغى تلقائياً لو ما تمّش الدفع خلال المدة هذي.'],
+                'help' => 'الطلب المدفوع بالبطاقة ينلغى تلقائياً لو ما تمّش الدفع خلال المدة هذي.'],
             'orders.reject_reasons' => ['type' => 'lines', 'public' => true,
                 'default' => "الصنف خلص\nالمتجر مزدحم توّا\nالمتجر على وشك الغلق\nالعنوان بعيد عن نطاقنا\nمشكلة في الطلب — الزبون يتصل بينا",
                 'label' => 'أسباب رفض الطلب في تطبيق المتجر',
-                'help'  => 'كل سبب في سطر. المتجر يقدر يكتب سبب آخر كمان.'],
+                'help' => 'كل سبب في سطر. المتجر يقدر يكتب سبب آخر كمان.'],
             'orders.customer_cancel_until' => ['type' => 'string', 'default' => 'pending', 'public' => true,
                 'choices' => ['pending' => 'قبل ما المتجر يقبل الطلب', 'never' => 'الزبون ما يقدرش يلغي'],
                 'label' => 'الزبون يقدر يلغي طلبه'],
@@ -40,27 +40,27 @@ class Options
             // ===== رموز التحقق =====
             'otp.channel' => ['type' => 'string', 'default' => 'sms',
                 'choices' => [
-                    'sms'          => 'رسالة نصية (SMS) بس',
+                    'sms' => 'رسالة نصية (SMS) بس',
                     'whatsapp_sms' => 'واتساب أولاً — ولو فشل رسالة نصية',
-                    'whatsapp'     => 'واتساب بس',
+                    'whatsapp' => 'واتساب بس',
                 ],
                 'label' => 'طريقة إرسال رمز التحقق',
-                'help'  => 'واتساب يحتاج إعدادات WHATSAPP_* في .env وقالب تحقق معتمد. الزبون يقدر دائماً يطلب الرمز برسالة نصية.'],
+                'help' => 'واتساب يحتاج إعدادات WHATSAPP_* في .env وقالب تحقق معتمد. الزبون يقدر دائماً يطلب الرمز برسالة نصية.'],
 
             // ===== التنبيهات الفورية للإدارة =====
             'alerts.pending_minutes' => ['type' => 'int', 'default' => 10, 'min' => 0, 'max' => 240,
                 'label' => 'نبّهني لو طلب ما تقبلش من المتجر خلال (دقيقة)',
-                'help'  => '0 = بدون تنبيه'],
+                'help' => '0 = بدون تنبيه'],
             'alerts.no_driver_minutes' => ['type' => 'int', 'default' => 10, 'min' => 0, 'max' => 240,
                 'label' => 'نبّهني لو طلب جاهز وما خذاهش سائق خلال (دقيقة)',
-                'help'  => '0 = بدون تنبيه'],
+                'help' => '0 = بدون تنبيه'],
             'alerts.phone' => ['type' => 'string', 'default' => '',
                 'label' => 'رقم يوصله التنبيه المهم على واتساب/SMS',
-                'help'  => 'اختياري — يحتاج قالب «تنبيهات الإدارة» في «قوالب الرسائل». فاضي = تنبيه اللوحة بس.'],
+                'help' => 'اختياري — يحتاج قالب «تنبيهات الإدارة» في «قوالب الرسائل». فاضي = تنبيه اللوحة بس.'],
 
             'orders.substitution_timeout_minutes' => ['type' => 'int', 'default' => 10, 'min' => 1, 'max' => 120,
                 'label' => 'مهلة رد الزبون على «صنف مش متوفر» (دقيقة)',
-                'help'  => 'لو الزبون ما ردّش خلال المدة: الطلب يكمّل بدون الأصناف الناقصة (ولو ما بقى شي ينلغى).'],
+                'help' => 'لو الزبون ما ردّش خلال المدة: الطلب يكمّل بدون الأصناف الناقصة (ولو ما بقى شي ينلغى).'],
 
             // ===== سجل النشاط =====
             'logs.enabled' => ['type' => 'bool', 'default' => true,
@@ -69,7 +69,33 @@ class Options
                 'label' => 'تسجيل الأحداث داخل التطبيقات (فتح متجر، إضافة للسلة، بحث...)'],
             'logs.retention_days' => ['type' => 'int', 'default' => 90, 'min' => 7, 'max' => 3650,
                 'label' => 'مدة الاحتفاظ بالسجل (يوم)',
-                'help'  => 'الأقدم ينمسح تلقائياً كل ليلة باش قاعدة البيانات ما تكبرش.'],
+                'help' => 'الأقدم ينمسح تلقائياً كل ليلة باش قاعدة البيانات ما تكبرش.'],
+
+            // ===== حالة السيرفر =====
+            'server.traffic_enabled' => ['type' => 'bool', 'default' => true,
+                'label' => 'تسجيل عدد الطلبات ومصدرها (لصفحة «حالة السيرفر»)',
+                'help' => 'ملف نصي خفيف — ما يثقلش قاعدة البيانات.'],
+            'server.traffic_hours' => ['type' => 'int', 'default' => 24, 'min' => 1, 'max' => 168,
+                'label' => 'مدة الاحتفاظ بعدّاد الطلبات (ساعة)'],
+            'server.slow_ms' => ['type' => 'int', 'default' => 1500, 'min' => 200, 'max' => 30000,
+                'label' => 'الطلب يعتبر «بطيء» لو خذا أكثر من (ملي ثانية)'],
+            'server.alert_enabled' => ['type' => 'bool', 'default' => true,
+                'label' => 'نبّهني في اللوحة لو السيرفر تحت ضغط عالي',
+                'help' => 'يتفحص كل 5 دقايق: المعالج، الذاكرة، المساحة، والأخطاء.'],
+
+            // ===== الحماية =====
+            'security.recaptcha_admin' => ['type' => 'bool', 'default' => true,
+                'label' => 'reCAPTCHA في صفحة دخول لوحة التحكم',
+                'help' => 'يشتغل بس لو مفاتيح RECAPTCHA_SITE_KEY و RECAPTCHA_SECRET_KEY موجودة في .env'],
+            'security.app_check' => ['type' => 'string', 'default' => 'monitor',
+                'choices' => [
+                    'off' => 'معطّل',
+                    'monitor' => 'مراقبة بس (يعدّ الطلبات المشبوهة بدون منع)',
+                    'enforce' => 'منع (يرفض أي طلب مش من التطبيق الأصلي)',
+                ],
+                'label' => 'حماية التطبيقات (Firebase App Check)',
+                'help' => 'يحمي إرسال رموز التحقق والدخول والطلبات من السكربتات. يحتاج FIREBASE_PROJECT_NUMBER في .env. '
+                    .'فعّل «منع» بس بعد ما التطبيق ينزل على Google Play ونسبة «موثّق» في «حالة السيرفر» تقرب من 100%.'],
 
             // ===== سلات الزبون المحفوظة =====
             'carts.saved_enabled' => ['type' => 'bool', 'default' => true, 'public' => true,
@@ -85,7 +111,7 @@ class Options
                 'label' => 'طريقة كسب النقاط'],
             'points.earn_rate' => ['type' => 'float', 'default' => 1, 'min' => 0, 'max' => 10000, 'public' => true,
                 'label' => 'النقاط المكتسبة',
-                'help'  => '«حسب القيمة»: نقاط لكل 1 د.ل من قيمة الأصناف · «لكل طلب»: عدد النقاط لكل طلب مكتمل'],
+                'help' => '«حسب القيمة»: نقاط لكل 1 د.ل من قيمة الأصناف · «لكل طلب»: عدد النقاط لكل طلب مكتمل'],
             'points.min_order' => ['type' => 'float', 'default' => 0, 'min' => 0, 'max' => 10000,
                 'label' => 'أقل قيمة طلب يكسب نقاط (د.ل)'],
             'points.redeem_mode' => ['type' => 'string', 'default' => 'wallet', 'public' => true,
@@ -93,25 +119,25 @@ class Options
                 'label' => 'استعمال النقاط (خيار واحد بس)'],
             'points.point_value' => ['type' => 'float', 'default' => 0.01, 'min' => 0.0001, 'max' => 100, 'public' => true,
                 'label' => 'قيمة النقطة الوحدة (د.ل)',
-                'help'  => 'مثلاً 0.01 = كل 100 نقطة بدينار'],
+                'help' => 'مثلاً 0.01 = كل 100 نقطة بدينار'],
             'points.min_redeem' => ['type' => 'int', 'default' => 100, 'min' => 1, 'max' => 1000000, 'public' => true,
                 'label' => 'أقل عدد نقاط للاستعمال'],
 
             // ===== المخزون =====
             'stock.restore_after_pickup' => ['type' => 'bool', 'default' => false,
                 'label' => 'إرجاع المخزون للطلبات اللي فشلت بعد ما استلمها السائق',
-                'help'  => 'الطلب اللي ينلغى قبل الاستلام يرجع مخزونه دائماً. بعد الاستلام البضاعة غالباً طلعت من المتجر — فعّل هذا لو السائق يرجّعها.'],
+                'help' => 'الطلب اللي ينلغى قبل الاستلام يرجع مخزونه دائماً. بعد الاستلام البضاعة غالباً طلعت من المتجر — فعّل هذا لو السائق يرجّعها.'],
             'stock.low_label_at' => ['type' => 'int', 'default' => 5, 'min' => 0, 'max' => 1000, 'public' => true,
                 'label' => 'إظهار «متبقي X فقط» للزبون لما الكمية تنزل لـ',
-                'help'  => '0 = ما يطلعش أبداً'],
+                'help' => '0 = ما يطلعش أبداً'],
 
             // ===== التوصيل =====
             'delivery.base_fee' => ['type' => 'float', 'default' => config('delivery.base_fee', 5), 'min' => 0, 'max' => 1000,
                 'label' => 'رسوم التوصيل الأساسية (د.ل)',
-                'help'  => 'تُستعمل لو المنطقة ما عندهاش رسوم خاصة.'],
+                'help' => 'تُستعمل لو المنطقة ما عندهاش رسوم خاصة.'],
             'delivery.fee_per_km' => ['type' => 'float', 'default' => config('delivery.fee_per_km', 1.5), 'min' => 0, 'max' => 1000,
                 'label' => 'رسوم كل كيلومتر (د.ل)',
-                'help'  => 'تُستعمل لو المنطقة ما عندهاش رسوم خاصة.'],
+                'help' => 'تُستعمل لو المنطقة ما عندهاش رسوم خاصة.'],
             'delivery.free_radius_km' => ['type' => 'float', 'default' => config('delivery.free_radius_km', 1), 'min' => 0, 'max' => 100,
                 'label' => 'المسافة المشمولة في الرسوم الأساسية (كم)'],
             'delivery.default_commission_percent' => ['type' => 'float', 'default' => config('delivery.commission_percent', 15), 'min' => 0, 'max' => 100,
@@ -120,7 +146,7 @@ class Options
             // ===== التتبّع =====
             'tracking.refresh_seconds' => ['type' => 'int', 'default' => 5, 'min' => 3, 'max' => 60, 'public' => true,
                 'label' => 'تحديث خريطة التتبّع عند الزبون كل (ثانية)',
-                'help'  => 'أقل = أسرع لكن ضغط أكثر على السيرفر.'],
+                'help' => 'أقل = أسرع لكن ضغط أكثر على السيرفر.'],
 
             // ===== الكروت =====
             'wallet.card_digits' => ['type' => 'int', 'default' => config('wallet.card_digits', 12), 'min' => 8, 'max' => 16,
@@ -144,10 +170,10 @@ class Options
     public static function cast(array $def, mixed $value): mixed
     {
         return match ($def['type']) {
-            'int'   => (int) $value,
+            'int' => (int) $value,
             'float' => (float) $value,
-            'bool'  => filter_var($value, FILTER_VALIDATE_BOOLEAN),
-            'list'  => static::parseList((string) $value),
+            'bool' => filter_var($value, FILTER_VALIDATE_BOOLEAN),
+            'list' => static::parseList((string) $value),
             'lines' => implode("\n", array_values(array_filter(array_map('trim', preg_split('/\R/u', (string) $value))))),
             default => (string) $value,
         };

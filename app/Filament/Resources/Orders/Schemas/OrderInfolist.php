@@ -27,10 +27,10 @@ class OrderInfolist
                         ->badge()
                         ->formatStateUsing(fn (OrderStatus $state) => $state->label())
                         ->color(fn (OrderStatus $state) => match ($state) {
-                            OrderStatus::Delivered                      => 'success',
+                            OrderStatus::Delivered => 'success',
                             OrderStatus::Cancelled, OrderStatus::Failed => 'danger',
-                            OrderStatus::Pending                        => 'warning',
-                            default                                     => 'info',
+                            OrderStatus::Pending => 'warning',
+                            default => 'info',
                         }),
 
                     TextEntry::make('created_at')
@@ -62,9 +62,7 @@ class OrderInfolist
                                 $line = "{$i->quantity} × {$i->name}  —  "
                                     .number_format($i->line_total, 2).' د.ل';
 
-                                $opts = collect($i->options ?? [])
-                                    ->map(fn ($o) => is_array($o) ? "{$o['option']}: {$o['value']}" : (string) $o)
-                                    ->implode('، ');
+                                $opts = $i->optionsText();
 
                                 if ($opts !== '') {
                                     $line .= "  ({$opts})";
@@ -142,8 +140,8 @@ class OrderInfolist
 
                             return $logs->map(function ($log) use (&$previous) {
                                 $label = OrderStatus::tryFrom($log->to_status)?->label() ?? $log->to_status;
-                                $time  = $log->created_at?->format('H:i:s — d/m/Y') ?? '';
-                                $who   = $log->user?->name ?? 'النظام';
+                                $time = $log->created_at?->format('H:i:s — d/m/Y') ?? '';
+                                $who = $log->user?->name ?? 'النظام';
 
                                 $gap = '';
                                 if ($previous && $log->created_at) {

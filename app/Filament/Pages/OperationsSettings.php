@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\Setting;
 use App\Support\Options;
+use App\Support\Perm;
 use BackedEnum;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -30,21 +31,23 @@ class OperationsSettings extends Page
     public ?array $data = [];
 
     private const SECTIONS = [
-        'orders'   => 'الطلبات',
-        'otp'      => 'رموز التحقق',
-        'alerts'   => 'التنبيهات الفورية',
-        'points'   => 'نقاط الولاء',
-        'carts'    => 'سلات الزبون المحفوظة',
-        'logs'     => 'سجل النشاط',
-        'stock'    => 'المخزون',
+        'orders' => 'الطلبات',
+        'otp' => 'رموز التحقق',
+        'alerts' => 'التنبيهات الفورية',
+        'points' => 'نقاط الولاء',
+        'carts' => 'سلات الزبون المحفوظة',
+        'logs' => 'سجل النشاط',
+        'server' => 'حالة السيرفر',
+        'security' => 'الحماية',
+        'stock' => 'المخزون',
         'delivery' => 'التوصيل والعمولة',
         'tracking' => 'التتبّع',
-        'wallet'   => 'كروت الشحن',
+        'wallet' => 'كروت الشحن',
     ];
 
     public static function canAccess(): bool
     {
-        return \App\Support\Perm::can('settings.manage');
+        return Perm::can('settings.manage');
     }
 
     public static function getNavigationLabel(): string
@@ -88,16 +91,16 @@ class OperationsSettings extends Page
                 $name = self::field($key);
 
                 $field = match (true) {
-                    $def['type'] === 'bool'   => Toggle::make($name),
-                    isset($def['choices'])    => Select::make($name)->options($def['choices'])->native(false)->required(),
+                    $def['type'] === 'bool' => Toggle::make($name),
+                    isset($def['choices']) => Select::make($name)->options($def['choices'])->native(false)->required(),
                     in_array($def['type'], ['int', 'float'], true) => TextInput::make($name)->numeric()->required()
                         ->minValue($def['min'] ?? null)->maxValue($def['max'] ?? null)
                         ->step($def['type'] === 'float' ? 'any' : 1),
-                    $def['type'] === 'lines'  => Textarea::make($name)->rows(5)->required()->columnSpanFull(),
-                    $def['type'] === 'list'   => TextInput::make($name)->required()
+                    $def['type'] === 'lines' => Textarea::make($name)->rows(5)->required()->columnSpanFull(),
+                    $def['type'] === 'list' => TextInput::make($name)->required()
                         ->regex('/^\s*\d+(\s*[,،]\s*\d+)*\s*$/u')
                         ->validationMessages(['regex' => 'أرقام مفصولة بفاصلة فقط.']),
-                    default                   => TextInput::make($name),
+                    default => TextInput::make($name),
                 };
 
                 $fields[] = $field->label($def['label'])->helperText($def['help'] ?? null);
@@ -123,8 +126,8 @@ class OperationsSettings extends Page
             $value = $state[self::field($key)] ?? null;
 
             $value = match ($def['type']) {
-                'bool'  => $value ? '1' : '0',
-                'list'  => implode(',', Options::parseList((string) $value)),
+                'bool' => $value ? '1' : '0',
+                'list' => implode(',', Options::parseList((string) $value)),
                 default => (string) $value,
             };
 

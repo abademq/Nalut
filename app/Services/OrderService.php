@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\OrderStatus;
+use App\Filament\Resources\Orders\OrderResource;
 use App\Models\Coupon;
 use App\Models\NotificationSetting;
 use App\Models\Order;
@@ -21,7 +22,7 @@ class OrderService
      * إنشاء طلب جديد.
      *
      * @param  array  $data  [store_id, address_id, payment_method, notes, coupon_code,
-     *                       items => [[product_id, quantity, note, option_value_ids[]]]]
+     *                       items => [[product_id, quantity, note, option_value_ids[] | options[{id, qty}]]]]
      */
     public function create(User $customer, array $data, ?User $actor = null): Order
     {
@@ -34,7 +35,7 @@ class OrderService
         $address = $customer->addresses()->findOrFail($data['address_id']);
 
         return DB::transaction(function () use ($customer, $store, $address, $data, $actor) {
-            $lines    = $this->buildLines($store, $data['items']);
+            $lines = $this->buildLines($store, $data['items']);
             $subtotal = round(array_sum(array_column($lines, 'line_total')), 2);
 
             if ($subtotal < $store->min_order) {
@@ -48,11 +49,11 @@ class OrderService
                 : 0;
 
             // المنطقة تتحسب من جديد — لو الإدارة عدّلت المناطق بعد حفظ العنوان
-            $zone        = GeoService::requireZone((float) $address->lat, (float) $address->lng, 'address_id');
+            $zone = GeoService::requireZone((float) $address->lat, (float) $address->lng, 'address_id');
             $deliveryFee = GeoService::deliveryFee($distance, $zone);
 
             // الكوبون بعد حساب التوصيل — باش يشتغل عرض «توصيل مجاني»
-            $coupon   = null;
+            $coupon = null;
             $discount = 0;
             if (! empty($data['coupon_code'])) {
                 $coupon = Coupon::where('code', $data['coupon_code'])->first();
@@ -62,7 +63,7 @@ class OrderService
                 $discount = $coupon->discountFor($subtotal, $deliveryFee);
             }
 
-            $total      = round($subtotal + $deliveryFee - $discount, 2);
+            $total = round($subtotal + $deliveryFee - $discount, 2);
 
             // نقاط الولاء (لو الإدارة مختارة «يدفع بيها مباشرة») — تنخصم قبل المحفظة
             [$pointsUsed, $pointsDiscount] = ($data['use_points'] ?? false)
@@ -74,10 +75,10 @@ class OrderService
 
             // الدفع من المحفظة (كامل أو جزئي)
             $walletService = app(WalletService::class);
-            $walletPaid    = 0.0;
+            $walletPaid = 0.0;
 
             if (($data['use_wallet'] ?? false) || ($data['payment_method'] ?? null) === 'wallet') {
-                $available  = $walletService->balance($customer);
+                $available = $walletService->balance($customer);
                 $walletPaid = min($available, $total);
 
                 if (($data['payment_method'] ?? null) === 'wallet' && $available < $total) {
@@ -89,32 +90,32 @@ class OrderService
 
             $order = Order::create([
                 // رقم مؤقت — يتبدّل برقم متسلسل (id) مباشرة بعد الإنشاء
-                'code'              => Order::temporaryCode(),
-                'customer_id'       => $customer->id,
-                'store_id'          => $store->id,
-                'delivery_zone_id'  => $zone?->id,
-                'coupon_id'         => $coupon?->id,
-                'status'            => OrderStatus::Pending,
-                'payment_method'    => $walletPaid >= $total ? 'wallet' : ($data['payment_method'] ?? 'cash'),
-                'wallet_paid'       => $walletPaid,
-                'is_paid'           => $walletPaid >= $total,
-                'address_details'   => $address->details,
-                'address_landmark'  => $address->landmark,
-                'address_lat'       => $address->lat,
-                'address_lng'       => $address->lng,
-                'customer_phone'    => $customer->phone,
-                'subtotal'          => $subtotal,
-                'delivery_fee'      => $deliveryFee,
-                'discount'          => $discount,
-                'points_used'       => $pointsUsed,
-                'points_discount'   => $pointsDiscount,
-                'total'             => $total,
+                'code' => Order::temporaryCode(),
+                'customer_id' => $customer->id,
+                'store_id' => $store->id,
+                'delivery_zone_id' => $zone?->id,
+                'coupon_id' => $coupon?->id,
+                'status' => OrderStatus::Pending,
+                'payment_method' => $walletPaid >= $total ? 'wallet' : ($data['payment_method'] ?? 'cash'),
+                'wallet_paid' => $walletPaid,
+                'is_paid' => $walletPaid >= $total,
+                'address_details' => $address->details,
+                'address_landmark' => $address->landmark,
+                'address_lat' => $address->lat,
+                'address_lng' => $address->lng,
+                'customer_phone' => $customer->phone,
+                'subtotal' => $subtotal,
+                'delivery_fee' => $deliveryFee,
+                'discount' => $discount,
+                'points_used' => $pointsUsed,
+                'points_discount' => $pointsDiscount,
+                'total' => $total,
                 'commission_amount' => $commission,
-                'store_earning'     => round($subtotal - $commission, 2),
+                'store_earning' => round($subtotal - $commission, 2),
                 // أجرة السائق ما تتأثرش بعرض التوصيل المجاني — المنصة تتحمّلها
-                'driver_earning'    => $deliveryFee,
-                'distance_km'       => $distance,
-                'notes'             => $data['notes'] ?? null,
+                'driver_earning' => $deliveryFee,
+                'distance_km' => $distance,
+                'notes' => $data['notes'] ?? null,
                 'prep_time_minutes' => $store->prep_time_minutes,
             ]);
 
@@ -142,18 +143,18 @@ class OrderService
 
             $order->statusLogs()->create([
                 'from_status' => null,
-                'to_status'   => OrderStatus::Pending->value,
-                'changed_by'  => $actor?->id ?? $customer->id,
-                'note'        => $isManual ? 'طلب يدوي أنشأته الإدارة' : null,
-                'created_at'  => now(),
+                'to_status' => OrderStatus::Pending->value,
+                'changed_by' => $actor?->id ?? $customer->id,
+                'note' => $isManual ? 'طلب يدوي أنشأته الإدارة' : null,
+                'created_at' => now(),
             ]);
 
             if ($coupon) {
                 $coupon->increment('used_count');
                 DB::table('coupon_user')->insert([
-                    'coupon_id'  => $coupon->id,
-                    'user_id'    => $customer->id,
-                    'order_id'   => $order->id,
+                    'coupon_id' => $coupon->id,
+                    'user_id' => $customer->id,
+                    'order_id' => $order->id,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -185,10 +186,10 @@ class OrderService
      */
     public function quote(User $customer, array $data): array
     {
-        $store   = Store::findOrFail($data['store_id']);
+        $store = Store::findOrFail($data['store_id']);
         $address = $customer->addresses()->findOrFail($data['address_id']);
 
-        $lines    = $this->buildLines($store, $data['items']);
+        $lines = $this->buildLines($store, $data['items']);
         $subtotal = round(array_sum(array_column($lines, 'line_total')), 2);
 
         $distance = ($store->lat && $store->lng)
@@ -196,10 +197,10 @@ class OrderService
             : 0;
 
         // المنطقة تتحسب من جديد — لو الإدارة عدّلت المناطق بعد حفظ العنوان
-            $zone        = GeoService::requireZone((float) $address->lat, (float) $address->lng, 'address_id');
+        $zone = GeoService::requireZone((float) $address->lat, (float) $address->lng, 'address_id');
         $deliveryFee = GeoService::deliveryFee($distance, $zone);
 
-        $discount   = 0;
+        $discount = 0;
         $couponError = null;
 
         if (! empty($data['coupon_code'])) {
@@ -220,29 +221,29 @@ class OrderService
         $total = round($total - $pointsDiscount, 2);
 
         $walletBalance = app(WalletService::class)->balance($customer);
-        $walletPaid    = 0.0;
+        $walletPaid = 0.0;
 
         if (($data['use_wallet'] ?? false) || ($data['payment_method'] ?? null) === 'wallet') {
             $walletPaid = min($walletBalance, $total);
         }
 
         return [
-            'subtotal'        => $subtotal,
-            'delivery_fee'    => $deliveryFee,
-            'discount'        => $discount,
-            'total'           => $total,
-            'distance_km'     => $distance,
-            'min_order'       => (float) $store->min_order,
+            'subtotal' => $subtotal,
+            'delivery_fee' => $deliveryFee,
+            'discount' => $discount,
+            'total' => $total,
+            'distance_km' => $distance,
+            'min_order' => (float) $store->min_order,
             'below_min_order' => $subtotal < $store->min_order,
-            'wallet_balance'  => $walletBalance,
-            'wallet_paid'     => round($walletPaid, 2),
-            'cash_due'        => round($total - $walletPaid, 2),
-            'coupon_error'    => $couponError,
-            'points_balance'  => (int) $customer->points_balance,
+            'wallet_balance' => $walletBalance,
+            'wallet_paid' => round($walletPaid, 2),
+            'cash_due' => round($total - $walletPaid, 2),
+            'coupon_error' => $couponError,
+            'points_balance' => (int) $customer->points_balance,
             // كم نقطة وكم دينار يقدر يستعمل في الطلب هذا (0 لو النقاط تتحوّل للمحفظة بس)
-            'points_available'          => $pointsAvailable,
+            'points_available' => $pointsAvailable,
             'points_available_discount' => $pointsAvailableDiscount,
-            'points_used'     => $pointsUsed,
+            'points_used' => $pointsUsed,
             'points_discount' => $pointsDiscount,
         ];
     }
@@ -277,7 +278,7 @@ class OrderService
                 ]);
             }
 
-            // خلص = يختفي من القائمة لين المتجر يعبّيه
+            // خلص = يتقفل للطلب (يقعد يبان بعلامة «نفد») لين المتجر يعبّيه
             Product::whereKey($productId)->where('stock_quantity', '<=', 0)
                 ->update(['is_available' => false, 'stock_quantity' => 0, 'sold_out_at' => now()]);
         }
@@ -332,48 +333,19 @@ class OrderService
                 ]);
             }
 
-            $optionsPrice = 0;
-            $chosen       = [];
-
-            foreach ($product->options as $option) {
-                $ids = array_intersect(
-                    $item['option_value_ids'] ?? [],
-                    $option->values->pluck('id')->all()
-                );
-
-                if ($option->is_required && count($ids) === 0) {
-                    throw ValidationException::withMessages([
-                        'items' => Texts::get('msg.option_required', ['option' => $option->name, 'name' => $product->name]),
-                    ]);
-                }
-
-                if (count($ids) > $option->max_choices) {
-                    throw ValidationException::withMessages([
-                        'items' => Texts::get('msg.option_too_many', ['option' => $option->name]),
-                    ]);
-                }
-
-                foreach ($option->values->whereIn('id', $ids) as $value) {
-                    $optionsPrice += $value->extra_price;
-                    $chosen[] = [
-                        'option' => $option->name,
-                        'value'  => $value->name,
-                        'price'  => $value->extra_price,
-                    ];
-                }
-            }
+            [$optionsPrice, $chosen] = $this->priceOptions($product, $item);
 
             $unitPrice = $product->effectivePrice();
 
             $lines[] = [
-                'product_id'    => $product->id,
-                'name'          => $product->name,
-                'unit_price'    => $unitPrice,
-                'quantity'      => $quantity,
-                'options'       => $chosen,
+                'product_id' => $product->id,
+                'name' => $product->name,
+                'unit_price' => $unitPrice,
+                'quantity' => $quantity,
+                'options' => $chosen,
                 'options_price' => $optionsPrice,
-                'line_total'    => round(($unitPrice + $optionsPrice) * $quantity, 2),
-                'note'          => $item['note'] ?? null,
+                'line_total' => round(($unitPrice + $optionsPrice) * $quantity, 2),
+                'note' => $item['note'] ?? null,
             ];
         }
 
@@ -382,6 +354,83 @@ class OrderService
         }
 
         return $lines;
+    }
+
+    /**
+     * الإضافات والخيارات المختارة لسطر واحد.
+     *
+     * التطبيق يبعث options: [{id, qty}] (الجديد — يدعم «سيخ كباب × 3»)
+     * أو option_value_ids: [..] (القديم — كل وحدة مرة).
+     *
+     * @return array<int, int> [رقم الإضافة => العدد]
+     */
+    public static function selectedOptions(array $item): array
+    {
+        $qty = [];
+        foreach ((array) ($item['option_value_ids'] ?? []) as $id) {
+            if (is_numeric($id)) {
+                $qty[(int) $id] = max($qty[(int) $id] ?? 0, 1);
+            }
+        }
+        foreach ((array) ($item['options'] ?? []) as $o) {
+            $id = is_array($o) ? ($o['id'] ?? null) : $o;
+            if (is_numeric($id)) {
+                $qty[(int) $id] = max(1, (int) (is_array($o) ? ($o['qty'] ?? 1) : 1));
+            }
+        }
+
+        return $qty;
+    }
+
+    /** @return array{0: float, 1: list<array{option: string, value: string, price: float, qty: int}>} */
+    private function priceOptions(Product $product, array $item): array
+    {
+        $selected = self::selectedOptions($item);
+        $price = 0.0;
+        $chosen = [];
+
+        foreach ($product->options as $option) {
+            $values = $option->values->whereIn('id', array_keys($selected));
+
+            if ($option->is_required && $values->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'items' => Texts::get('msg.option_required', ['option' => $option->name, 'name' => $product->name]),
+                ]);
+            }
+
+            $max = $option->type === 'single' ? 1 : max(1, (int) $option->max_choices);
+            if ($values->count() > $max) {
+                throw ValidationException::withMessages([
+                    'items' => Texts::get('msg.option_too_many', ['option' => $option->name]),
+                ]);
+            }
+
+            foreach ($values as $value) {
+                if (! $value->is_available) {
+                    throw ValidationException::withMessages([
+                        'items' => Texts::get('msg.option_unavailable', ['value' => $value->name, 'name' => $product->name]),
+                    ]);
+                }
+
+                $n = $selected[$value->id];
+                $limit = max(1, (int) ($value->max_qty ?? 1));
+                if ($n > $limit) {
+                    throw ValidationException::withMessages([
+                        'items' => Texts::get('msg.option_max_qty', ['value' => $value->name, 'max' => $limit]),
+                    ]);
+                }
+
+                $price += $value->extra_price * $n;
+                $chosen[] = [
+                    'option' => $option->name,
+                    'value' => $value->name,
+                    'price' => (float) $value->extra_price,
+                    'qty' => $n,
+                ];
+            }
+        }
+
+        return [round($price, 2), $chosen];
     }
 
     /** الانتقال بين الحالات — البوابة الوحيدة لتغيير حالة الطلب */
@@ -394,7 +443,7 @@ class OrderService
         $from = $order->status;
 
         // الإدارة تقدر تفرض أي انتقال (force) — التطبيقات لا
-        $force      = (bool) ($extra['force'] ?? false);
+        $force = (bool) ($extra['force'] ?? false);
         $isAbnormal = ! $from->canMoveTo($to);
 
         if ($from === $to) {
@@ -425,25 +474,25 @@ class OrderService
 
             match ($to) {
                 OrderStatus::Accepted => $payload = $payload + [
-                    'accepted_at'       => now(),
+                    'accepted_at' => now(),
                     'prep_time_minutes' => $extra['prep_time_minutes'] ?? $order->prep_time_minutes,
                 ],
                 // القبول = بدء التحضير: نسجّلو وقت القبول ومدة التحضير اللي حددها المتجر
                 OrderStatus::Preparing => $payload = $payload + [
-                    'accepted_at'       => $order->accepted_at ?? now(),
+                    'accepted_at' => $order->accepted_at ?? now(),
                     'prep_time_minutes' => $extra['prep_time_minutes'] ?? $order->prep_time_minutes,
                 ],
-                OrderStatus::Ready     => $payload['ready_at'] = now(),
-                OrderStatus::Assigned  => $payload['driver_id'] = $extra['driver_id'] ?? $order->driver_id,
-                OrderStatus::PickedUp  => $payload['picked_up_at'] = now(),
+                OrderStatus::Ready => $payload['ready_at'] = now(),
+                OrderStatus::Assigned => $payload['driver_id'] = $extra['driver_id'] ?? $order->driver_id,
+                OrderStatus::PickedUp => $payload['picked_up_at'] = now(),
                 OrderStatus::Delivered => $payload = $payload + [
                     'delivered_at' => now(),
-                    'is_paid'      => true,
+                    'is_paid' => true,
                 ],
                 OrderStatus::Cancelled, OrderStatus::Failed => $payload = $payload + [
-                    'cancelled_at'  => now(),
+                    'cancelled_at' => now(),
                     'cancel_reason' => $extra['reason'] ?? null,
-                    'cancelled_by'  => $actor?->id,
+                    'cancelled_by' => $actor?->id,
                 ],
                 default => null,
             };
@@ -458,12 +507,12 @@ class OrderService
 
             $order->statusLogs()->create([
                 'from_status' => $from->value,
-                'to_status'   => $to->value,
-                'changed_by'  => $actor?->id,
-                'note'        => $note,
-                'lat'         => $extra['lat'] ?? null,
-                'lng'         => $extra['lng'] ?? null,
-                'created_at'  => now(),
+                'to_status' => $to->value,
+                'changed_by' => $actor?->id,
+                'note' => $note,
+                'lat' => $extra['lat'] ?? null,
+                'lng' => $extra['lng'] ?? null,
+                'created_at' => now(),
             ]);
 
             // إرجاع المخزون والنقاط لو الطلب انلغى أو فشل
@@ -526,7 +575,7 @@ class OrderService
             return;
         }
 
-        if ($order->picked_up_at && ! \App\Support\Options::get('stock.restore_after_pickup')) {
+        if ($order->picked_up_at && ! Options::get('stock.restore_after_pickup')) {
             return;
         }
 
@@ -547,7 +596,7 @@ class OrderService
     /** الحالات اللي تحتاج تدخّل الإدارة — تنبيه فوري في اللوحة */
     private function alertAdmins(Order $order, OrderStatus $to, ?User $actor): void
     {
-        $url = \App\Filament\Resources\Orders\OrderResource::getUrl('view', ['record' => $order->id], panel: 'admin');
+        $url = OrderResource::getUrl('view', ['record' => $order->id], panel: 'admin');
         $reason = $order->cancel_reason ? " — {$order->cancel_reason}" : '';
 
         if ($to === OrderStatus::Failed) {
@@ -613,9 +662,9 @@ class OrderService
     private function notify(Order $order, OrderStatus $to): void
     {
         $data = [
-            'type'     => 'order_status',
+            'type' => 'order_status',
             'order_id' => (string) $order->id,
-            'status'   => $to->value,
+            'status' => $to->value,
         ];
 
         $title = Texts::get('notify.title', ['code' => $order->code]);
@@ -649,13 +698,13 @@ class OrderService
     private function vars(Order $order): array
     {
         return [
-            'code'     => $order->code,
-            'prep'     => $order->prep_time_minutes ?: Options::get('orders.default_prep_minutes'),
-            'driver'   => $order->driver?->name ?? '',
-            'store'    => $order->store?->name ?? '',
-            'address'  => $order->address_details,
-            'reason'   => $order->cancel_reason ?? '',
-            'earning'  => number_format((float) $order->driver_earning, 2),
+            'code' => $order->code,
+            'prep' => $order->prep_time_minutes ?: Options::get('orders.default_prep_minutes'),
+            'driver' => $order->driver?->name ?? '',
+            'store' => $order->store?->name ?? '',
+            'address' => $order->address_details,
+            'reason' => $order->cancel_reason ?? '',
+            'earning' => number_format((float) $order->driver_earning, 2),
             'distance' => number_format((float) $order->distance_km, 1),
         ];
     }
@@ -695,7 +744,7 @@ class OrderService
             ->get();
 
         $title = Texts::get('notify.driver.available_title');
-        $body  = Texts::get('notify.driver.available', $this->vars($order));
+        $body = Texts::get('notify.driver.available', $this->vars($order));
 
         foreach ($drivers as $driver) {
             if (! $driver->driverProfile?->canAccept($order)) {
@@ -703,7 +752,7 @@ class OrderService
             }
 
             PushService::toUser($driver, $title, $body, [
-                'type'     => 'order_available',
+                'type' => 'order_available',
                 'order_id' => (string) $order->id,
             ], 'driver');
         }

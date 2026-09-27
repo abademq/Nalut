@@ -7,13 +7,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Http\Resources\ProductResource;
 use App\Models\Order;
-use App\Models\Product;
 use App\Models\OrderItem;
+use App\Models\Product;
 use App\Services\OrderService;
+use App\Services\ProductOptionsSync;
+use App\Services\SubstitutionService;
 use App\Support\LocalDay;
+use App\Support\Texts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
 use Illuminate\Validation\ValidationException;
 
 /** واجهات تطبيق المتجر */
@@ -36,13 +41,13 @@ class StorePanelController extends Controller
                 'id' => $store->id, 'name' => $store->name, 'is_open' => (bool) $store->is_open,
             ],
             'today' => [
-                'orders'  => $store->orders()->whereBetween('created_at', [$from, $to])->count(),
-                'sales'   => (float) $store->orders()->whereBetween('created_at', [$from, $to])
+                'orders' => $store->orders()->whereBetween('created_at', [$from, $to])->count(),
+                'sales' => (float) $store->orders()->whereBetween('created_at', [$from, $to])
                     ->where('status', OrderStatus::Delivered->value)->sum('store_earning'),
                 'pending' => $store->orders()->where('status', OrderStatus::Pending->value)
                     ->where(fn ($q) => $q->where('payment_method', '!=', 'card')->orWhere('is_paid', true))
                     ->count(),
-                'active'  => $store->orders()->active()->count(),
+                'active' => $store->orders()->active()->count(),
             ],
             'low_stock' => $store->products()
                 ->where('track_stock', true)
@@ -66,8 +71,8 @@ class StorePanelController extends Controller
 
         $request->validate([
             'status' => ['nullable', 'string'],
-            'date'   => ['nullable', 'date_format:Y-m-d'],
-            'q'      => ['nullable', 'string', 'max:20'],
+            'date' => ['nullable', 'date_format:Y-m-d'],
+            'q' => ['nullable', 'string', 'max:20'],
         ]);
 
         $final = [OrderStatus::Delivered->value, OrderStatus::Cancelled->value, OrderStatus::Failed->value];
@@ -97,15 +102,15 @@ class StorePanelController extends Controller
         abort_unless($order->store_id === $this->store($request)->id, 403);
 
         $data = $request->validate([
-            'status'            => ['required', 'in:preparing,ready,cancelled'],
+            'status' => ['required', 'in:preparing,ready,cancelled'],
             'prep_time_minutes' => ['nullable', 'integer', 'between:1,600'],
-            'reason'            => ['nullable', 'string', 'max:200'],
+            'reason' => ['nullable', 'string', 'max:200'],
         ]);
 
         // الطلب يستنى رد الزبون على الأصناف الناقصة — المتجر يقدر يرفض بس
         if ($order->awaiting_customer_at && $data['status'] !== 'cancelled') {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'status' => \App\Support\Texts::get('msg.substitution_pending'),
+            throw ValidationException::withMessages([
+                'status' => Texts::get('msg.substitution_pending'),
             ]);
         }
 
@@ -126,12 +131,12 @@ class StorePanelController extends Controller
     }
 
     /** أصناف مش متوفرة: تتقفل، والزبون يختار يكمّل بدونها أو يعدّل طلبه */
-    public function unavailableItems(Request $request, Order $order, \App\Services\SubstitutionService $subs): JsonResponse
+    public function unavailableItems(Request $request, Order $order, SubstitutionService $subs): JsonResponse
     {
         abort_unless($order->store_id === $this->store($request)->id, 403);
 
         $data = $request->validate([
-            'item_ids'   => ['required', 'array', 'min:1'],
+            'item_ids' => ['required', 'array', 'min:1'],
             'item_ids.*' => ['integer'],
         ]);
 
@@ -149,10 +154,10 @@ class StorePanelController extends Controller
             ->orderBy('sort')
             ->get()
             ->map(fn ($s) => [
-                'id'             => $s->id,
-                'name'           => $s->name,
-                'sort'           => $s->sort,
-                'is_active'      => (bool) $s->is_active,
+                'id' => $s->id,
+                'name' => $s->name,
+                'sort' => $s->sort,
+                'is_active' => (bool) $s->is_active,
                 'products_count' => $s->products_count,
             ]);
 
@@ -181,8 +186,8 @@ class StorePanelController extends Controller
         $section = $this->store($request)->sections()->findOrFail($id);
 
         $section->update($request->validate([
-            'name'      => ['nullable', 'string', 'max:60'],
-            'sort'      => ['nullable', 'integer'],
+            'name' => ['nullable', 'string', 'max:60'],
+            'sort' => ['nullable', 'integer'],
             'is_active' => ['nullable', 'boolean'],
         ]));
 
@@ -206,7 +211,7 @@ class StorePanelController extends Controller
         $store = $this->store($request);
 
         $data = $request->validate([
-            'ids'   => ['required', 'array'],
+            'ids' => ['required', 'array'],
             'ids.*' => ['integer'],
         ]);
 
@@ -229,15 +234,15 @@ class StorePanelController extends Controller
         $store = $this->store($request);
 
         $data = $request->validate([
-            'name'            => ['required', 'string', 'max:120'],
-            'description'     => ['nullable', 'string', 'max:500'],
-            'price'           => ['required', 'numeric', 'min:0'],
-            'discount_price'  => ['nullable', 'numeric', 'min:0', 'lt:price'],
+            'name' => ['required', 'string', 'max:120'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'price' => ['required', 'numeric', 'min:0'],
+            'discount_price' => ['nullable', 'numeric', 'min:0', 'lt:price'],
             'menu_section_id' => ['nullable', 'integer', $this->ownSectionRule($store->id)],
-            'is_available'    => ['nullable', 'boolean'],
-            'track_stock'     => ['nullable', 'boolean'],
-            'stock_quantity'  => ['nullable', 'integer', 'min:0'],
-            'max_per_order'   => ['nullable', 'integer', 'min:1'],
+            'is_available' => ['nullable', 'boolean'],
+            'track_stock' => ['nullable', 'boolean'],
+            'stock_quantity' => ['nullable', 'integer', 'min:0'],
+            'max_per_order' => ['nullable', 'integer', 'min:1'],
             'low_stock_alert' => ['nullable', 'integer', 'min:0'],
             ...self::IMAGE_RULES,
         ]);
@@ -255,16 +260,16 @@ class StorePanelController extends Controller
         abort_unless($product->store_id === $this->store($request)->id, 403);
 
         $data = $request->validate([
-            'name'            => ['nullable', 'string', 'max:120'],
-            'description'     => ['nullable', 'string', 'max:500'],
-            'price'           => ['nullable', 'numeric', 'min:0'],
-            'discount_price'  => ['nullable', 'numeric', 'min:0'],
+            'name' => ['nullable', 'string', 'max:120'],
+            'description' => ['nullable', 'string', 'max:500'],
+            'price' => ['nullable', 'numeric', 'min:0'],
+            'discount_price' => ['nullable', 'numeric', 'min:0'],
             // كان ناقص من القائمة — فتغيير القسم ينحفظ بدون ما يتغيّر فعلياً
             'menu_section_id' => ['nullable', 'integer', $this->ownSectionRule($product->store_id)],
-            'is_available'    => ['nullable', 'boolean'],
-            'track_stock'     => ['nullable', 'boolean'],
-            'stock_quantity'  => ['nullable', 'integer', 'min:0'],
-            'max_per_order'   => ['nullable', 'integer', 'min:1'],
+            'is_available' => ['nullable', 'boolean'],
+            'track_stock' => ['nullable', 'boolean'],
+            'stock_quantity' => ['nullable', 'integer', 'min:0'],
+            'max_per_order' => ['nullable', 'integer', 'min:1'],
             'low_stock_alert' => ['nullable', 'integer', 'min:0'],
             ...self::IMAGE_RULES,
         ]);
@@ -285,7 +290,18 @@ class StorePanelController extends Controller
         // نمسحو الملفات بعد ما ينحفظ المنتج — لو الحفظ فشل ما نخسروش الصور
         Storage::disk('public')->delete($removed);
 
-        return response()->json(['data' => new ProductResource($product->fresh())]);
+        return response()->json(['data' => new ProductResource($product->fresh()->load('options.values'))]);
+    }
+
+    /** الإضافات والخيارات (زيادة صوص، سيخ كباب، الحجم...) — القائمة كاملة */
+    public function syncProductOptions(Request $request, Product $product, ProductOptionsSync $sync): JsonResponse
+    {
+        abort_unless($product->store_id === $this->store($request)->id, 403);
+
+        $data = $request->validate(ProductOptionsSync::RULES);
+        $sync->sync($product, $data['options']);
+
+        return response()->json(['data' => new ProductResource($product->fresh()->load('options.values'))]);
     }
 
     public function destroyProduct(Request $request, Product $product): JsonResponse
@@ -298,12 +314,12 @@ class StorePanelController extends Controller
 
     /** قواعد الصور — صورة واحدة (image) للتوافق مع النسخ القديمة، أو عدة صور (images[]) */
     private const IMAGE_RULES = [
-        'image'           => ['nullable', 'image', 'max:5120'],
-        'images'          => ['nullable', 'array', 'max:'.Product::MAX_IMAGES],
-        'images.*'        => ['image', 'max:5120'],
-        'remove_images'   => ['nullable', 'array'],
+        'image' => ['nullable', 'image', 'max:5120'],
+        'images' => ['nullable', 'array', 'max:'.Product::MAX_IMAGES],
+        'images.*' => ['image', 'max:5120'],
+        'remove_images' => ['nullable', 'array'],
         'remove_images.*' => ['string'],
-        'main_image'      => ['nullable', 'string'],
+        'main_image' => ['nullable', 'string'],
     ];
 
     /**
@@ -374,7 +390,7 @@ class StorePanelController extends Controller
             ->groupBy(fn ($o) => $o->payment_method->value)
             ->map(fn ($g) => [
                 'method' => $g->first()->payment_method->value,
-                'label'  => $g->first()->payment_method->label(),
+                'label' => $g->first()->payment_method->label(),
                 'orders' => $g->count(),
                 'amount' => $money($g, 'subtotal'),
             ])
@@ -388,47 +404,47 @@ class StorePanelController extends Controller
             ->limit(10)
             ->get()
             ->map(fn ($r) => [
-                'name'     => $r->name,
+                'name' => $r->name,
                 'quantity' => (int) $r->qty,
-                'amount'   => round((float) $r->amount, 2),
+                'amount' => round((float) $r->amount, 2),
             ]);
 
         return response()->json([
-            'date'         => $day->toDateString(),
-            'store'        => $store->name,
+            'date' => $day->toDateString(),
+            'store' => $store->name,
             'generated_at' => now(LocalDay::timezone())->format('Y-m-d H:i'),
-            'orders'       => [
-                'total'     => $orders->count(),
+            'orders' => [
+                'total' => $orders->count(),
                 'delivered' => $delivered->count(),
                 'cancelled' => $count(OrderStatus::Cancelled),
-                'failed'    => $count(OrderStatus::Failed),
-                'active'    => $orders->filter(fn ($o) => ! $o->status->isFinal())->count(),
+                'failed' => $count(OrderStatus::Failed),
+                'active' => $orders->filter(fn ($o) => ! $o->status->isFinal())->count(),
             ],
-            'sales'        => [
+            'sales' => [
                 // قيمة الأصناف قبل التوصيل
-                'gross'      => $money($delivered, 'subtotal'),
-                'discount'   => $money($delivered, 'discount'),
+                'gross' => $money($delivered, 'subtotal'),
+                'discount' => $money($delivered, 'discount'),
                 'commission' => $money($delivered, 'commission_amount'),
                 // صافي المتجر بعد عمولة المنصة
-                'net'        => $money($delivered, 'store_earning'),
-                'average'    => $delivered->count() ? round((float) $delivered->avg('subtotal'), 2) : 0.0,
+                'net' => $money($delivered, 'store_earning'),
+                'average' => $delivered->count() ? round((float) $delivered->avg('subtotal'), 2) : 0.0,
             ],
-            'by_payment'   => $byPayment,
+            'by_payment' => $byPayment,
             'top_products' => $topProducts,
-            'list'         => $orders->map(fn ($o) => [
-                'code'         => $o->code,
-                'time'         => LocalDay::toLocal($o->created_at)?->format('H:i'),
-                'status'       => $o->status->value,
+            'list' => $orders->map(fn ($o) => [
+                'code' => $o->code,
+                'time' => LocalDay::toLocal($o->created_at)?->format('H:i'),
+                'status' => $o->status->value,
                 'status_label' => $o->status->label(),
-                'payment'      => $o->payment_method->label(),
-                'subtotal'     => (float) $o->subtotal,
+                'payment' => $o->payment_method->label(),
+                'subtotal' => (float) $o->subtotal,
             ])->values(),
         ]);
     }
 
     /** القسم لازم يكون تابع لنفس المتجر */
-    private function ownSectionRule(int $storeId): \Illuminate\Validation\Rules\Exists
+    private function ownSectionRule(int $storeId): Exists
     {
-        return \Illuminate\Validation\Rule::exists('menu_sections', 'id')->where('store_id', $storeId);
+        return Rule::exists('menu_sections', 'id')->where('store_id', $storeId);
     }
 }

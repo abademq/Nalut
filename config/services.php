@@ -34,9 +34,20 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-    
+
+    // reCAPTCHA v2 (مربع «أنا لست روبوتاً») — فاضي = معطّل
+    'recaptcha' => [
+        'site_key' => env('RECAPTCHA_SITE_KEY'),
+        'secret_key' => env('RECAPTCHA_SECRET_KEY'),
+    ],
+
+    // Firebase App Check: رقم المشروع (Project number) من إعدادات مشروع Firebase
+    'appcheck' => [
+        'project_number' => env('FIREBASE_PROJECT_NUMBER'),
+    ],
+
     'fcm' => [
-        'project_id'  => env('FCM_PROJECT_ID'),
+        'project_id' => env('FCM_PROJECT_ID'),
         'credentials' => env('FCM_CREDENTIALS_PATH', 'storage/app/firebase.json'),
     ],
 ];

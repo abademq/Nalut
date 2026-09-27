@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Products\Tables;
 
+use App\Filament\Support\ShareLink;
 use App\Models\Product;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -89,7 +90,7 @@ class ProductsTable
                 TrashedFilter::make()->label('المحذوفة'),
             ])
             ->recordActions([
-                \App\Filament\Support\ShareLink::make(fn ($record) => route('link.product', ['store' => $record->store_id, 'product' => $record->id]))
+                ShareLink::make(fn ($record) => route('link.product', ['store' => $record->store_id, 'product' => $record->id]))
                     ->iconButton()->tooltip('رابط المشاركة'),
                 Action::make('restock')
                     ->label('تعبئة المخزون')
@@ -115,7 +116,7 @@ class ProductsTable
                     }),
 
                 Action::make('toggleAvailable')
-                    ->label(fn (Product $record) => $record->is_available ? 'إخفاء' : 'إتاحة')
+                    ->label(fn (Product $record) => $record->is_available ? 'إيقاف' : 'إتاحة')
                     ->icon(fn (Product $record) => $record->is_available ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
                     ->color(fn (Product $record) => $record->is_available ? 'gray' : 'success')
                     ->action(fn (Product $record) => $record->update(['is_available' => ! $record->is_available])),

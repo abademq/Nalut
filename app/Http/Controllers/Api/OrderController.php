@@ -8,6 +8,8 @@ use App\Http\Resources\OrderResource;
 use App\Models\Order;
 use App\Services\DriverLocationService;
 use App\Services\OrderService;
+use App\Support\Options;
+use App\Support\Texts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -29,18 +31,21 @@ class OrderController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'store_id'                 => ['required', 'exists:stores,id'],
-            'address_id'               => ['required', 'integer'],
-            'payment_method'           => ['nullable', 'in:cash,wallet,card'],
-            'use_wallet'               => ['nullable', 'boolean'],
-            'use_points'               => ['nullable', 'boolean'],
-            'notes'                    => ['nullable', 'string', 'max:500'],
-            'coupon_code'              => ['nullable', 'string', 'max:30'],
-            'items'                    => ['required', 'array', 'min:1'],
-            'items.*.product_id'       => ['required', 'integer'],
-            'items.*.quantity'         => ['required', 'integer', 'min:1', 'max:50'],
-            'items.*.note'             => ['nullable', 'string', 'max:200'],
+            'store_id' => ['required', 'exists:stores,id'],
+            'address_id' => ['required', 'integer'],
+            'payment_method' => ['nullable', 'in:cash,wallet,card'],
+            'use_wallet' => ['nullable', 'boolean'],
+            'use_points' => ['nullable', 'boolean'],
+            'notes' => ['nullable', 'string', 'max:500'],
+            'coupon_code' => ['nullable', 'string', 'max:30'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'integer'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:50'],
+            'items.*.note' => ['nullable', 'string', 'max:200'],
             'items.*.option_value_ids' => ['nullable', 'array'],
+            'items.*.options' => ['nullable', 'array', 'max:40'],
+            'items.*.options.*.id' => ['required', 'integer'],
+            'items.*.options.*.qty' => ['nullable', 'integer', 'min:1', 'max:20'],
         ]);
 
         $order = $this->orders->create($request->user(), $data);
@@ -54,16 +59,21 @@ class OrderController extends Controller
     public function quote(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'store_id'           => ['required', 'exists:stores,id'],
-            'address_id'         => ['required', 'integer'],
-            'payment_method'     => ['nullable', 'in:cash,wallet,card'],
-            'use_wallet'         => ['nullable', 'boolean'],
-            'use_points'         => ['nullable', 'boolean'],
-            'coupon_code'        => ['nullable', 'string', 'max:30'],
-            'items'              => ['required', 'array', 'min:1'],
+            'store_id' => ['required', 'exists:stores,id'],
+            'address_id' => ['required', 'integer'],
+            'payment_method' => ['nullable', 'in:cash,wallet,card'],
+            'use_wallet' => ['nullable', 'boolean'],
+            'use_points' => ['nullable', 'boolean'],
+            'coupon_code' => ['nullable', 'string', 'max:30'],
+            'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', 'integer'],
-            'items.*.quantity'   => ['required', 'integer', 'min:1', 'max:50'],
-            'items.*.note'       => ['nullable', 'string', 'max:200'],
+            'items.*.quantity' => ['required', 'integer', 'min:1', 'max:50'],
+            'items.*.note' => ['nullable', 'string', 'max:200'],
+            // كانت ناقصة — التسعيرة كانت تطلع بدون سعر الإضافات
+            'items.*.option_value_ids' => ['nullable', 'array'],
+            'items.*.options' => ['nullable', 'array', 'max:40'],
+            'items.*.options.*.id' => ['required', 'integer'],
+            'items.*.options.*.qty' => ['nullable', 'integer', 'min:1', 'max:20'],
         ]);
 
         return response()->json($this->orders->quote($request->user(), $data));
@@ -86,11 +96,11 @@ class OrderController extends Controller
         abort_unless($order->customer_id === $request->user()->id, 403);
 
         return response()->json([
-            'status'          => $order->status->value,
-            'status_label'    => $order->status->label(),
+            'status' => $order->status->value,
+            'status_label' => $order->status->label(),
             'driver_location' => $order->driver_id ? DriverLocationService::get($order->driver_id) : null,
-            'store_location'  => ['lat' => $order->store->lat, 'lng' => $order->store->lng],
-            'destination'     => ['lat' => $order->address_lat, 'lng' => $order->address_lng],
+            'store_location' => ['lat' => $order->store->lat, 'lng' => $order->store->lng],
+            'destination' => ['lat' => $order->address_lat, 'lng' => $order->address_lng],
         ]);
     }
 
@@ -102,19 +112,19 @@ class OrderController extends Controller
 
         // الإلغاء متاح قبل ما المتجر يبدا التحضير فقط — والإدارة تقدر تقفله نهائياً
         abort_if(
-            \App\Support\Options::get('orders.customer_cancel_until') === 'never',
+            Options::get('orders.customer_cancel_until') === 'never',
             422,
-            \App\Support\Texts::get('msg.cancel_disabled')
+            Texts::get('msg.cancel_disabled')
         );
 
         abort_unless(
             $order->status === OrderStatus::Pending,
             422,
-            \App\Support\Texts::get('msg.cancel_too_late')
+            Texts::get('msg.cancel_too_late')
         );
 
         $order = $this->orders->transition($order, OrderStatus::Cancelled, $request->user(), [
-            'reason' => $request->input('reason') ?: \App\Support\Texts::get('msg.cancelled_by_customer'),
+            'reason' => $request->input('reason') ?: Texts::get('msg.cancelled_by_customer'),
         ]);
 
         return response()->json(['data' => new OrderResource($order)]);
@@ -127,9 +137,9 @@ class OrderController extends Controller
         abort_if($order->rating()->exists(), 422, 'قيّمت هذا الطلب من قبل.');
 
         $data = $request->validate([
-            'store_rating'  => ['nullable', 'integer', 'between:1,5'],
+            'store_rating' => ['nullable', 'integer', 'between:1,5'],
             'driver_rating' => ['nullable', 'integer', 'between:1,5'],
-            'comment'       => ['nullable', 'string', 'max:400'],
+            'comment' => ['nullable', 'string', 'max:400'],
         ]);
 
         $order->rating()->create($data + ['user_id' => $request->user()->id]);
@@ -144,7 +154,7 @@ class OrderController extends Controller
         if (! empty($data['store_rating']) && $store = $order->store) {
             $count = $store->rating_count + 1;
             $store->update([
-                'rating_avg'   => round((($store->rating_avg * $store->rating_count) + $data['store_rating']) / $count, 2),
+                'rating_avg' => round((($store->rating_avg * $store->rating_count) + $data['store_rating']) / $count, 2),
                 'rating_count' => $count,
             ]);
         }
@@ -152,7 +162,7 @@ class OrderController extends Controller
         if (! empty($data['driver_rating']) && $profile = $order->driver?->driverProfile) {
             $count = $profile->rating_count + 1;
             $profile->update([
-                'rating_avg'   => round((($profile->rating_avg * $profile->rating_count) + $data['driver_rating']) / $count, 2),
+                'rating_avg' => round((($profile->rating_avg * $profile->rating_count) + $data['driver_rating']) / $count, 2),
                 'rating_count' => $count,
             ]);
         }

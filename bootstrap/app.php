@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\LogApiActivity;
+use App\Http\Middleware\RecordTraffic;
+use App\Http\Middleware\VerifyAppCheck;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,10 +18,14 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'role' => EnsureRole::class,
+            'appcheck' => VerifyAppCheck::class,
         ]);
 
+        // حالة السيرفر: عدّاد خفيف لكل طلب (ملف نصي، بعد ما الرد يوصل)
+        $middleware->append(RecordTraffic::class);
+
         // سجل النشاط: كل عملية من التطبيقات
-        $middleware->api(append: \App\Http\Middleware\LogApiActivity::class);
+        $middleware->api(append: LogApiActivity::class);
 
         // ما فيش مسار باسم login — بدونه أي طلب API بدون توكن يطيح بخطأ 500 بدل 401
         $middleware->redirectGuestsTo(

@@ -12,7 +12,7 @@ class ProductOption extends Model
 
     protected function casts(): array
     {
-        return ['is_required' => 'boolean'];
+        return ['is_required' => 'boolean', 'max_choices' => 'integer'];
     }
 
     public function product(): BelongsTo
