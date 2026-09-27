@@ -142,6 +142,43 @@ class Options
                 'label' => 'المسافة المشمولة في الرسوم الأساسية (كم)'],
             'delivery.default_commission_percent' => ['type' => 'float', 'default' => config('delivery.commission_percent', 15), 'min' => 0, 'max' => 100,
                 'label' => 'عمولة المنصة الافتراضية للمتاجر الجديدة (%)'],
+            'delivery.driver_share_percent' => ['type' => 'float', 'default' => 100, 'min' => 0, 'max' => 100,
+                'label' => 'نصيب السائق من رسوم التوصيل (%)',
+                'help' => '100 = الرسوم كاملة للسائق. مثلاً 80 = 80% للسائق و20% للمنصة. ينطبق على الطلبات الجديدة بس.'],
+
+            // ===== التسويات =====
+            'settlement.company_name' => ['type' => 'string', 'default' => 'شركة القمرة المظلمة لخدمات التكنولوجيا وتقنية المعلومات',
+                'label' => 'اسم الشركة في واصل التسوية'],
+            'settlement.prefix' => ['type' => 'string', 'default' => 'ST-',
+                'label' => 'بادئة رقم التسوية', 'help' => 'مثلاً ST- ← ST-000125'],
+            'settlement.footer' => ['type' => 'string', 'default' => 'هذا الواصل إثبات للمبلغ المذكور أعلاه. يُرجى الاحتفاظ به.',
+                'label' => 'نص أسفل واصل التسوية'],
+            'settlement.show_orders' => ['type' => 'bool', 'default' => true,
+                'label' => 'قائمة الطلبات في واصل التسوية (ورق A4)'],
+
+            // ===== ما يظهر للمتجر والسائق (صفحة «ما يظهر للمتجر والسائق») =====
+            'show.store.customer_name' => ['type' => 'bool', 'default' => true, 'label' => 'اسم الزبون'],
+            'show.store.customer_phone' => ['type' => 'bool', 'default' => true, 'label' => 'رقم الزبون'],
+            'show.store.customer_address' => ['type' => 'bool', 'default' => true, 'label' => 'عنوان الزبون'],
+            'show.store.item_prices' => ['type' => 'bool', 'default' => true, 'label' => 'أسعار الأصناف'],
+            'show.store.order_total' => ['type' => 'bool', 'default' => true, 'label' => 'اللي يدفعه الزبون (التوصيل، الخصم، الإجمالي، طريقة الدفع)'],
+            'show.store.commission' => ['type' => 'bool', 'default' => true, 'label' => 'عمولة المنصة'],
+            'show.store.store_net' => ['type' => 'bool', 'default' => true, 'label' => 'صافي المتجر من الطلب'],
+            'show.store.driver_earning' => ['type' => 'bool', 'default' => false, 'label' => 'أجرة السائق'],
+            'show.store.driver' => ['type' => 'bool', 'default' => true, 'label' => 'اسم ورقم السائق'],
+            'show.store.balance' => ['type' => 'bool', 'default' => true, 'label' => 'رصيده والتسويات (حسابي)'],
+
+            'show.driver.customer_name' => ['type' => 'bool', 'default' => true, 'label' => 'اسم الزبون'],
+            'show.driver.customer_phone' => ['type' => 'bool', 'default' => true, 'label' => 'رقم الزبون'],
+            'show.driver.items' => ['type' => 'bool', 'default' => true, 'label' => 'الأصناف'],
+            'show.driver.item_prices' => ['type' => 'bool', 'default' => true, 'label' => 'أسعار الأصناف'],
+            'show.driver.order_total' => ['type' => 'bool', 'default' => true, 'label' => 'تفصيل اللي يدفعه الزبون (الأصناف، التوصيل، الخصم، الإجمالي)'],
+            'show.driver.store_net' => ['type' => 'bool', 'default' => false, 'label' => 'صافي المتجر من الطلب'],
+            'show.driver.commission' => ['type' => 'bool', 'default' => false, 'label' => 'عمولة المنصة'],
+            'show.driver.earning' => ['type' => 'bool', 'default' => true, 'label' => 'أجرته من الطلب'],
+            'show.driver.store_phone' => ['type' => 'bool', 'default' => true, 'label' => 'رقم المتجر'],
+            'show.driver.notes' => ['type' => 'bool', 'default' => true, 'label' => 'ملاحظات الزبون'],
+            'show.driver.balance' => ['type' => 'bool', 'default' => true, 'label' => 'رصيده والتسويات (حسابي)'],
 
             // ===== التتبّع =====
             'tracking.refresh_seconds' => ['type' => 'int', 'default' => 5, 'min' => 3, 'max' => 60, 'public' => true,

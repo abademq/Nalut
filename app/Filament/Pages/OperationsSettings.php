@@ -39,6 +39,7 @@ class OperationsSettings extends Page
         'logs' => 'سجل النشاط',
         'server' => 'حالة السيرفر',
         'security' => 'الحماية',
+        'settlement' => 'واصل التسوية',
         'stock' => 'المخزون',
         'delivery' => 'التوصيل والعمولة',
         'tracking' => 'التتبّع',
@@ -123,6 +124,10 @@ class OperationsSettings extends Page
         $state = $this->form->getState();
 
         foreach (Options::definitions() as $key => $def) {
+            // خيارات صفحات ثانية (مثلاً «ما يظهر للمتجر والسائق») ما تتلمسش
+            if (! array_key_exists(self::field($key), $state)) {
+                continue;
+            }
             $value = $state[self::field($key)] ?? null;
 
             $value = match ($def['type']) {

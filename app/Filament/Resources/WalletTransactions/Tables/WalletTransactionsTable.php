@@ -68,15 +68,15 @@ class WalletTransactionsTable
 
                 Filter::make('credits')
                     ->label('الداخل فقط')
-                    ->query(fn (Builder $q) => $q->where('amount', '>=', 0)),
+                    ->query(fn (Builder $query) => $query->where('amount', '>=', 0)),
 
                 Filter::make('debits')
                     ->label('الخارج فقط')
-                    ->query(fn (Builder $q) => $q->where('amount', '<', 0)),
+                    ->query(fn (Builder $query) => $query->where('amount', '<', 0)),
 
                 Filter::make('today')
                     ->label('اليوم')
-                    ->query(fn (Builder $q) => $q->whereDate('created_at', today())),
+                    ->query(fn (Builder $query) => $query->whereDate('created_at', today())),
             ]);
     }
 }

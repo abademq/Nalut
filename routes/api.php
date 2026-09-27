@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\CustomerExtrasController;
 use App\Http\Controllers\Api\DriverController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PartyAccountController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\StorePanelController;
 use App\Http\Controllers\Api\WalletController;
@@ -76,6 +77,7 @@ Route::prefix('v1')->group(function () {
         // ---------- المتجر ----------
         Route::prefix('store')->middleware('role:store')->group(function () {
             Route::get('summary', [StorePanelController::class, 'summary']);
+            Route::get('account', [PartyAccountController::class, 'store']);
             Route::post('toggle-open', [StorePanelController::class, 'toggleOpen']);
             Route::get('orders', [StorePanelController::class, 'orders']);
             Route::get('reports/daily', [StorePanelController::class, 'dailyReport']);
@@ -97,6 +99,7 @@ Route::prefix('v1')->group(function () {
         // ---------- السائق ----------
         Route::prefix('driver')->middleware('role:driver')->group(function () {
             Route::post('online', [DriverController::class, 'setOnline']);
+            Route::get('account', [PartyAccountController::class, 'driver']);
             Route::post('location', [DriverController::class, 'updateLocation'])->middleware('throttle:120,1');
             Route::get('available-orders', [DriverController::class, 'available']);
             Route::post('orders/{order}/accept', [DriverController::class, 'accept']);

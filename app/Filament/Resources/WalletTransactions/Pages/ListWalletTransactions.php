@@ -2,9 +2,11 @@
 
 namespace App\Filament\Resources\WalletTransactions\Pages;
 
+use App\Filament\Pages\SettlementDesk;
 use App\Filament\Resources\WalletTransactions\WalletTransactionResource;
 use App\Models\User;
 use App\Services\WalletService;
+use App\Support\Perm;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -18,101 +20,48 @@ class ListWalletTransactions extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('settlement')
-                ->authorize(fn () => \App\Support\Perm::can('finance.manage'))
-                ->label('تسوية نقدية')
+            // تسويات المتاجر والسائقين انتقلت لتبويب «التسويات» (بواصل مطبوع)
+            Action::make('settlements')
+                ->label('تسويات المتاجر والسائقين')
+                ->icon('heroicon-o-scale')
+                ->color('gray')
+                ->visible(fn () => SettlementDesk::canAccess())
+                ->url(SettlementDesk::getUrl()),
+
+            Action::make('topupCash')
+                ->authorize(fn () => Perm::can('finance.manage'))
+                ->label('شحن نقدي لزبون')
                 ->icon('heroicon-o-hand-raised')
                 ->color('success')
-                ->modalDescription('استعملها لمّا السائق يسلّم الكاش اللي عنده، '
-                    .'أو لمّا تشحن محفظة زبون نقداً.')
+                ->modalDescription('الزبون سلّمك فلوس نقداً وتبي تضيفها لمحفظته.')
                 ->schema([
                     Select::make('user_id')
-                        ->label('الحساب')
-                        ->options(fn () => User::query()
-                            ->orderBy('name')
-                            ->get()
-                            ->mapWithKeys(fn ($u) => [
-                                $u->id => "{$u->name} — {$u->phone} ({$u->rolesLabel()})",
-                            ]))
+                        ->label('الزبون')
                         ->searchable()
+                        ->getSearchResultsUsing(fn (string $search) => User::withRole('customer')
+                            ->where(fn ($q) => $q->where('name', 'like', "%$search%")->orWhere('phone', 'like', "%$search%"))
+                            ->limit(30)->get()
+                            ->mapWithKeys(fn ($u) => [$u->id => "{$u->name} — {$u->phone}"]))
+                        ->getOptionLabelUsing(fn ($value) => ($u = User::find($value)) ? "{$u->name} — {$u->phone}" : null)
                         ->required()
                         ->live()
-                        ->helperText(function ($get) {
-                            if (! $get('user_id')) {
-                                return null;
-                            }
-                            $user = User::find($get('user_id'));
+                        ->helperText(fn ($get) => $get('user_id') && ($u = User::find($get('user_id')))
+                            ? 'الرصيد الحالي: '.number_format($u->walletBalance(), 2).' د.ل' : null),
 
-                            return $user
-                                ? 'الرصيد الحالي: '.number_format($user->walletBalance(), 2).' د.ل'
-                                : null;
-                        }),
-
-                    TextInput::make('amount')
-                        ->label('المبلغ (د.ل)')
-                        ->numeric()
-                        ->required()
-                        ->minValue(0.01),
-
-                    TextInput::make('note')
-                        ->label('ملاحظة')
-                        ->maxLength(200),
+                    TextInput::make('amount')->label('المبلغ (د.ل)')->numeric()->required()->minValue(0.01),
+                    TextInput::make('note')->label('ملاحظة')->maxLength(200),
                 ])
                 ->action(function (array $data) {
-                    $user = User::findOrFail($data['user_id']);
-
-                    app(WalletService::class)->settle(
-                        $user,
+                    app(WalletService::class)->credit(
+                        User::findOrFail($data['user_id']),
                         (float) $data['amount'],
-                        'settlement',
-                        $data['note'] ?? 'تسوية نقدية',
+                        'topup_cash',
+                        null,
+                        $data['note'] ?? 'شحن نقدي',
                         auth()->user()
                     );
 
-                    Notification::make()->title('تمت التسوية')->success()->send();
-                }),
-
-            Action::make('payout')
-                ->authorize(fn () => \App\Support\Perm::can('finance.manage'))
-                ->label('صرف مستحقات')
-                ->icon('heroicon-o-arrow-up-tray')
-                ->color('warning')
-                ->modalDescription('استعملها لمّا تدفع للمتجر أو للسائق مستحقاته — '
-                    .'ينقص الرصيد بالمبلغ المصروف.')
-                ->schema([
-                    Select::make('user_id')
-                        ->label('الحساب')
-                        ->options(fn () => User::where(fn ($query) => $query->withRole('store')->orWhere(fn ($w) => $w->withRole('driver')))
-                            ->orderBy('name')
-                            ->get()
-                            ->mapWithKeys(fn ($u) => [
-                                $u->id => "{$u->name} — ".number_format($u->walletBalance(), 2).' د.ل',
-                            ]))
-                        ->searchable()
-                        ->required(),
-
-                    TextInput::make('amount')
-                        ->label('المبلغ المصروف (د.ل)')
-                        ->numeric()
-                        ->required()
-                        ->minValue(0.01),
-
-                    TextInput::make('note')
-                        ->label('ملاحظة')
-                        ->maxLength(200),
-                ])
-                ->action(function (array $data) {
-                    $user = User::findOrFail($data['user_id']);
-
-                    app(WalletService::class)->settle(
-                        $user,
-                        (float) $data['amount'],
-                        'payout',
-                        $data['note'] ?? 'صرف مستحقات',
-                        auth()->user()
-                    );
-
-                    Notification::make()->title('تم الصرف')->success()->send();
+                    Notification::make()->title('تم الشحن')->success()->send();
                 }),
         ];
     }

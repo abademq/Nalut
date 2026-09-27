@@ -3,13 +3,87 @@
 namespace App\Http\Resources;
 
 use App\Services\DeliveryIssueService;
+use App\Support\Options;
+use App\Support\OrderMoney;
 use App\Support\Texts;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\Resources\MissingValue;
 
 class OrderResource extends JsonResource
 {
     public function toArray(Request $request): array
+    {
+        $data = $this->base($request);
+        $viewer = OrderMoney::viewer($request);
+
+        if (! in_array($viewer, ['store', 'driver'], true)) {
+            return $data;
+        }
+
+        // ===== اللي يشوفه المتجر والسائق — من «ما يظهر للمتجر والسائق» =====
+        $can = fn (string $w) => OrderMoney::can($viewer, $w);
+        $show = [];
+        foreach (Options::definitions() as $key => $def) {
+            if (str_starts_with($key, "show.$viewer.")) {
+                $show[substr($key, strlen("show.$viewer."))] = (bool) Options::get($key);
+            }
+        }
+        $data['show'] = $show;
+        $data['money'] = OrderMoney::forApi($this->resource, $viewer);
+
+        $customer = $data['customer'] ?? null;
+        if (is_array($customer)) {
+            if (! $can('customer_name')) {
+                $customer['name'] = 'زبون';
+            }
+            if (! $can('customer_phone')) {
+                $customer['phone'] = null;
+            }
+            $data['customer'] = $customer;
+        }
+
+        if (! $can('item_prices') || ($viewer === 'driver' && ! $can('items'))) {
+            $data['subtotal'] = null;
+            if (isset($data['items']) && ! $data['items'] instanceof MissingValue) {
+                $data['items'] = collect($data['items'])
+                    ->map(fn ($i) => array_merge($i, ['unit_price' => null, 'line_total' => null]))->all();
+            }
+        }
+
+        if (! $can('order_total')) {
+            foreach (['delivery_fee', 'discount', 'points_discount', 'total', 'wallet_paid'] as $k) {
+                $data[$k] = null;
+            }
+            if ($viewer === 'store') {
+                $data['cash_to_collect'] = null;
+            }
+        }
+
+        if ($viewer === 'store') {
+            if (! $can('customer_address')) {
+                $data['address'] = null;
+            }
+            if (! $can('driver') && is_array($data['driver'] ?? null)) {
+                $data['driver'] = null;
+            }
+        } else {
+            if (! $can('items')) {
+                $data['items'] = [];
+            }
+            if (! $can('notes')) {
+                $data['notes'] = null;
+            }
+            if (! $can('store_phone') && is_array($data['store'] ?? null)) {
+                $data['store']['phone'] = null;
+            }
+            $data['driver_earning'] = $can('earning') ? (float) $this->driver_earning : null;
+        }
+
+        return $data;
+    }
+
+    private function base(Request $request): array
     {
         return [
             'id' => $this->id,

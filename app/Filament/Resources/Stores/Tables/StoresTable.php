@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Stores\Tables;
 
+use App\Filament\Pages\SettlementDesk;
+use App\Filament\Support\ShareLink;
 use App\Models\Store;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -101,7 +103,7 @@ class StoresTable
                 TrashedFilter::make()->label('المحذوفة'),
             ])
             ->recordActions([
-                \App\Filament\Support\ShareLink::make(fn (Store $record) => route('link.store', $record))->iconButton()->tooltip('رابط المشاركة'),
+                ShareLink::make(fn (Store $record) => route('link.store', $record))->iconButton()->tooltip('رابط المشاركة'),
                 Action::make('toggleOpen')
                     ->label(fn (Store $record) => $record->is_open ? 'غلق المتجر' : 'فتح المتجر')
                     ->icon(fn (Store $record) => $record->is_open ? 'heroicon-o-lock-closed' : 'heroicon-o-lock-open')
@@ -115,6 +117,12 @@ class StoresTable
                             ->send();
                     }),
 
+                Action::make('account')
+                    ->label('الحساب')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('info')
+                    ->visible(fn ($record) => $record->user_id && SettlementDesk::canAccess())
+                    ->url(fn ($record) => SettlementDesk::getUrl(['party' => 'store', 'account' => $record->user_id])),
                 ViewAction::make()->label('عرض'),
                 EditAction::make()->label('تعديل'),
             ])

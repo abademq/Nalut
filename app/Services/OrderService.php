@@ -112,8 +112,9 @@ class OrderService
                 'total' => $total,
                 'commission_amount' => $commission,
                 'store_earning' => round($subtotal - $commission, 2),
-                // أجرة السائق ما تتأثرش بعرض التوصيل المجاني — المنصة تتحمّلها
-                'driver_earning' => $deliveryFee,
+                // أجرة السائق ما تتأثرش بعرض التوصيل المجاني — المنصة تتحمّلها.
+                // نصيب السائق من رسوم التوصيل (الباقي للمنصة) — من «إعدادات التشغيل»
+                'driver_earning' => round($deliveryFee * min(100, max(0, (float) Options::get('delivery.driver_share_percent'))) / 100, 2),
                 'distance_km' => $distance,
                 'notes' => $data['notes'] ?? null,
                 'prep_time_minutes' => $store->prep_time_minutes,

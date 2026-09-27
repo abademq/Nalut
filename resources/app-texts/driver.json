@@ -20,6 +20,11 @@
   "vars": null
  },
  {
+  "text": "{amount} د.ل",
+  "group": "money_view",
+  "vars": "{amount}"
+ },
+ {
   "text": "إشعار في الخلفية: {messageId}",
   "group": "push",
   "vars": "{messageId}"
@@ -41,8 +46,103 @@
  },
  {
   "text": "ما نقدرش نوصل للخادم.",
-  "group": "available_tab",
+  "group": "account_screen",
   "vars": null
+ },
+ {
+  "text": "تسوية {number}",
+  "group": "account_screen",
+  "vars": "{number}"
+ },
+ {
+  "text": "ملغية",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "التاريخ",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "العملية",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "المبلغ",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "الطريقة",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "عدد الطلبات",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "رصيدك بعدها",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "واصل التسوية",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "حسابي والتسويات",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "إعادة المحاولة",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "كشف الحساب مش متاح توّا. تواصل مع الإدارة.",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "التسويات",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "ما فيش تسويات لسه",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "تستلمها من الإدارة في التسوية الجاية",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "تسلّمها للإدارة في التسوية الجاية",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "ما عليك وما لك شي توّا",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "آخر تسوية: {date}",
+  "group": "account_screen",
+  "vars": "{date}"
+ },
+ {
+  "text": "من آخر تسوية ({orders} طلب)",
+  "group": "account_screen",
+  "vars": "{orders}"
  },
  {
   "text": "قبول الطلب",
@@ -76,11 +176,6 @@
  },
  {
   "text": "طلبات متاحة",
-  "group": "available_tab",
-  "vars": null
- },
- {
-  "text": "إعادة المحاولة",
   "group": "available_tab",
   "vars": null
  },
@@ -601,6 +696,16 @@
  },
  {
   "text": "مدفوع بالكامل — ما تحصّلش فلوس",
+  "group": "order_card",
+  "vars": null
+ },
+ {
+  "text": "الأصناف ({count})",
+  "group": "order_card",
+  "vars": "{count}"
+ },
+ {
+  "text": "تفصيل الفلوس",
   "group": "order_card",
   "vars": null
  },

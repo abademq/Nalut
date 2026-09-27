@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Models\Order;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 
 class OrderInfolist
@@ -82,44 +83,9 @@ class OrderInfolist
                         ->columnSpanFull(),
                 ]),
 
-            Section::make('الحساب')
-                ->columns(4)
-                ->schema([
-                    TextEntry::make('subtotal')
-                        ->label('مجموع الأصناف')
-                        ->formatStateUsing(fn ($state) => number_format((float) $state, 2).' د.ل'),
-
-                    TextEntry::make('delivery_fee')
-                        ->label('رسوم التوصيل')
-                        ->formatStateUsing(fn ($state) => number_format((float) $state, 2).' د.ل'),
-
-                    TextEntry::make('discount')
-                        ->label('الخصم')
-                        ->formatStateUsing(fn ($state) => number_format((float) $state, 2).' د.ل'),
-
-                    TextEntry::make('total')
-                        ->label('الإجمالي')
-                        ->weight('bold')
-                        ->size('lg')
-                        ->formatStateUsing(fn ($state) => number_format((float) $state, 2).' د.ل'),
-
-                    TextEntry::make('payment_method')
-                        ->label('طريقة الدفع')
-                        ->badge()
-                        ->formatStateUsing(fn ($state) => $state->label()),
-
-                    TextEntry::make('commission_amount')
-                        ->label('عمولة المنصة')
-                        ->formatStateUsing(fn ($state) => number_format((float) $state, 2).' د.ل'),
-
-                    TextEntry::make('store_earning')
-                        ->label('صافي المتجر')
-                        ->formatStateUsing(fn ($state) => number_format((float) $state, 2).' د.ل'),
-
-                    TextEntry::make('driver_earning')
-                        ->label('أجرة السائق')
-                        ->formatStateUsing(fn ($state) => number_format((float) $state, 2).' د.ل'),
-                ]),
+            // تفصيل الفلوس: على الزبون، التوزيع، مين يحصّل ومين يسدد، والتسوية
+            Section::make('الحساب والتوزيع')
+                ->schema([View::make('filament.orders.money')]),
 
             Section::make('سجل الحالات')
                 ->description('كل تغيير مسجّل بوقته ومنو عمله')

@@ -28,7 +28,7 @@ class Permissions
     /** مجموعات جاهزة تسهّل الاختيار */
     public const PRESETS = [
         'operator' => ['orders.view', 'orders.manage', 'users.view'],
-        'accountant' => ['finance.view', 'finance.manage', 'cards.manage', 'orders.view'],
+        'accountant' => ['finance.view', 'finance.manage', 'cards.manage', 'orders.view', 'settlements.view', 'settlements.manage'],
         'catalog' => ['stores.manage', 'products.manage', 'coupons.manage'],
     ];
 

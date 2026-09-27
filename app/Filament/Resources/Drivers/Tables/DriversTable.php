@@ -2,11 +2,13 @@
 
 namespace App\Filament\Resources\Drivers\Tables;
 
+use App\Filament\Pages\SettlementDesk;
+use App\Filament\Resources\Drivers\DriverCapacity;
 use App\Models\User;
-use App\Services\WalletService;
+use App\Support\Perm;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
-use Filament\Forms\Components\TextInput;
+use Filament\Actions\BulkActionGroup;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -53,11 +55,11 @@ class DriversTable
                         return $p->isReallyOnline() ? 'متاح' : 'متاح (موقع قديم)';
                     })
                     ->color(fn ($state) => match ($state) {
-                        'متاح'              => 'success',
-                        'متاح (موقع قديم)'  => 'warning',
-                        'غير متاح'          => 'gray',
-                        'بانتظار الاعتماد'  => 'info',
-                        default             => 'danger',
+                        'متاح' => 'success',
+                        'متاح (موقع قديم)' => 'warning',
+                        'غير متاح' => 'gray',
+                        'بانتظار الاعتماد' => 'info',
+                        default => 'danger',
                     }),
 
                 TextColumn::make('capacity')
@@ -69,9 +71,9 @@ class DriversTable
                         }
 
                         return match ($p->multi_order_mode) {
-                            'single'     => 'طلب واحد',
+                            'single' => 'طلب واحد',
                             'same_store' => "{$p->max_active_orders} من نفس المتجر",
-                            default      => "{$p->max_active_orders} من أي متجر",
+                            default => "{$p->max_active_orders} من أي متجر",
                         };
                     }),
 
@@ -121,9 +123,9 @@ class DriversTable
                     ->color(fn ($state) => match (true) {
                         (float) $state > 0 => 'success',
                         (float) $state < 0 => 'danger',
-                        default            => 'gray',
+                        default => 'gray',
                     })
-                    ->sortable(query: fn (Builder $q, string $direction) => $q
+                    ->sortable(query: fn (Builder $query, string $direction) => $query
                         ->leftJoin('wallets', 'wallets.user_id', '=', 'users.id')
                         ->orderBy('wallets.balance', $direction)
                         ->select('users.*')),
@@ -164,10 +166,10 @@ class DriversTable
                 SelectFilter::make('state')
                     ->label('الحالة')
                     ->options([
-                        'online'   => 'متاح توّا',
-                        'offline'  => 'غير متاح',
-                        'pending'  => 'بانتظار الاعتماد',
-                        'blocked'  => 'موقوف',
+                        'online' => 'متاح توّا',
+                        'offline' => 'غير متاح',
+                        'pending' => 'بانتظار الاعتماد',
+                        'blocked' => 'موقوف',
                     ])
                     ->query(function (Builder $query, array $data) {
                         return match ($data['value'] ?? null) {
@@ -182,25 +184,25 @@ class DriversTable
                             'pending' => $query->whereHas('driverProfile',
                                 fn ($q) => $q->where('is_approved', false)),
                             'blocked' => $query->where('is_active', false),
-                            default   => $query,
+                            default => $query,
                         };
                     }),
 
                 Filter::make('owes')
                     ->label('عليهم كاش للمنصة')
-                    ->query(fn (Builder $q) => $q->whereHas('wallet',
+                    ->query(fn (Builder $query) => $query->whereHas('wallet',
                         fn ($w) => $w->where('balance', '<', 0))),
 
                 Filter::make('credit')
                     ->label('لهم مستحقات')
-                    ->query(fn (Builder $q) => $q->whereHas('wallet',
+                    ->query(fn (Builder $query) => $query->whereHas('wallet',
                         fn ($w) => $w->where('balance', '>', 0))),
             ])
             ->recordActions([
-                \App\Filament\Resources\Drivers\DriverCapacity::action()->iconButton()->tooltip('إعدادات الطلبات والمناطق'),
+                DriverCapacity::action()->iconButton()->tooltip('إعدادات الطلبات والمناطق'),
                 ActionGroup::make([
                     Action::make('approve')
-                ->authorize(fn () => \App\Support\Perm::can('users.manage'))
+                        ->authorize(fn () => Perm::can('users.manage'))
                         ->label('اعتماد السائق')
                         ->icon('heroicon-o-check-badge')
                         ->color('success')
@@ -217,7 +219,7 @@ class DriversTable
                         }),
 
                     Action::make('forceOffline')
-                ->authorize(fn () => \App\Support\Perm::can('users.manage'))
+                        ->authorize(fn () => Perm::can('users.manage'))
                         ->label('جعله غير متاح')
                         ->icon('heroicon-o-pause-circle')
                         ->color('warning')
@@ -234,44 +236,16 @@ class DriversTable
                                 ->send();
                         }),
 
+                    // التسوية صارت في تبويب «التسويات» — كشف مفصّل وواصل مطبوع
                     Action::make('settle')
-                ->authorize(fn () => \App\Support\Perm::can('finance.manage'))
-                        ->label('تسوية الحساب')
+                        ->label('كشف الحساب والتسوية')
                         ->icon('heroicon-o-banknotes')
                         ->color('info')
-                        ->schema([
-                            TextInput::make('amount')
-                                ->label('المبلغ المستلم نقداً (د.ل)')
-                                ->numeric()
-                                ->required()
-                                ->minValue(0.01)
-                                ->helperText('المبلغ اللي سلّمه السائق للإدارة'),
-
-                            TextInput::make('note')
-                                ->label('ملاحظة')
-                                ->maxLength(120),
-                        ])
-                        ->action(function (User $record, array $data) {
-                            app(WalletService::class)->credit(
-                                $record,
-                                (float) $data['amount'],
-                                'settlement',
-                                null,
-                                $data['note'] ?? 'تسوية نقدية'
-                            );
-
-                            Notification::make()
-                                ->title('تمت التسوية')
-                                ->body('الرصيد الجديد: '
-                                    .number_format(
-                                        app(WalletService::class)->balance($record), 2)
-                                    .' د.ل')
-                                ->success()
-                                ->send();
-                        }),
+                        ->visible(fn () => SettlementDesk::canAccess())
+                        ->url(fn (User $record) => SettlementDesk::getUrl(['party' => 'driver', 'account' => $record->id])),
 
                     Action::make('toggleActive')
-                ->authorize(fn () => \App\Support\Perm::can('users.manage'))
+                        ->authorize(fn () => Perm::can('users.manage'))
                         ->label(fn (User $record) => $record->is_active
                             ? 'إيقاف الحساب'
                             : 'تفعيل الحساب')
@@ -293,8 +267,8 @@ class DriversTable
                 ]),
             ])
             ->toolbarActions([
-                \Filament\Actions\BulkActionGroup::make([
-                    \App\Filament\Resources\Drivers\DriverCapacity::bulkAction(),
+                BulkActionGroup::make([
+                    DriverCapacity::bulkAction(),
                 ]),
             ]);
     }

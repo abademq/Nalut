@@ -105,6 +105,11 @@
   "vars": null
  },
  {
+  "text": "{amount} د.ل",
+  "group": "money_view",
+  "vars": "{amount}"
+ },
+ {
   "text": "اكتب اسم لكل مجموعة إضافات.",
   "group": "options_editor",
   "vars": null
@@ -396,8 +401,103 @@
  },
  {
   "text": "ما نقدرش نوصل للخادم.",
-  "group": "daily_report_screen",
+  "group": "account_screen",
   "vars": null
+ },
+ {
+  "text": "انسخ رابط الواصل — افتحه في المتصفح باش تشوفه أو تطبعه",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "تسوية {number}",
+  "group": "account_screen",
+  "vars": "{number}"
+ },
+ {
+  "text": "التاريخ",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "العملية",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "المبلغ",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "الطريقة",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "عدد الطلبات",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "رصيدك بعدها",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "واصل التسوية",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "حسابي والتسويات",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "إعادة المحاولة",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "كشف الحساب مش متاح توّا. تواصل مع الإدارة.",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "التسويات",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "ما فيش تسويات لسه",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "تستلمها من الإدارة في التسوية الجاية",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "تسلّمها للإدارة في التسوية الجاية",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "ما عليك وما لك شي توّا",
+  "group": "account_screen",
+  "vars": null
+ },
+ {
+  "text": "آخر تسوية: {date}",
+  "group": "account_screen",
+  "vars": "{date}"
+ },
+ {
+  "text": "من آخر تسوية ({orders} طلب)",
+  "group": "account_screen",
+  "vars": "{orders}"
  },
  {
   "text": "طُبع التقرير",
@@ -436,11 +536,6 @@
  },
  {
   "text": "طباعة التقرير",
-  "group": "daily_report_screen",
-  "vars": null
- },
- {
-  "text": "إعادة المحاولة",
   "group": "daily_report_screen",
   "vars": null
  },
@@ -725,11 +820,6 @@
   "vars": "{driverName}"
  },
  {
-  "text": "التوصيل",
-  "group": "order_history_screen",
-  "vars": null
- },
- {
   "text": "إعادة طباعة الفاتورة",
   "group": "order_history_screen",
   "vars": null
@@ -900,11 +990,6 @@
   "vars": "{notes}"
  },
  {
-  "text": "الإجمالي {total} د.ل",
-  "group": "orders_tab",
-  "vars": "{total}"
- },
- {
   "text": "واصل المتجر",
   "group": "orders_tab",
   "vars": null
@@ -961,6 +1046,11 @@
  },
  {
   "text": "جاهز — بانتظار السائق",
+  "group": "orders_tab",
+  "vars": null
+ },
+ {
+  "text": "اضغط للتفصيل",
   "group": "orders_tab",
   "vars": null
  },
@@ -1431,6 +1521,11 @@
  },
  {
   "text": "طلبات نشطة",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "مستحقاتك عند الإدارة وواصلات التسوية",
   "group": "settings_tab",
   "vars": null
  },
