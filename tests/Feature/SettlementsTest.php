@@ -177,4 +177,23 @@ class SettlementsTest extends TestCase
     {
         $this->assertSame('فقط ألفان وخمسون ديناراً لا غير', ArabicAmount::words(2050));
     }
+
+    public function test_cash_to_collect_never_hidden_or_wrongly_paid(): void
+    {
+        $o = $this->delivered('C1');
+        $o->update(['status' => OrderStatus::Ready, 'is_paid' => false, 'delivered_at' => null]);
+
+        // المتجر مخبّي «اللي يدفعه الزبون» — واصل السائق لازم يعرف الكاش
+        Setting::put('opt.show.store.order_total', '0');
+        Cache::flush();
+        $order = collect($this->actingAs($this->owner, 'sanctum')->getJson('/api/v1/store/orders')->json('data'))->firstWhere('code', 'C1');
+        $this->assertNull($order['total']);
+        $this->assertSame(110.0, (float) $order['cash_to_collect']);
+
+        // دفع إلكتروني ما كملش: مش «مدفوع»
+        $o->update(['payment_method' => 'card', 'is_paid' => false]);
+        $this->assertSame(110.0, OrderMoney::cashToCollect($o->fresh()));
+        $o->update(['is_paid' => true]);
+        $this->assertSame(0.0, OrderMoney::cashToCollect($o->fresh()));
+    }
 }

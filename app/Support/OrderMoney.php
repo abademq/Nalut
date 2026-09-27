@@ -44,6 +44,18 @@ class OrderMoney
         return array_key_exists($key, Options::definitions()) ? (bool) Options::get($key) : true;
     }
 
+    /**
+     * اللي يحصّله السائق من الزبون.
+     * نقداً: الإجمالي − المدفوع من المحفظة (حتى بعد التسليم — للسجل والتسوية).
+     * غير نقداً: صفر بس لو فعلاً مدفوع، غير هكي الباقي كامل (ما نقولوش «مدفوع» على طلب مش مدفوع).
+     */
+    public static function cashToCollect(Order $o): float
+    {
+        $rest = max(0, round((float) $o->total - (float) ($o->wallet_paid ?? 0), 2));
+
+        return $o->payment_method?->value === 'cash' || ! $o->is_paid ? $rest : 0.0;
+    }
+
     /** الأرقام الخام */
     public static function numbers(Order $o): array
     {
@@ -56,7 +68,7 @@ class OrderMoney
         $commission = (float) $o->commission_amount;
         $storeNet = (float) $o->store_earning;
         $driver = (float) $o->driver_earning;
-        $cash = $o->payment_method?->value === 'cash' ? max(0, round($total - $wallet, 2)) : 0.0;
+        $cash = self::cashToCollect($o);
 
         return [
             'subtotal' => $subtotal,
@@ -112,7 +124,7 @@ class OrderMoney
         }
 
         // الكاش: السائق لازم يعرفه دائماً
-        if ($n['cash_to_collect'] > 0 && ($viewer === 'driver' || $can('order_total'))) {
+        if ($n['cash_to_collect'] > 0) {
             $add('customer', 'يتحصّل نقداً من الزبون', $n['cash_to_collect'], 'highlight',
                 $viewer === 'driver' ? 'تسلّمه للإدارة في التسوية' : null);
         }

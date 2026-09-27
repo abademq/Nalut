@@ -55,9 +55,7 @@ class OrderResource extends JsonResource
             foreach (['delivery_fee', 'discount', 'points_discount', 'total', 'wallet_paid'] as $k) {
                 $data[$k] = null;
             }
-            if ($viewer === 'store') {
-                $data['cash_to_collect'] = null;
-            }
+            // المبلغ اللي يحصّله السائق ما يتخبّاش أبداً — واصل السائق يحتاجه
         }
 
         if ($viewer === 'store') {
@@ -114,9 +112,7 @@ class OrderResource extends JsonResource
             'is_paid' => (bool) $this->is_paid,
             'wallet_paid' => (float) ($this->wallet_paid ?? 0),
             // المبلغ اللي يحصّله السائق نقداً فعلياً
-            'cash_to_collect' => $this->payment_method->value === 'cash'
-                ? max(0, round((float) $this->total - (float) ($this->wallet_paid ?? 0), 2))
-                : 0.0,
+            'cash_to_collect' => OrderMoney::cashToCollect($this->resource),
             'subtotal' => (float) $this->subtotal,
             'delivery_fee' => (float) $this->delivery_fee,
             'discount' => (float) $this->discount,
