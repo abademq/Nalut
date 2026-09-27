@@ -350,6 +350,11 @@
   "vars": null
  },
  {
+  "text": "ابعتلي الرمز برسالة نصية",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
   "text": "دخول",
   "group": "login_screen",
   "vars": null

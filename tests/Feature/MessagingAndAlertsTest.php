@@ -130,6 +130,23 @@ class MessagingAndAlertsTest extends TestCase
         $this->assertDatabaseHas('message_logs', ['context' => 'otp', 'status' => 'failed']);
     }
 
+    public function test_whatsapp_only_failure_offers_sms(): void
+    {
+        Setting::put('opt.otp.channel', 'whatsapp');
+        Http::swap(new \Illuminate\Http\Client\Factory);
+        Http::fake([
+            'graph.facebook.com/*' => Http::response(['error' => ['message' => 'template not found']], 404),
+            'dev.resala.ly/*'      => Http::response(['pin' => '4821', 'id' => 'r1']),
+        ]);
+
+        $this->postJson('/api/v1/auth/otp', ['phone' => '0914444445'])
+            ->assertStatus(503)->assertJsonPath('sms_fallback', true);
+
+        // الزبون يطلبه برسالة نصية — بدون ما يستنى المهلة
+        $this->postJson('/api/v1/auth/otp', ['phone' => '0914444445', 'channel' => 'sms'])
+            ->assertOk()->assertJsonPath('channel', 'sms');
+    }
+
     // ===== تنبيهات الإدارة =====
 
     public function test_failed_order_alerts_admins_once(): void

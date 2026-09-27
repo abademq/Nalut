@@ -119,7 +119,11 @@ class OtpService
                 Log::warning('OTP WhatsApp failed', ['phone' => $phone, 'error' => $e->getMessage()]);
 
                 if ($mode === 'whatsapp') {
-                    throw new HttpException(503, 'تعذّر إرسال رمز التحقق على واتساب. جرّب «ابعتلي رسالة نصية».');
+                    // التطبيق يوري زر «ابعتلي رسالة نصية» لما يلقى sms_fallback
+                    throw new \Illuminate\Http\Exceptions\HttpResponseException(response()->json([
+                        'message'      => 'تعذّر إرسال رمز التحقق على واتساب. تقدر تطلبه برسالة نصية.',
+                        'sms_fallback' => true,
+                    ], 503));
                 }
                 // whatsapp_sms: نكمّلو بالـ SMS
             }
