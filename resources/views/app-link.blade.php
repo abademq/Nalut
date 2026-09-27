@@ -41,6 +41,9 @@
             <p>{{ $subtitle }}</p>
             <a class="btn primary" href="{{ $intent }}">افتح في التطبيق</a>
             <a class="btn secondary" href="{{ $play }}">حمّل التطبيق</a>
+            @if(! empty($web))
+                <a class="btn secondary" href="{{ $web }}">اطلب من الموقع (آيفون أو كمبيوتر)</a>
+            @endif
             <div class="app">{{ $app }}</div>
         </div>
     </div>

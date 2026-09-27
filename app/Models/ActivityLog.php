@@ -13,10 +13,11 @@ class ActivityLog extends Model
 
     public const APPS = [
         'customer' => 'تطبيق الزبون',
-        'store'    => 'تطبيق المتجر',
-        'driver'   => 'تطبيق السائق',
-        'admin'    => 'لوحة التحكم',
-        'system'   => 'النظام (تلقائي)',
+        'web' => 'موقع الطلب',
+        'store' => 'تطبيق المتجر',
+        'driver' => 'تطبيق السائق',
+        'admin' => 'لوحة التحكم',
+        'system' => 'النظام (تلقائي)',
     ];
 
     protected $fillable = [

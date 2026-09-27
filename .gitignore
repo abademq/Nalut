@@ -32,3 +32,4 @@ Thumbs.db
 .env.txt
 /storage/framework/views/*
 !/storage/framework/views/.gitignore
+/public/weborder/leaflet/

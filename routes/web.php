@@ -5,7 +5,20 @@ use App\Http\Controllers\Admin\DriverMapController;
 use App\Http\Controllers\Admin\SettlementPrintController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Web\AppLinkController;
+use App\Http\Controllers\Web\WebOrderController;
 use Illuminate\Support\Facades\Route;
+
+// ===== موقع الطلب (للآيفون والكمبيوتر) =====
+$webOrder = function () {
+    Route::get('manifest.webmanifest', [WebOrderController::class, 'manifest']);
+    Route::get('sw.js', [WebOrderController::class, 'serviceWorker']);
+    Route::get('{any?}', [WebOrderController::class, 'shell'])->where('any', '^(?!api/|admin|livewire|storage/|weborder/|admin-api|settlements/|payments/|up$|\.well-known).*$');
+};
+
+// على الدومين الفرعي (WEB_ORDER_DOMAIN في .env) — قبل باقي المسارات باش «/» يفتح الموقع
+if ($domain = config('weborder.domain')) {
+    Route::domain($domain)->name('weborder.domain.')->group($webOrder);
+}
 
 Route::get('/', function () {
     return view('welcome');
@@ -31,3 +44,6 @@ Route::get('go/{screen}', [AppLinkController::class, 'screen'])->name('link.scre
 // واصل التسوية للطباعة (اللوحة، أو رابط موقّع من تطبيق المتجر/السائق)
 Route::get('settlements/{settlement}/print', SettlementPrintController::class)
     ->name('settlements.print');
+
+// وعلى المسار /order في أي دومين
+Route::prefix(config('weborder.path', 'order'))->name('weborder.')->group($webOrder);

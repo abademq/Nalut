@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\ActivityLog;
 use App\Models\Order;
+use App\Models\Store;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -55,20 +56,20 @@ class Activity
             [$orderId, $storeId] = self::links($subject, $orderId, $storeId);
 
             return ActivityLog::create([
-                'user_id'      => $user?->id,
-                'app'          => $app ?? self::currentApp($request),
-                'action'       => Str::limit($action, 58, ''),
-                'description'  => Str::limit($description, 250),
+                'user_id' => $user?->id,
+                'app' => $app ?? self::currentApp($request),
+                'action' => Str::limit($action, 58, ''),
+                'description' => Str::limit($description, 250),
                 // جداول مفتاحها نص (الإعدادات) ما تنربطش — الاسم في الوصف
                 'subject_type' => is_numeric($subject?->getKey()) ? $subject->getMorphClass() : null,
-                'subject_id'   => is_numeric($subject?->getKey()) ? $subject->getKey() : null,
-                'order_id'     => $orderId,
-                'store_id'     => $storeId,
-                'properties'   => $properties ?: null,
-                'status'       => $status,
-                'ip'           => $request?->ip(),
-                'device'       => $request ? Str::limit((string) $request->userAgent(), 158, '') : null,
-                'created_at'   => $at ?? now(),
+                'subject_id' => is_numeric($subject?->getKey()) ? $subject->getKey() : null,
+                'order_id' => $orderId,
+                'store_id' => $storeId,
+                'properties' => $properties ?: null,
+                'status' => $status,
+                'ip' => $request?->ip(),
+                'device' => $request ? Str::limit((string) $request->userAgent(), 158, '') : null,
+                'created_at' => $at ?? now(),
             ]);
         } catch (\Throwable $e) {
             // السجل ما يطيّحش أي عملية
@@ -110,6 +111,11 @@ class Activity
 
     private static function guessApp(Request $request): string
     {
+        // موقع الطلب (زبون من المتصفح)
+        if ($request->header('X-Client') === 'web') {
+            return 'web';
+        }
+
         $header = $request->header('X-App');
         if (in_array($header, ['customer', 'store', 'driver'], true)) {
             return $header;
@@ -232,7 +238,7 @@ class Activity
         if ($subject) {
             $orderId ??= is_numeric($subject->getAttribute('order_id')) ? (int) $subject->getAttribute('order_id') : null;
             $storeId ??= is_numeric($subject->getAttribute('store_id')) ? (int) $subject->getAttribute('store_id') : null;
-            if ($subject instanceof \App\Models\Store) {
+            if ($subject instanceof Store) {
                 $storeId ??= $subject->getKey();
             }
         }

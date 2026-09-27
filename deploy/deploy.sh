@@ -38,6 +38,15 @@ php artisan migrate --force
 echo "==> مزامنة النصوص"
 php artisan texts:sync
 
+# موقع الطلب: مكتبة الخريطة على السيرفر نفسه (أسرع من CDN) — ما يوقفش النشر لو فشل
+if [[ ! -f public/weborder/leaflet/leaflet.js ]]; then
+  echo "==> مكتبة الخريطة لموقع الطلب"
+  mkdir -p public/weborder/leaflet
+  curl -fsSL https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js -o public/weborder/leaflet/leaflet.js \
+    && curl -fsSL https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css -o public/weborder/leaflet/leaflet.css \
+    || { rm -f public/weborder/leaflet/leaflet.js; echo "   (تخطّي — الموقع يجيبها من CDN)"; }
+fi
+
 echo "==> بناء الكاش"
 php artisan optimize:clear
 php artisan config:cache

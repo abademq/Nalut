@@ -40,6 +40,7 @@ class OperationsSettings extends Page
         'server' => 'حالة السيرفر',
         'security' => 'الحماية',
         'settlement' => 'واصل التسوية',
+        'web' => 'موقع الطلب',
         'stock' => 'المخزون',
         'delivery' => 'التوصيل والعمولة',
         'tracking' => 'التتبّع',

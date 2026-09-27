@@ -7,6 +7,7 @@ use App\Filament\Pages\BrandingSettings;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Store;
+use App\Support\Options;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
@@ -24,9 +25,9 @@ class AppLinkController extends Controller
 
         return response()->json($fingerprints ? [[
             'relation' => ['delegate_permission/common.handle_all_urls'],
-            'target'   => [
-                'namespace'                => 'android_app',
-                'package_name'             => config('applinks.android_package'),
+            'target' => [
+                'namespace' => 'android_app',
+                'package_name' => config('applinks.android_package'),
                 'sha256_cert_fingerprints' => $fingerprints,
             ],
         ]] : []);
@@ -84,13 +85,18 @@ class AppLinkController extends Controller
             : BrandingSettings::logoUrl();
 
         return response()->view('app-link', [
-            'title'    => $title,
+            'title' => $title,
             'subtitle' => $subtitle,
-            'image'    => $imageUrl,
-            'intent'   => $intent,
-            'play'     => $play,
-            'app'      => AppSettings::values()['name'],
-            'url'      => url()->current(),
+            'image' => $imageUrl,
+            'intent' => $intent,
+            'play' => $play,
+            'app' => AppSettings::values()['name'],
+            'url' => url()->current(),
+            // موقع الطلب — للآيفون أو اللي ما عندوش التطبيق
+            'web' => Options::get('web.enabled')
+                ? (config('weborder.domain') ? 'https://'.config('weborder.domain') : url(config('weborder.path', 'order')))
+                    .(str_starts_with($deepPath, 's/') ? '/'.$deepPath : '/')
+                : null,
         ]);
     }
 }
