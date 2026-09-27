@@ -34,7 +34,7 @@ class ReadyCart extends Model
     {
         $products = Product::whereIn('id', array_column($this->lines(), 'product_id'))->get()->keyBy('id');
 
-        return round(collect($this->lines())->sum(fn ($l) => ($p = $products->get($l['product_id'])) && $p->is_available
+        return round(collect($this->lines())->sum(fn ($l) => ($p = $products->get($l['product_id'])) && $p->is_available && ($p->is_visible ?? true)
             ? $p->effectivePrice() * $l['quantity'] : 0), 2);
     }
 }

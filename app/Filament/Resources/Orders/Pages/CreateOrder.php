@@ -85,7 +85,7 @@ class CreateOrder extends CreateRecord
                             }
 
                             return Product::where('store_id', $storeId)
-                                ->where('is_available', true)
+                                ->where('is_available', true)->where('is_visible', true)
                                 ->get()
                                 ->mapWithKeys(fn ($p) => [
                                     $p->id => $p->name.' — '.number_format($p->effectivePrice(), 2).' د.ل',
@@ -112,9 +112,9 @@ class CreateOrder extends CreateRecord
             Select::make('payment_method')
                 ->label('طريقة الدفع')
                 ->options([
-                    'cash'   => 'نقداً عند الاستلام',
+                    'cash' => 'نقداً عند الاستلام',
                     'wallet' => 'محفظة إلكترونية',
-                    'card'   => 'بطاقة مصرفية',
+                    'card' => 'بطاقة مصرفية',
                 ])
                 ->default('cash')
                 ->required(),
@@ -136,15 +136,15 @@ class CreateOrder extends CreateRecord
         $customer = User::findOrFail($data['customer_id']);
 
         return app(OrderService::class)->create($customer, [
-            'store_id'       => $data['store_id'],
-            'address_id'     => $data['address_id'],
+            'store_id' => $data['store_id'],
+            'address_id' => $data['address_id'],
             'payment_method' => $data['payment_method'] ?? 'cash',
-            'coupon_code'    => $data['coupon_code'] ?? null,
-            'notes'          => $data['notes'] ?? null,
-            'items'          => array_map(fn ($i) => [
+            'coupon_code' => $data['coupon_code'] ?? null,
+            'notes' => $data['notes'] ?? null,
+            'items' => array_map(fn ($i) => [
                 'product_id' => $i['product_id'],
-                'quantity'   => (int) ($i['quantity'] ?? 1),
-                'note'       => $i['note'] ?? null,
+                'quantity' => (int) ($i['quantity'] ?? 1),
+                'note' => $i['note'] ?? null,
             ], $data['items'] ?? []),
         ], auth()->user());
     }

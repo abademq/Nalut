@@ -21,14 +21,19 @@ class ProductResource extends JsonResource
             'price' => (float) $this->price,
             'discount_price' => $this->discount_price ? (float) $this->discount_price : null,
             'is_available' => (bool) $this->is_available,
+            // الظهور (المتجر يخفي الصنف على الزبائن بعيد عن التوفّر)
+            'is_visible' => (bool) ($this->is_visible ?? true),
+            // للزبون: «متوفر X قطع فقط» — null = ما نكتبوش العدد
+            'left' => $this->customerLeft(),
             'is_favorite' => FavoriteIds::has($request->user(), Product::class, $this->id),
             // المخزون: التطبيق يحدّ الكمية ويكتب «متبقي X» — والمتجر يحتاجهم في فورم التعديل
             'track_stock' => (bool) $this->track_stock,
             'stock_quantity' => $this->track_stock ? (int) $this->stock_quantity : null,
             'max_per_order' => $this->max_per_order ? (int) $this->max_per_order : null,
             'low_stock_alert' => $this->low_stock_alert ? (int) $this->low_stock_alert : null,
-            // خلص وتخفّى تلقائياً — يرجع لحاله لما المخزون يرجع
-            'sold_out' => $this->sold_out_at !== null,
+            // للمتجر: available | low | sold_out (الكمية صفر، يرجع معاها) | stopped (موقوف بالإيد)
+            'state' => $this->state(),
+            'sold_out' => $this->isOutOfStock(),
             'section_id' => $this->menu_section_id,
             'options' => $this->whenLoaded('options', fn () => $this->options->map(fn ($o) => [
                 'id' => $o->id,

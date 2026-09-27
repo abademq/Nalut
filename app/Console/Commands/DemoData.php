@@ -230,6 +230,7 @@ class DemoData extends Command
             'low_stock_alert' => $p['low'] ?? null,
             'max_per_order' => $p['max'] ?? null,
             'is_available' => ! ($p['off'] ?? false) && (! array_key_exists('stock', $p) || $p['stock'] > 0),
+            'is_visible' => ! ($p['hidden'] ?? false),
             'sold_out_at' => array_key_exists('stock', $p) && $p['stock'] <= 0 ? now() : null,
             'images' => $images ?: null,
             'sort' => $p['sort'] ?? 0,
@@ -301,6 +302,8 @@ class DemoData extends Command
         $this->product($s, $sec, ['name' => 'مياه', 'price' => 1, 'section' => 'مشروبات', 'images' => 0]);
         $this->product($s, $sec, ['name' => 'مشروب غازي', 'price' => 2.5, 'section' => 'مشروبات', 'max' => 6]);
         $this->product($s, $sec, ['name' => 'كنافة', 'price' => 10, 'section' => 'حلويات', 'stock' => 1, 'desc' => 'آخر قطعة — جرّب طلبها من زبونين مع بعض']);
+        $this->product($s, $sec, ['name' => 'عرض العيد (مخفي)', 'price' => 50, 'section' => 'حلويات', 'hidden' => true, 'desc' => 'مخفي عن الزبائن — يبان في تطبيق المتجر واللوحة بس']);
+        $this->product($s, $sec, ['name' => 'بسبوسة', 'price' => 7, 'section' => 'حلويات', 'stock' => 3, 'low' => 3, 'desc' => 'الزبون يشوف «متوفر 3 قطع فقط»']);
         ReadyCart::create(['store_id' => $s->id, 'name' => 'وجبة عائلية جاهزة', 'description' => '٤ شاورما + ٤ مشروبات', 'is_active' => true,
             'items' => [['product_id' => $shawarma->id, 'quantity' => 4], ['product_id' => $s->products()->where('name', 'مشروب غازي')->value('id'), 'quantity' => 4]]]);
 

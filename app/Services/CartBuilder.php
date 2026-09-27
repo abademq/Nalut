@@ -26,7 +26,7 @@ class CartBuilder
         foreach ($lines as $l) {
             $p = $products->get($l['product_id']);
 
-            if (! $p || ! $p->is_available) {
+            if (! $p || ! $p->is_available || ! ($p->is_visible ?? true)) {
                 $missing[] = $p?->name ?? 'صنف محذوف';
 
                 continue;

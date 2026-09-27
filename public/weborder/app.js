@@ -393,14 +393,13 @@ function productCard(p, storeOpen) {
   const off = !p.is_available;
   return `<div class="product ${off ? 'off' : ''}" data-product="${p.id}">
     <div class="ph">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : '🍽️'}
-      ${off ? `<span class="tag ${p.sold_out ? '' : 'grey'}">${p.sold_out ? 'نفد' : 'مش متوفر'}</span>` : ''}</div>
+      ${off ? '<span class="tag grey">غير متوفر</span>' : ''}</div>
     <div class="pinfo">
       <div class="n">${esc(p.name)}</div>
       ${p.description ? `<div class="d">${esc(p.description)}</div>` : ''}
-      ${p.sold_out ? '<div class="tiny" style="color:var(--err)">نفد — تقدر تشوف التفاصيل والصور</div>'
-        : off ? '<div class="tiny muted">مش متوفر توّا</div>'
-          : p.state === 'low' && p.stock_quantity != null ? `<div class="tiny" style="color:var(--warn);font-weight:700">باقي ${p.stock_quantity} بس</div>`
-            : p.options?.length ? '<div class="tiny" style="color:var(--ok)">فيه إضافات</div>' : ''}
+      ${off ? '<div class="tiny muted">غير متوفر توّا — تقدر تشوف الصور والتفاصيل</div>'
+        : p.left != null ? `<div class="tiny" style="color:var(--warn);font-weight:700">متوفر ${p.left} قطع فقط</div>`
+          : p.options?.length ? '<div class="tiny" style="color:var(--ok)">فيه إضافات</div>' : ''}
       <div class="bottom">
         <div><span class="price">${money(effPrice(p))}</span> ${hasDiscount(p) ? `<span class="strike">${num(p.price).toFixed(2)}</span>` : ''}</div>
         ${!off && storeOpen ? `<div class="row" style="gap:6px">${q ? `<span class="qtybadge">×${q}</span>` : ''}<button class="addbtn" aria-label="أضف">+</button></div>` : ''}
@@ -683,8 +682,7 @@ function productSheet(p, store, onAdded) {
   let qty = 1;
   const inCart = Cart.data.storeId === store.id ? Cart.qtyOf(p.id) : 0;
   const max = maxQty(p) == null ? null : maxQty(p) - inCart;
-  const reason = p.sold_out ? 'نفد — يرجع قريب إن شاء الله'
-    : !p.is_available ? 'مش متوفر توّا'
+  const reason = !p.is_available ? 'غير متوفر توّا'
       : !store.is_accepting ? 'المتجر مغلق توّا'
         : (max != null && max < 1) ? 'وصلت للحد المسموح من الصنف هذا' : null;
   const canOrder = !reason;
@@ -697,7 +695,7 @@ function productSheet(p, store, onAdded) {
     }
   }
   const images = p.images?.length ? p.images : (p.image ? [p.image] : []);
-  const low = p.track_stock && p.stock_quantity != null && p.stock_quantity <= 5;
+  const low = p.left != null;
 
   const { el, close } = sheet(`
     ${images.length ? `<div class="gallery"><div class="track">${images.map((u) => `<img src="${esc(u)}" alt="">`).join('')}</div>
@@ -714,7 +712,7 @@ function productSheet(p, store, onAdded) {
       <div id="opts"></div>
       ${canOrder ? `<label class="field" style="margin-top:16px"><span>ملاحظة على هذا الصنف</span>
         <textarea class="textarea" id="note" maxlength="200" placeholder="بدون بصل، حار، مشوي أكثر..."></textarea></label>` : ''}
-      ${canOrder && low ? `<div class="tiny" style="color:var(--warn);font-weight:700">متبقي ${p.stock_quantity} فقط</div>`
+      ${canOrder && low ? `<div class="tiny" style="color:var(--warn);font-weight:700">متوفر ${p.left} قطع فقط</div>`
         : canOrder && p.max_per_order ? `<div class="tiny muted">أقصى كمية في الطلب: ${p.max_per_order}</div>` : ''}
     </div>
     <div class="sheet-foot" id="foot"></div>`);

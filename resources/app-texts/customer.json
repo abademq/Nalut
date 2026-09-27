@@ -1280,12 +1280,7 @@
   "vars": null
  },
  {
-  "text": "نفد — يرجع قريب إن شاء الله",
-  "group": "store_screen",
-  "vars": null
- },
- {
-  "text": "مش متوفر توّا",
+  "text": "غير متوفر توّا",
   "group": "store_screen",
   "vars": null
  },
@@ -1325,9 +1320,9 @@
   "vars": null
  },
  {
-  "text": "متبقي {stockLeft} فقط",
+  "text": "متوفر {n} قطع فقط",
   "group": "store_screen",
-  "vars": "{stockLeft}"
+  "vars": "{n}"
  },
  {
   "text": "أقصى كمية في الطلب: {maxPerOrder}",
@@ -1445,19 +1440,14 @@
   "vars": "{price}"
  },
  {
-  "text": "نفد",
+  "text": "غير متوفر",
   "group": "store_screen",
   "vars": null
  },
  {
-  "text": "نفد — تقدر تشوف التفاصيل والصور",
+  "text": "غير متوفر توّا — تقدر تشوف الصور والتفاصيل",
   "group": "store_screen",
   "vars": null
- },
- {
-  "text": "باقي {n} بس",
-  "group": "store_screen",
-  "vars": "{n}"
  },
  {
   "text": "فيه إضافات",

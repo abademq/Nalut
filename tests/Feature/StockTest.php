@@ -160,4 +160,31 @@ class StockTest extends TestCase
         $q->update(['is_available' => false]);
         $this->assertSame('stopped', $q->fresh()->state());
     }
+
+    public function test_customer_sees_available_left_or_unavailable_and_hidden_is_gone(): void
+    {
+        [$c, $a] = $this->customer('0913000007');
+        Sanctum::actingAs($c);
+        $get = fn () => collect($this->getJson('/api/v1/stores/'.$this->store->id)->json('data.products'))->firstWhere('id', $this->product->id);
+
+        // المتجر ما حددش تنبيه: «متوفر» بدون عدد
+        $this->assertNull($get()['left']);
+        $this->product->update(['low_stock_alert' => 3]);
+        $this->assertSame(2, $get()['left']); // «متوفر 2 قطع فقط»
+
+        // خلص: غير متوفر (الصور تقعد)
+        $this->product->update(['stock_quantity' => 0]);
+        $this->assertFalse($get()['is_available']);
+        $this->assertNull($get()['left']);
+        $this->assertSame('sold_out', $get()['state']);
+
+        // مخفي: ما يبانش ولا يتطلب
+        $this->product->update(['stock_quantity' => 5, 'is_visible' => false]);
+        $this->assertNull($get());
+        $this->order([$c, $a], 1)->assertStatus(422);
+
+        // المتجر يرجّعه من تطبيقه
+        Sanctum::actingAs(User::find($this->store->user_id));
+        $this->postJson('/api/v1/store/products/'.$this->product->id, ['is_visible' => true])->assertOk()->assertJsonPath('data.is_visible', true);
+    }
 }

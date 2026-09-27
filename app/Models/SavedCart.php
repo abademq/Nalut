@@ -44,7 +44,7 @@ class SavedCart extends Model
         $missing = 0;
         foreach ($lines as $l) {
             $p = $products->get($l['product_id']);
-            if ($p && $p->is_available) {
+            if ($p && $p->is_available && ($p->is_visible ?? true)) {
                 $values = $p->options->flatMap->values->keyBy('id');
                 $extra = 0.0;
                 foreach (OrderService::selectedOptions($l) as $id => $n) {

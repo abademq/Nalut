@@ -304,7 +304,8 @@ class OrderService
                 ->find($item['product_id']);
 
             // كان يرجع 404 عام — الزبون ما يعرفش إن المنتج خلص وهو في سلته
-            if (! $product) {
+            // (المخفي عن الزبائن = كأنه مش موجود)
+            if (! $product || ! ($product->is_visible ?? true)) {
                 throw ValidationException::withMessages([
                     'items' => Texts::get('msg.product_missing'),
                 ]);

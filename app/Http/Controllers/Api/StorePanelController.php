@@ -240,6 +240,7 @@ class StorePanelController extends Controller
             'discount_price' => ['nullable', 'numeric', 'min:0', 'lt:price'],
             'menu_section_id' => ['nullable', 'integer', $this->ownSectionRule($store->id)],
             'is_available' => ['nullable', 'boolean'],
+            'is_visible' => ['nullable', 'boolean'],
             'track_stock' => ['nullable', 'boolean'],
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
             'max_per_order' => ['nullable', 'integer', 'min:1'],
@@ -271,6 +272,7 @@ class StorePanelController extends Controller
             // كان ناقص من القائمة — فتغيير القسم ينحفظ بدون ما يتغيّر فعلياً
             'menu_section_id' => ['nullable', 'integer', $this->ownSectionRule($product->store_id)],
             'is_available' => ['nullable', 'boolean'],
+            'is_visible' => ['nullable', 'boolean'],
             'track_stock' => ['nullable', 'boolean'],
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
             'max_per_order' => ['nullable', 'integer', 'min:1'],

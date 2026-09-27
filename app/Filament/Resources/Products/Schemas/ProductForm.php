@@ -75,6 +75,12 @@ class ProductForm
                     ->directory('products')
                     ->columnSpanFull(),
 
+                Toggle::make('is_visible')
+                    ->label('يظهر للزبائن')
+                    ->default(true)
+                    ->helperText('مطفي = الصنف مخفي كامل عن الزبائن (ما يبانش في القائمة)، بعيد عن توفّره.')
+                    ->columnSpanFull(),
+
                 Toggle::make('is_available')
                     ->label('متوفر للطلب')
                     ->default(true)

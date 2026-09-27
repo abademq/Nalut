@@ -14,7 +14,7 @@ class Product extends Model
 
     protected $fillable = [
         'store_id', 'menu_section_id', 'name', 'description', 'image', 'images',
-        'price', 'discount_price', 'is_available', 'sort',
+        'price', 'discount_price', 'is_available', 'is_visible', 'sort',
         'track_stock', 'stock_quantity', 'max_per_order', 'low_stock_alert', 'sold_out_at',
     ];
 
@@ -24,6 +24,7 @@ class Product extends Model
             'price' => 'float',
             'discount_price' => 'float',
             'is_available' => 'boolean',
+            'is_visible' => 'boolean',
             'track_stock' => 'boolean',
             'stock_quantity' => 'integer',
             'images' => 'array',
@@ -124,6 +125,26 @@ class Product extends Model
     public function lowStockLevel(): int
     {
         return (int) ($this->low_stock_alert ?? rescue(fn () => Options::get('stock.low_label_at'), 5, false));
+    }
+
+    /** اللي يبان للزبائن بس (المخفي ما يبانش حتى لو متوفر) */
+    public function scopeVisible($query)
+    {
+        return $query->where('is_visible', true);
+    }
+
+    /**
+     * الزبون يشوف حاجتين بس: متوفر (ومعاه «X قطع فقط» لو المتجر حدد تنبيه) أو غير متوفر.
+     * «قطع فقط» تطلع بس لو المتجر كتب «تنبيه عند الكمية» للصنف — هو اللي يقرر.
+     */
+    public function customerLeft(): ?int
+    {
+        if (! $this->is_available || ! $this->track_stock || $this->low_stock_alert === null) {
+            return null;
+        }
+        $left = (int) $this->stock_quantity;
+
+        return $left > 0 && $left <= (int) $this->low_stock_alert ? $left : null;
     }
 
     public const STATE_LABELS = [

@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\StoreResource;
+use App\Models\Announcement;
+use App\Models\ReadyCart;
 use App\Models\Store;
 use App\Models\StoreType;
 use App\Services\GeoService;
@@ -24,15 +26,15 @@ class CatalogController extends Controller
     public function stores(Request $request): JsonResponse
     {
         $request->validate([
-            'lat'        => ['nullable', 'numeric'],
-            'lng'        => ['nullable', 'numeric'],
-            'type'       => ['nullable', 'integer'],
+            'lat' => ['nullable', 'numeric'],
+            'lng' => ['nullable', 'numeric'],
+            'type' => ['nullable', 'integer'],
             // قسم التطبيق: مطاعم، متاجر إلكترونية، ...
-            'section'    => ['nullable', 'integer'],
-            'q'          => ['nullable', 'string', 'max:60'],
-            'sort'       => ['nullable', 'in:nearest,rating,popular,name'],
+            'section' => ['nullable', 'integer'],
+            'q' => ['nullable', 'string', 'max:60'],
+            'sort' => ['nullable', 'in:nearest,rating,popular,name'],
             'min_rating' => ['nullable', 'numeric', 'between:0,5'],
-            'open_only'  => ['nullable', 'boolean'],
+            'open_only' => ['nullable', 'boolean'],
         ]);
 
         $stores = Store::visible()
@@ -62,9 +64,9 @@ class CatalogController extends Controller
 
         $stores = match ($sort) {
             'nearest' => $stores->sortBy(fn ($s) => $s->distance_km ?? 9999),
-            'rating'  => $stores->sortByDesc(fn ($s) => [$s->rating_avg, $s->rating_count]),
+            'rating' => $stores->sortByDesc(fn ($s) => [$s->rating_avg, $s->rating_count]),
             'popular' => $stores->sortByDesc('rating_count'),
-            default   => $stores->sortBy('name'),
+            default => $stores->sortBy('name'),
         };
 
         // المفتوح دائماً فوق المغلق مهما كان الفرز
@@ -82,14 +84,15 @@ class CatalogController extends Controller
         $store->load([
             'type',
             'sections',
-            'products' => fn ($q) => $q->orderBy('sort')->with('options.values'),
+            // المخفي عن الزبائن ما يطلعش أصلاً (غير المتوفر يطلع «غير متوفر»)
+            'products' => fn ($q) => $q->visible()->orderBy('sort')->with('options.values'),
         ]);
 
         return response()->json([
             'data' => (new StoreResource($store))->additional([]),
             // شريط عروض المتجر + السلات الجاهزة
-            'announcements' => \App\Models\Announcement::live()->where('store_id', $store->id)->get()->map->toApp()->values(),
-            'ready_carts'   => \App\Models\ReadyCart::where('store_id', $store->id)->where('is_active', true)->orderBy('sort')->get()
+            'announcements' => Announcement::live()->where('store_id', $store->id)->get()->map->toApp()->values(),
+            'ready_carts' => ReadyCart::where('store_id', $store->id)->where('is_active', true)->orderBy('sort')->get()
                 ->map(fn ($c) => [
                     'id' => $c->id, 'name' => $c->name, 'description' => $c->description,
                     'image' => $c->image ? asset('storage/'.$c->image) : null,

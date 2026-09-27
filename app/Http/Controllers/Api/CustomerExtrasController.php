@@ -35,7 +35,7 @@ class CustomerExtrasController extends Controller
         $stores = Store::visible()->with('type')
             ->whereIn('id', $favs->where('favoritable_type', Store::class)->pluck('favoritable_id'))->get();
 
-        $products = Product::with(['store', 'options.values'])
+        $products = Product::visible()->with(['store', 'options.values'])
             ->whereIn('id', $favs->where('favoritable_type', Product::class)->pluck('favoritable_id'))
             ->whereHas('store', fn ($q) => $q->where('is_active', true))
             ->get();

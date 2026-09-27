@@ -12,6 +12,7 @@ use Filament\Actions\RestoreBulkAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -70,6 +71,12 @@ class ProductsTable
                     ->placeholder('بدون حد')
                     ->toggleable(isToggledHiddenByDefault: true),
 
+                IconColumn::make('is_visible')
+                    ->label('يظهر')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-eye')
+                    ->falseIcon('heroicon-o-eye-slash'),
+
                 // حالة وحدة واضحة بدل «متوفر ✓/✗»: متوفر · قرّب يخلص · نفد (يرجع مع الكمية) · موقوف (بالإيد)
                 TextColumn::make('state')
                     ->label('الحالة')
@@ -90,6 +97,10 @@ class ProductsTable
                     ->label('المتجر')
                     ->relationship('store', 'name')
                     ->searchable(),
+
+                Filter::make('hidden')
+                    ->label('المخفية عن الزبائن')
+                    ->query(fn ($query) => $query->where('is_visible', false)),
 
                 Filter::make('low_stock')
                     ->label('مخزون منخفض')
@@ -125,9 +136,15 @@ class ProductsTable
                             ->send();
                     }),
 
+                Action::make('toggleVisible')
+                    ->label(fn (Product $record) => $record->is_visible ? 'إخفاء عن الزبائن' : 'إظهار للزبائن')
+                    ->icon(fn (Product $record) => $record->is_visible ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
+                    ->color('gray')
+                    ->action(fn (Product $record) => $record->update(['is_visible' => ! $record->is_visible])),
+
                 Action::make('toggleAvailable')
                     ->label(fn (Product $record) => $record->is_available ? 'إيقاف' : 'فتح للطلب')
-                    ->icon(fn (Product $record) => $record->is_available ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
+                    ->icon(fn (Product $record) => $record->is_available ? 'heroicon-o-pause-circle' : 'heroicon-o-play-circle')
                     ->color(fn (Product $record) => $record->is_available ? 'gray' : 'success')
                     ->action(function (Product $record) {
                         // خالص: ما يتفتحش إلا بعد «تعبئة المخزون»

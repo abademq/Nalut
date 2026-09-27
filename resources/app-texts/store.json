@@ -1260,6 +1260,21 @@
   "vars": null
  },
  {
+  "text": "يظهر للزبائن",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "الزبائن يشوفوه في القائمة",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "مخفي كامل على الزبائن — ما يبانش في القائمة ولا يتطلب",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
   "text": "متوفر للطلب",
   "group": "product_form_screen",
   "vars": null
@@ -1270,7 +1285,7 @@
   "vars": null
  },
  {
-  "text": "مطفي = «موقوف»: الزبائن يشوفوه «مش متوفر» لين تفتحه أنت",
+  "text": "مطفي = الزبائن يشوفوه «غير متوفر» (بصوره) لين تفتحه أنت",
   "group": "product_form_screen",
   "vars": null
  },
@@ -1317,6 +1332,16 @@
  {
   "text": "إضافة المنتج",
   "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "انخفى عن الزبائن",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "رجع يظهر للزبائن",
+  "group": "products_tab",
   "vars": null
  },
  {
@@ -1415,7 +1440,7 @@
   "vars": null
  },
  {
-  "text": "{count} صنف خلص — يبان للزبائن «نفد» وما يتطلبش",
+  "text": "{count} صنف خلص — يبان للزبائن «غير متوفر» وما يتطلبش",
   "group": "products_tab",
   "vars": "{count}"
  },
@@ -1446,6 +1471,11 @@
  },
  {
   "text": "ما فيش منتجات في القسم",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "مخفي عن الزبائن",
   "group": "products_tab",
   "vars": null
  },
@@ -1490,6 +1520,16 @@
   "vars": null
  },
  {
+  "text": "إخفاء عن الزبائن",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "إظهار للزبائن",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
   "text": "خلص من المخزن",
   "group": "products_tab",
   "vars": null
@@ -1500,7 +1540,7 @@
   "vars": "{qty}"
  },
  {
-  "text": "يبان للزبائن «نفد» وما يتطلبش لين تزيد الكمية. اضغط هني باش تعبّيه.",
+  "text": "يبان للزبائن «غير متوفر» وما يتطلبش لين تزيد الكمية. اضغط هني باش تعبّيه.",
   "group": "products_tab",
   "vars": null
  },
