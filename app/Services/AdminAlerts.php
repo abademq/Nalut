@@ -21,25 +21,25 @@ class AdminAlerts
     /**
      * @param  string|null  $key  يمنع تكرار نفس التنبيه (مثلاً order-failed:15)
      */
-    public static function send(string $title, string $body, ?string $url = null, string $level = 'warning', ?string $key = null): bool
+    public static function send(string $title, string $body, ?string $url = null, string $level = 'warning', ?string $key = null, string $permission = 'orders.view'): bool
     {
         if ($key && ! Cache::add("admin-alert:$key", 1, now()->addDays(3))) {
             return false; // انبعت من قبل
         }
 
         try {
-            // كل إداري يشوف الطلبات
+            // كل إداري عنده الصلاحية (الطلبات افتراضياً، الدعم للتذاكر)
             $admins = User::withRole(UserRole::Admin)->where('is_active', true)->get()
-                ->filter(fn (User $u) => $u->hasPermission('orders.view'));
+                ->filter(fn (User $u) => $u->hasPermission($permission));
 
             if ($admins->isNotEmpty()) {
                 $n = Notification::make()
                     ->title($title)
                     ->body($body)
                     ->icon(match ($level) {
-                        'danger'  => 'heroicon-o-exclamation-triangle',
-                        'info'    => 'heroicon-o-information-circle',
-                        default   => 'heroicon-o-bell-alert',
+                        'danger' => 'heroicon-o-exclamation-triangle',
+                        'info' => 'heroicon-o-information-circle',
+                        default => 'heroicon-o-bell-alert',
                     })
                     ->iconColor($level);
 

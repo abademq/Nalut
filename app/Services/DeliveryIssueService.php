@@ -4,13 +4,17 @@ namespace App\Services;
 
 use App\Enums\OrderStatus;
 use App\Filament\Pages\AppSettings;
+use App\Filament\Resources\Orders\OrderResource;
 use App\Models\FailureReason;
 use App\Models\NotificationSetting;
 use App\Models\Order;
 use App\Models\OrderIssue;
+use App\Models\Ticket;
 use App\Models\User;
+use App\Support\Options;
 use App\Support\Texts;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -46,29 +50,29 @@ class DeliveryIssueService
             $n = OrderIssue::where('order_id', $order->id)->lockForUpdate()->count() + 1;
 
             $issue = OrderIssue::create([
-                'ticket'            => 'T'.$order->code.'-'.$n,
-                'order_id'          => $order->id,
-                'driver_id'         => $driver->id,
+                'ticket' => 'T'.$order->code.'-'.$n,
+                'order_id' => $order->id,
+                'driver_id' => $driver->id,
                 'failure_reason_id' => $reason->id,
-                'reason_label'      => $reason->label,
-                'note'              => $note,
-                'action'            => $review ? 'review' : 'failed',
-                'status'            => $review ? 'open' : 'resolved',
-                'resolution'        => $review ? null : 'failed',
-                'resolved_at'       => $review ? null : now(),
-                'lat'               => $lat,
-                'lng'               => $lng,
+                'reason_label' => $reason->label,
+                'note' => $note,
+                'action' => $review ? 'review' : 'failed',
+                'status' => $review ? 'open' : 'resolved',
+                'resolution' => $review ? null : 'failed',
+                'resolved_at' => $review ? null : now(),
+                'lat' => $lat,
+                'lng' => $lng,
             ]);
 
             if ($review) {
                 $order->statusLogs()->create([
                     'from_status' => $order->status->value,
-                    'to_status'   => $order->status->value,
-                    'changed_by'  => $driver->id,
-                    'note'        => "بلاغ {$issue->ticket}: {$reason->label} — قيد مراجعة الإدارة",
-                    'lat'         => $lat,
-                    'lng'         => $lng,
-                    'created_at'  => now(),
+                    'to_status' => $order->status->value,
+                    'changed_by' => $driver->id,
+                    'note' => "بلاغ {$issue->ticket}: {$reason->label} — قيد مراجعة الإدارة",
+                    'lat' => $lat,
+                    'lng' => $lng,
+                    'created_at' => now(),
                 ]);
 
                 if ($order->customer && NotificationSetting::isEnabled('customer', 'failed')) {
@@ -83,8 +87,8 @@ class DeliveryIssueService
             } else {
                 $this->orders->transition($order, OrderStatus::Failed, $driver, [
                     'reason' => $reason->label.($note ? " — {$note}" : ''),
-                    'lat'    => $lat,
-                    'lng'    => $lng,
+                    'lat' => $lat,
+                    'lng' => $lng,
                 ]);
             }
 
@@ -92,7 +96,7 @@ class DeliveryIssueService
                 AdminAlerts::send(
                     "بلاغ من السائق — {$issue->ticket}",
                     "{$reason->label}".($note ? " — {$note}" : '')." · الطلب {$order->code} قيد مراجعتك",
-                    \App\Filament\Resources\Orders\OrderResource::getUrl('view', ['record' => $order->id], panel: 'admin'),
+                    OrderResource::getUrl('view', ['record' => $order->id], panel: 'admin'),
                     'danger',
                     "issue:{$issue->ticket}"
                 );
@@ -100,6 +104,52 @@ class DeliveryIssueService
 
             return $issue->fresh(['order.store', 'driver']);
         });
+    }
+
+    /**
+     * تذكرة الدعم للبلاغ (لو السبب «يفتح الدعم» والتذاكر مفعّلة) — تنفتح مرة وحدة لكل بلاغ.
+     */
+    public function supportTicket(OrderIssue $issue): ?Ticket
+    {
+        $reason = $issue->failure_reason_id ? FailureReason::find($issue->failure_reason_id) : null;
+        if (! $reason?->open_support || ! Options::get('support.driver_issues') || ! $issue->driver) {
+            return null;
+        }
+
+        $existing = Ticket::where('user_id', $issue->driver_id)->where('app', 'driver')
+            ->where('order_id', $issue->order_id)->open()->latest('id')->first();
+        if ($existing) {
+            return $existing;
+        }
+
+        $order = $issue->order;
+        $body = implode("\n", array_filter([
+            "🚨 بلاغ تعذّر تسليم — {$issue->ticket}",
+            "السبب: {$issue->reason_label}",
+            'الحالة: '.($issue->action === 'review' ? 'قيد مراجعة الإدارة' : 'فشل التسليم'),
+            "المتجر: {$order->store?->name}",
+            "عنوان الزبون: {$order->address_details}",
+            $issue->note ? "ملاحظات السائق: {$issue->note}" : null,
+        ]));
+
+        try {
+            // حد التذاكر المفتوحة ما ينطبقش على بلاغات التسليم
+            return DB::transaction(function () use ($issue, $order, $body) {
+                $t = Ticket::create([
+                    'user_id' => $issue->driver_id, 'app' => 'driver', 'category' => 'delivery',
+                    'subject' => "بلاغ {$issue->ticket} — طلب {$order->code}", 'order_id' => $order->id,
+                    'status' => 'open', 'admin_unread' => true, 'last_message_at' => now(),
+                ]);
+                $t->update(['code' => 'TK'.str_pad((string) $t->id, 5, '0', STR_PAD_LEFT)]);
+                $t->messages()->create(['user_id' => $issue->driver_id, 'is_staff' => false, 'body' => $body]);
+
+                return $t;
+            });
+        } catch (\Throwable $e) {
+            Log::error('Support ticket for issue failed', ['issue' => $issue->id, 'error' => $e->getMessage()]);
+
+            return null;
+        }
     }
 
     /** قرار الإدارة على بلاغ مفتوح */
@@ -119,21 +169,21 @@ class DeliveryIssueService
 
             // نقفلو البلاغ أول — باش الانتقالات تحت ما يوقفهاش «بلاغ مفتوح»
             $issue->update([
-                'status'          => 'resolved',
-                'resolution'      => $resolution,
+                'status' => 'resolved',
+                'resolution' => $resolution,
                 'resolution_note' => $note,
-                'resolved_by'     => $admin->id,
-                'resolved_at'     => now(),
+                'resolved_by' => $admin->id,
+                'resolved_at' => now(),
             ]);
 
             match ($resolution) {
-                'continue'  => $issue->driver && PushService::toUser(
+                'continue' => $issue->driver && PushService::toUser(
                     $issue->driver, Texts::get('notify.title', ['code' => $order->code]), Texts::get('notify.driver.review_continue'),
                     ['type' => 'order_status', 'order_id' => (string) $order->id],
                     'driver'
                 ),
-                'reassign'  => $this->reassign($order, $admin, $reason),
-                'failed'    => $this->orders->transition($order, OrderStatus::Failed, $admin, ['reason' => $reason, 'force' => true]),
+                'reassign' => $this->reassign($order, $admin, $reason),
+                'failed' => $this->orders->transition($order, OrderStatus::Failed, $admin, ['reason' => $reason, 'force' => true]),
                 'cancelled' => $this->orders->transition($order, OrderStatus::Cancelled, $admin, ['reason' => $reason, 'force' => true]),
             };
 
@@ -164,6 +214,10 @@ class DeliveryIssueService
     {
         $reason = $issue->failure_reason_id ? FailureReason::find($issue->failure_reason_id) : null;
         if (! $reason?->open_support) {
+            return null;
+        }
+        // التذاكر مفعّلة: السائق يتابع من داخل التطبيق بدل واتساب
+        if (Options::get('support.driver_issues')) {
             return null;
         }
 

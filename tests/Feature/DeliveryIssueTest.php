@@ -10,11 +10,13 @@ use App\Models\Order;
 use App\Models\OrderIssue;
 use App\Models\Setting;
 use App\Models\Store;
+use App\Models\Ticket;
 use App\Models\User;
 use App\Services\DeliveryIssueService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class DeliveryIssueTest extends TestCase
@@ -22,7 +24,9 @@ class DeliveryIssueTest extends TestCase
     use RefreshDatabase;
 
     private User $driver;
+
     private User $customer;
+
     private Order $order;
 
     protected function setUp(): void
@@ -62,6 +66,8 @@ class DeliveryIssueTest extends TestCase
 
     public function test_review_reason_holds_order_and_returns_whatsapp_ticket(): void
     {
+        // الطريقة القديمة (واتساب) — لما التذاكر مطفية للبلاغات
+        Setting::put('opt.support.driver_issues', '0');
         $res = $this->postJson("/api/v1/driver/orders/{$this->order->id}/issue", [
             'reason_id' => $this->reason('تعطّلت المركبة')->id, 'note' => 'العجلة', 'lat' => 31.86, 'lng' => 10.97,
         ])->assertCreated();
@@ -89,6 +95,26 @@ class DeliveryIssueTest extends TestCase
 
         // بلاغ ثاني على نفس الطلب ممنوع
         $this->postJson("/api/v1/driver/orders/{$this->order->id}/issue", ['reason_id' => $this->reason('مشكلة أخرى')->id])->assertStatus(422);
+    }
+
+    public function test_support_reason_opens_ticket_inside_app_instead_of_whatsapp(): void
+    {
+        $res = $this->postJson("/api/v1/driver/orders/{$this->order->id}/issue", [
+            'reason_id' => $this->reason('تعطّلت المركبة')->id, 'note' => 'العجلة',
+        ])->assertCreated()
+            ->assertJsonPath('support_url', null)
+            ->assertJsonPath('support_expected', false);
+
+        $id = $res->json('support_ticket_id');
+        $this->assertNotNull($id);
+        $t = Ticket::findOrFail($id);
+        $this->assertSame('driver', $t->app);
+        $this->assertSame($this->order->id, $t->order_id);
+        $this->assertStringContainsString('العجلة', $t->messages()->first()->body);
+
+        // يظهر في قائمة السائق وفي تذاكره
+        $this->getJson('/api/v1/driver/orders?status=active')->assertJsonPath('data.0.issue.support_ticket_id', $id);
+        $this->withHeader('X-App', 'driver')->getJson('/api/v1/support/tickets')->assertJsonPath('data.0.id', $id);
     }
 
     public function test_customer_sees_review_label_but_not_ticket(): void
@@ -137,7 +163,7 @@ class DeliveryIssueTest extends TestCase
         $this->postJson("/api/v1/driver/orders/{$this->order->id}/issue", ['reason_id' => $this->reason('تعطّلت المركبة')->id])->assertForbidden();
     }
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('resolutions')]
+    #[DataProvider('resolutions')]
     public function test_admin_resolutions(string $resolution, OrderStatus $expected, bool $driverKept): void
     {
         $this->postJson("/api/v1/driver/orders/{$this->order->id}/issue", ['reason_id' => $this->reason('تعطّلت المركبة')->id])->assertCreated();
@@ -155,9 +181,9 @@ class DeliveryIssueTest extends TestCase
     public static function resolutions(): array
     {
         return [
-            'continue'  => ['continue', OrderStatus::OnTheWay, true],
-            'reassign'  => ['reassign', OrderStatus::Ready, false],
-            'failed'    => ['failed', OrderStatus::Failed, true],
+            'continue' => ['continue', OrderStatus::OnTheWay, true],
+            'reassign' => ['reassign', OrderStatus::Ready, false],
+            'failed' => ['failed', OrderStatus::Failed, true],
             'cancelled' => ['cancelled', OrderStatus::Cancelled, true],
         ];
     }

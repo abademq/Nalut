@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PartyAccountController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\StorePanelController;
+use App\Http\Controllers\Api\SupportController;
 use App\Http\Controllers\Api\WalletController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,14 @@ Route::prefix('v1')->group(function () {
     Route::get('app/content', [AppContentController::class, 'show']);
 
     Route::middleware('auth:sanctum')->group(function () {
+
+        // ---------- تذاكر الدعم (الزبون، السائق، المتجر) ----------
+        Route::get('support/categories', [SupportController::class, 'categories']);
+        Route::get('support/tickets', [SupportController::class, 'index']);
+        Route::post('support/tickets', [SupportController::class, 'store'])->middleware('throttle:5,10');
+        Route::get('support/tickets/{ticket}', [SupportController::class, 'show']);
+        Route::post('support/tickets/{ticket}/messages', [SupportController::class, 'message'])->middleware('throttle:20,1');
+        Route::post('support/tickets/{ticket}/close', [SupportController::class, 'close']);
 
         // أحداث من داخل التطبيقات لسجل النشاط (دفعات)
         Route::post('activity', [ActivityController::class, 'store'])->middleware('throttle:30,1');

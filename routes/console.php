@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\SupportService;
 use App\Support\Traffic;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -26,3 +27,6 @@ Schedule::command('activity:prune')->dailyAt('03:30')->withoutOverlapping();
 // حالة السيرفر: ملفات عدّاد الطلبات الأقدم من المدة المحددة
 Schedule::call(fn () => Traffic::prune())->name('traffic-prune')->hourly();
 Schedule::command('server:check')->everyFiveMinutes()->withoutOverlapping();
+
+// تذاكر الدعم: اللي الإدارة ردّت عليها وما جاش رد من فترة تتقفل لحالها
+Schedule::call(fn () => app(SupportService::class)->autoClose())->name('tickets-auto-close')->hourly();

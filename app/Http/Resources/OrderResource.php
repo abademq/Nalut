@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Ticket;
 use App\Services\DeliveryIssueService;
 use App\Support\Options;
 use App\Support\OrderMoney;
@@ -110,6 +111,9 @@ class OrderResource extends JsonResource
                     'reason' => $this->openIssue->reason_label,
                     'created_at' => $this->openIssue->created_at,
                     'support_url' => app(DeliveryIssueService::class)->supportUrl($this->openIssue),
+                    // تذكرة الدعم المربوطة بالطلب (السائق يتابعها من التطبيق)
+                    'support_ticket_id' => Ticket::where('user_id', $this->driver_id)->where('app', 'driver')
+                        ->where('order_id', $this->id)->latest('id')->value('id'),
                 ]
             ),
             'is_final' => $this->status->isFinal(),

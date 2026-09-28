@@ -1082,6 +1082,7 @@ route('/orders', async ({ alive }) => {
 }, { tab: 'orders', title: 'طلباتي', back: false });
 
 route('/orders/:id', async ({ params, alive, onLeave }) => {
+  const supportOn = await opt('support.enabled', true);
   const id = +params.id;
   let order = null;
   let map = null; let markers = {};
@@ -1155,6 +1156,7 @@ route('/orders/:id', async ({ params, alive, onLeave }) => {
       <div class="stack">
         ${final ? '<button class="btn outline block" id="reorder">🔁 اطلب نفس الطلب</button>' : ''}
         ${canCancel ? '<button class="btn danger block" id="cancel">إلغاء الطلب</button>' : ''}
+        ${supportOn ? `<button class="btn ghost block" data-go="/support/new?order=${o.id}&code=${encodeURIComponent(o.code)}">🎧 مشكلة في الطلب؟ تواصل مع الدعم</button>` : ''}
       </div>`;
 
     // الردود على الأصناف الناقصة
@@ -1410,7 +1412,7 @@ route('/saved', async ({ alive }) => {
 // ================= حسابي =================
 route('/account', async () => {
   const u = Auth.user || {};
-  const [pointsOn, savedOn] = await Promise.all([opt('points.enabled', false), opt('carts.saved_enabled', true)]);
+  const [pointsOn, savedOn, supportOn] = await Promise.all([opt('points.enabled', false), opt('carts.saved_enabled', true), opt('support.enabled', true)]);
   const item = (path, ic, label) => `<div class="item" data-go="${path}"><span class="ic">${ic}</span><span class="grow">${label}</span><span class="chev">‹</span></div>`;
   view.innerHTML = `
     <div class="card row"><div style="width:52px;height:52px;border-radius:50%;background:var(--brand-soft);display:grid;place-items:center;font-size:24px">👤</div>
@@ -1423,6 +1425,7 @@ route('/account', async () => {
       ${pointsOn ? item('/points', '⭐', 'نقاطي') : ''}
       ${item('/favorites', '❤️', 'المفضلة')}
       ${savedOn ? item('/saved', '💾', 'سلاتي المحفوظة') : ''}
+      ${supportOn ? item('/support', '🎧', 'الدعم والمساعدة') : ''}
     </div>
     <div class="card menu-list">
       <div class="item" id="password"><span class="ic">🔑</span><span class="grow">كلمة المرور</span><span class="chev">‹</span></div>
@@ -1477,6 +1480,129 @@ function recaptchaLib() {
   });
   return rcP;
 }
+
+// ================= الدعم الفني (تذاكر) =================
+const ticketStatus = { open: ['تستنى رد الإدارة', 'warn'], answered: ['الدعم ردّ', 'ok'], closed: ['مقفولة', ''] };
+const fileToData = (file) => new Promise((ok, bad) => {
+  if (file.size > 5 * 1024 * 1024) return bad(new Error('الصورة كبيرة — لحد 5 ميغا'));
+  const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => bad(new Error('ما قدرناش نقراو الصورة')); r.readAsDataURL(file);
+});
+
+route('/support', async ({ alive }) => {
+  const r = await GET('/support/tickets');
+  if (!alive()) return;
+  const list = r.data || [];
+  view.innerHTML = `
+    <button class="btn block" data-go="/support/new" style="margin-bottom:12px">➕ تذكرة جديدة</button>
+    ${list.length ? list.map((t) => `
+      <div class="card order-card" data-go="/support/${t.id}">
+        <div class="row between"><b ${t.unread ? '' : 'style="font-weight:600"'}>${esc(t.subject)}</b>
+          <span class="pill ${ticketStatus[t.status]?.[1] || ''}">${esc(t.status_label)}</span></div>
+        <div class="tiny muted" style="margin-top:4px">${esc(t.code)} · ${esc(t.category_label)}${t.order_code ? ' · طلب ' + esc(t.order_code) : ''}</div>
+        ${t.last_message ? `<div class="small muted" style="margin-top:4px">${esc(t.last_message)}</div>` : ''}
+        ${t.unread ? `<div class="pill err" style="margin-top:6px">${t.unread} رد جديد</div>` : ''}
+      </div>`).join('')
+      : '<div class="empty"><div class="big">🎧</div><p>عندك مشكلة أو سؤال؟ افتح تذكرة والدعم الفني يرد عليك هني.</p></div>'}`;
+}, { tab: 'account', title: 'الدعم والمساعدة' });
+
+route('/support/new', async ({ query, alive }) => {
+  const r = await GET('/support/categories');
+  if (!alive()) return;
+  if (!r.enabled) { view.innerHTML = '<div class="empty"><div class="big">🎧</div><p>الدعم من الموقع موقوف حالياً.</p></div>'; return; }
+  const orderId = query.order ? +query.order : null;
+  let cat = orderId ? r.categories[0]?.key : null;
+  let image = null;
+  view.innerHTML = `
+    ${orderId ? `<div class="card">🧾 بخصوص الطلب <b>${esc(query.code || '')}</b></div>` : ''}
+    <div class="card">
+      <b>شن نوع المشكلة؟</b>
+      <div class="chips" id="cats" style="margin-top:8px;flex-wrap:wrap">${r.categories.map((c) => `<button class="chip ${c.key === cat ? 'on' : ''}" data-cat="${esc(c.key)}">${esc(c.label)}</button>`).join('')}</div>
+      <label class="field" style="margin-top:12px"><span>اكتب المشكلة بالتفصيل</span>
+        <textarea class="textarea" id="body" rows="6" maxlength="2000" placeholder="شن صار؟ وامتا؟ وشن كنت تبي تدير؟"></textarea></label>
+      <label class="btn ghost small" style="margin-top:8px;cursor:pointer">📷 <span id="img-label">أرفق صورة (اختياري)</span><input type="file" id="img" accept="image/*" hidden></label>
+      <button class="btn block" id="send" style="margin-top:14px">إرسال للدعم الفني</button>
+    </div>`;
+  $$('[data-cat]').forEach((b) => b.onclick = () => { cat = b.dataset.cat; $$('[data-cat]').forEach((x) => x.classList.toggle('on', x === b)); });
+  $('#img').onchange = async (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    try { image = await fileToData(f); $('#img-label').textContent = '✅ ' + f.name; } catch (err) { toast(err.message, 'err'); }
+  };
+  $('#send').onclick = (e) => busy(e.currentTarget, async () => {
+    const body = $('#body').value.trim();
+    if (!cat) return toast('اختار نوع المشكلة', 'err');
+    if (body.length < 3) return toast('اكتب المشكلة بالتفصيل', 'err');
+    try {
+      const res = await POST('/support/tickets', { category: cat, body, ...(orderId ? { order_id: orderId } : {}), ...(image ? { image } : {}) });
+      toast(res.message, 'ok');
+      go('/support/' + res.data.id, true);
+    } catch (err) { toast(err.message, 'err'); }
+  });
+}, { tab: 'account', title: 'تذكرة جديدة' });
+
+route('/support/:id', async ({ params, alive, onLeave }) => {
+  const id = params.id;
+  let count = -1;
+  let image = null;
+  view.innerHTML = '<div id="t-head"></div><div class="card" id="t-msgs" style="max-height:60vh;overflow-y:auto"></div><div id="t-foot"></div>';
+
+  async function load() {
+    let t;
+    try { t = (await GET('/support/tickets/' + id)).data; } catch (e) { if (count < 0) toast(e.message, 'err'); return; }
+    if (!alive()) return;
+    setTop({ title: t.code, back: true });
+    $('#t-head').innerHTML = `<div class="card"><div class="row between"><b>${esc(t.subject)}</b><span class="pill ${ticketStatus[t.status]?.[1] || ''}">${esc(t.status_label)}</span></div>
+      <div class="tiny muted" style="margin-top:4px">${esc(t.category_label)}${t.order_code ? ' · طلب ' + esc(t.order_code) : ''}</div></div>`;
+    if (t.messages.length !== count) {
+      count = t.messages.length;
+      const box = $('#t-msgs');
+      box.innerHTML = t.messages.map((m) => `
+        <div style="display:flex;justify-content:${m.from === 'me' ? 'flex-end' : 'flex-start'};margin:6px 0">
+          <div style="max-width:80%;padding:10px 12px;border-radius:14px;${m.from === 'me' ? 'background:var(--brand-soft)' : 'background:#fff;border:1px solid #E5E7EB'}">
+            ${m.from === 'staff' ? '<div class="tiny" style="color:var(--ok);font-weight:700;margin-bottom:4px">🎧 الدعم الفني</div>' : ''}
+            ${m.body ? `<div style="white-space:pre-wrap">${esc(m.body)}</div>` : ''}
+            ${m.image ? `<a href="${esc(m.image)}" target="_blank" rel="noopener"><img src="${esc(m.image)}" alt="" style="max-width:220px;max-height:220px;border-radius:10px;margin-top:6px;display:block"></a>` : ''}
+            <div class="tiny muted" style="margin-top:4px">${fmtDate(m.created_at)}</div>
+          </div></div>`).join('')
+        + (t.status === 'open' && t.messages.at(-1)?.from === 'me' ? '<div class="tiny muted center" style="margin:10px">وصلت رسالتك — الدعم يرد عليك هني.</div>' : '');
+      box.scrollTop = box.scrollHeight;
+    }
+    const foot = $('#t-foot');
+    if (!foot.dataset.ready) {
+      foot.dataset.ready = 1;
+      foot.innerHTML = `<div class="card">
+        <div class="tiny muted" id="closed-note" hidden style="margin-bottom:6px">التذكرة مقفولة — لو كتبت رسالة تتفتح من جديد.</div>
+        <textarea class="textarea" id="msg" rows="2" maxlength="2000" placeholder="اكتب رسالتك…"></textarea>
+        <div class="row" style="margin-top:8px;flex-wrap:wrap">
+          <label class="btn ghost small" style="cursor:pointer">📷 <span id="img-label">صورة</span><input type="file" id="img" accept="image/*" hidden></label>
+          <button class="btn grow" id="send">إرسال</button>
+          <button class="btn ghost small" id="close-t">✔️ المشكلة انحلّت</button>
+        </div></div>`;
+      $('#img', foot).onchange = async (e) => {
+        const f = e.target.files[0]; if (!f) return;
+        try { image = await fileToData(f); $('#img-label', foot).textContent = '✅ صورة'; } catch (err) { toast(err.message, 'err'); }
+      };
+      $('#send', foot).onclick = (e) => busy(e.currentTarget, async () => {
+        const body = $('#msg', foot).value.trim();
+        if (!body && !image) return;
+        try {
+          await POST(`/support/tickets/${id}/messages`, { ...(body ? { body } : {}), ...(image ? { image } : {}) });
+          $('#msg', foot).value = ''; image = null; $('#img-label', foot).textContent = 'صورة';
+          await load();
+        } catch (err) { toast(err.message, 'err'); }
+      });
+      $('#close-t', foot).onclick = async () => {
+        if (!(await confirmBox('قفل التذكرة؟', 'لو المشكلة رجعت اكتب فيها وتتفتح من جديد.', 'اقفلها', 'رجوع'))) return;
+        try { await POST(`/support/tickets/${id}/close`); await load(); } catch (err) { toast(err.message, 'err'); }
+      };
+    }
+    $('#closed-note', foot).hidden = t.status !== 'closed';
+    $('#close-t', foot).hidden = t.status === 'closed';
+  }
+
+  await load();
+  const timer = setInterval(load, 10000);
+  onLeave(() => clearInterval(timer));
+}, { tab: 'account', title: ' ' });
 
 route('/login', async ({ query }) => {
   if (Auth.in) return go(query.next || '/', true);

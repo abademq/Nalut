@@ -167,7 +167,9 @@ class MessagingAndAlertsTest extends TestCase
 
         Sanctum::actingAs($driver);
         $this->postJson("/api/v1/driver/orders/{$o->id}/issue", ['reason_id' => $reason->id])
-            ->assertCreated()->assertJsonPath('support_expected', true);
+            // السبب «يفتح الدعم» ← تذكرة داخل التطبيق (مش واتساب)
+            ->assertCreated()->assertJsonPath('support_expected', false)
+            ->assertJsonPath('support_ticket_id', fn ($id) => $id !== null);
 
         $this->assertStringContainsString('بلاغ', $this->admin->notifications()->first()->data['title']);
     }

@@ -23,11 +23,12 @@ class Permissions
         'messages.manage' => 'الرسائل: الحملات التسويقية والتقارير والقوالب',
         'logs.view' => 'عرض سجل النشاط',
         'server.view' => 'عرض حالة السيرفر',
+        'support.manage' => 'تذاكر الدعم: قراءة والرد على الزبائن والسائقين',
     ];
 
     /** مجموعات جاهزة تسهّل الاختيار */
     public const PRESETS = [
-        'operator' => ['orders.view', 'orders.manage', 'users.view'],
+        'operator' => ['orders.view', 'orders.manage', 'users.view', 'support.manage'],
         'accountant' => ['finance.view', 'finance.manage', 'cards.manage', 'orders.view', 'settlements.view', 'settlements.manage'],
         'catalog' => ['stores.manage', 'products.manage', 'coupons.manage'],
     ];

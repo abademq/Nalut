@@ -6,12 +6,16 @@ use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Models\DeliveryZone;
+use App\Models\FailureReason;
 use App\Models\Order;
+use App\Services\DeliveryIssueService;
 use App\Services\DriverLocationService;
 use App\Services\GeoService;
 use App\Services\OrderService;
+use App\Support\Texts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 /** واجهات تطبيق السائق */
 class DriverController extends Controller
@@ -30,24 +34,24 @@ class DriverController extends Controller
 
     public function zones(Request $request): JsonResponse
     {
-        $profile  = $this->profile($request);
+        $profile = $this->profile($request);
         $selected = $profile->zones()->pluck('delivery_zones.id')->all();
 
         $zones = DeliveryZone::where('is_active', true)
             ->orderBy('name')
             ->get()
             ->map(fn ($z) => [
-                'id'         => $z->id,
-                'name'       => $z->name,
-                'selected'   => in_array($z->id, $selected, true),
-                'base_fee'   => (float) $z->base_fee,
+                'id' => $z->id,
+                'name' => $z->name,
+                'selected' => in_array($z->id, $selected, true),
+                'base_fee' => (float) $z->base_fee,
                 'fee_per_km' => (float) $z->fee_per_km,
             ]);
 
         return response()->json([
-            'data'      => $zones,
+            'data' => $zones,
             'all_zones' => empty($selected),
-            'note'      => 'لو ما اخترت ولا منطقة، بتوصلك طلبات كل المناطق.',
+            'note' => 'لو ما اخترت ولا منطقة، بتوصلك طلبات كل المناطق.',
         ]);
     }
 
@@ -56,14 +60,14 @@ class DriverController extends Controller
         $profile = $this->profile($request);
 
         $data = $request->validate([
-            'zone_ids'   => ['present', 'array'],
+            'zone_ids' => ['present', 'array'],
             'zone_ids.*' => ['integer', 'exists:delivery_zones,id'],
         ]);
 
         $profile->zones()->sync($data['zone_ids']);
 
         return response()->json([
-            'message'  => 'تم تحديث مناطق عملك',
+            'message' => 'تم تحديث مناطق عملك',
             'zone_ids' => $profile->zones()->pluck('delivery_zones.id'),
         ]);
     }
@@ -89,8 +93,8 @@ class DriverController extends Controller
         $this->profile($request);
 
         $data = $request->validate([
-            'lat'     => ['required', 'numeric', 'between:-90,90'],
-            'lng'     => ['required', 'numeric', 'between:-180,180'],
+            'lat' => ['required', 'numeric', 'between:-90,90'],
+            'lng' => ['required', 'numeric', 'between:-180,180'],
             'heading' => ['nullable', 'numeric'],
         ]);
 
@@ -132,14 +136,14 @@ class DriverController extends Controller
         }
 
         return response()->json([
-            'data'           => OrderResource::collection($orders),
+            'data' => OrderResource::collection($orders),
             'filtered_zones' => $zoneIds,
-            'capacity'       => [
-                'max'       => $profile->max_active_orders,
-                'active'    => $profile->activeOrders()->count(),
+            'capacity' => [
+                'max' => $profile->max_active_orders,
+                'active' => $profile->activeOrders()->count(),
                 'remaining' => $profile->remainingCapacity(),
-                'mode'      => $profile->multi_order_mode,
-                'mode_label'=> $profile->modeLabel(),
+                'mode' => $profile->multi_order_mode,
+                'mode_label' => $profile->modeLabel(),
             ],
         ]);
     }
@@ -174,16 +178,16 @@ class DriverController extends Controller
 
         // البلاغ المفتوح يوقف الطلب لين الإدارة تقرر
         if ($order->openIssue()->exists()) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'status' => \App\Support\Texts::get('msg.under_review_block'),
+            throw ValidationException::withMessages([
+                'status' => Texts::get('msg.under_review_block'),
             ]);
         }
 
         $data = $request->validate([
             'status' => ['required', 'in:picked_up,on_the_way,delivered,failed'],
             'reason' => ['nullable', 'string', 'max:200'],
-            'lat'    => ['nullable', 'numeric'],
-            'lng'    => ['nullable', 'numeric'],
+            'lat' => ['nullable', 'numeric'],
+            'lng' => ['nullable', 'numeric'],
         ]);
 
         // موقع السائق لحظة تغيير الحالة — باش خريطة الزبون تطلع فوراً بدون ما تستنى التحديث الدوري
@@ -206,23 +210,23 @@ class DriverController extends Controller
     {
         $this->profile($request);
 
-        return response()->json(['data' => \App\Models\FailureReason::where('is_active', true)
+        return response()->json(['data' => FailureReason::where('is_active', true)
             ->orderBy('sort')->get(['id', 'label', 'hold_for_review', 'open_support'])]);
     }
 
     /** بلاغ تعذّر تسليم — يرجع التذكرة ورابط الدعم الفني */
-    public function reportIssue(Request $request, Order $order, \App\Services\DeliveryIssueService $issues): JsonResponse
+    public function reportIssue(Request $request, Order $order, DeliveryIssueService $issues): JsonResponse
     {
         $this->profile($request);
 
         $data = $request->validate([
             'reason_id' => ['required', 'integer'],
-            'note'      => ['nullable', 'string', 'max:300'],
-            'lat'       => ['nullable', 'numeric', 'between:-90,90'],
-            'lng'       => ['nullable', 'numeric', 'between:-180,180'],
+            'note' => ['nullable', 'string', 'max:300'],
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
         ]);
 
-        $reason = \App\Models\FailureReason::where('is_active', true)->findOrFail($data['reason_id']);
+        $reason = FailureReason::where('is_active', true)->findOrFail($data['reason_id']);
 
         $issue = $issues->report(
             $order, $request->user(), $reason, $data['note'] ?? null,
@@ -230,16 +234,20 @@ class DriverController extends Controller
             isset($data['lng']) ? (float) $data['lng'] : null,
         );
 
+        // السبب «يفتح الدعم» + التذاكر مفعّلة: تذكرة داخل التطبيق بدل واتساب
+        $supportTicket = $issues->supportTicket($issue);
+
         return response()->json([
-            'ticket'       => $issue->ticket,
+            'ticket' => $issue->ticket,
+            'support_ticket_id' => $supportTicket?->id,
             'under_review' => $issue->action === 'review',
-            'message'      => $issue->action === 'review'
+            'message' => $issue->action === 'review'
                 ? 'تم إرسال البلاغ — الطلب قيد مراجعة الإدارة'
                 : 'تم تسجيل فشل التسليم',
-            'support_url'  => $issues->supportUrl($issue),
+            'support_url' => $issues->supportUrl($issue),
             // السبب مفروض يفتح الدعم — لو الرابط فاضي فرقم الدعم مش مضبوط في اللوحة
-            'support_expected' => (bool) $reason->open_support,
-            'data'         => new OrderResource($issue->order->fresh(['store', 'items', 'customer', 'openIssue'])),
+            'support_expected' => (bool) $reason->open_support && ! $supportTicket,
+            'data' => new OrderResource($issue->order->fresh(['store', 'items', 'customer', 'openIssue'])),
         ], 201);
     }
 
@@ -264,12 +272,12 @@ class DriverController extends Controller
             ->where('status', OrderStatus::Delivered->value);
 
         return response()->json([
-            'today'      => (float) (clone $base)->whereDate('delivered_at', today())->sum('driver_earning'),
+            'today' => (float) (clone $base)->whereDate('delivered_at', today())->sum('driver_earning'),
             'this_month' => (float) (clone $base)->whereMonth('delivered_at', now()->month)->sum('driver_earning'),
-            'total'      => (float) (clone $base)->sum('driver_earning'),
-            'delivered'  => $profile->delivered_count,
+            'total' => (float) (clone $base)->sum('driver_earning'),
+            'delivered' => $profile->delivered_count,
             // الرصيد السالب = كاش المنصة اللي عند السائق
-            'balance'    => $request->user()->walletBalance(),
+            'balance' => $request->user()->walletBalance(),
         ]);
     }
 }

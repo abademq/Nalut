@@ -45,6 +45,141 @@
   "vars": "{value}"
  },
  {
+  "text": "الدعم والمساعدة",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "تذكرة جديدة",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "عندك مشكلة أو سؤال؟ افتح تذكرة والدعم الفني يرد عليك هني، وتوصلك إشعار لما يردو.",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "طلب {code}",
+  "group": "support",
+  "vars": "{code}"
+ },
+ {
+  "text": "الدعم من التطبيق موقوف حالياً.",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "اختار نوع المشكلة.",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "اكتب المشكلة بالتفصيل.",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "وصلت تذكرتك",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "بخصوص الطلب {code}",
+  "group": "support",
+  "vars": "{code}"
+ },
+ {
+  "text": "شن نوع المشكلة؟",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "اكتب المشكلة بالتفصيل",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "شن صار؟ وامتا؟ وشن كنت تبي تدير؟",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "أرفق صورة (اختياري)",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "بدّل الصورة",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "إرسال للدعم الفني",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "قفل التذكرة؟",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "لو المشكلة انحلّت اقفلها. لو رجعت تقدر تكتب فيها وتتفتح من جديد.",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "رجوع",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "اقفلها",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "الدعم الفني",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "تذكرة",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "قفل التذكرة",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "وصلت رسالتك — الدعم الفني يرد عليك هني وتوصلك إشعار.",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "التذكرة مقفولة — لو كتبت رسالة تتفتح من جديد.",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "صورة",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "اكتب رسالتك…",
+  "group": "support",
+  "vars": null
+ },
+ {
+  "text": "الصورة جاهزة — اكتب تعليق أو ابعتها",
+  "group": "support",
+  "vars": null
+ },
+ {
   "text": "ما نقدرش نوصل للخادم.",
   "group": "account_screen",
   "vars": null
@@ -158,11 +293,6 @@
   "text": "\nتحصّل نقداً: {cashToCollect} د.ل",
   "group": "available_tab",
   "vars": "{cashToCollect}"
- },
- {
-  "text": "رجوع",
-  "group": "available_tab",
-  "vars": null
  },
  {
   "text": "قبول",
@@ -746,6 +876,11 @@
  },
  {
   "text": "خروج",
+  "group": "settings_tab",
+  "vars": null
+ },
+ {
+  "text": "عندك مشكلة؟ افتح تذكرة وتابع الرد هني",
   "group": "settings_tab",
   "vars": null
  },
