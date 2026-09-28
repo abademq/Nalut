@@ -71,9 +71,12 @@ class StoresTable
                     ->counts('orders')
                     ->badge(),
 
-                IconColumn::make('is_open')
-                    ->label('مفتوح')
-                    ->boolean(),
+                // الحالة الفعلية: المفتاح + ساعات العمل + الفتح اليدوي
+                TextColumn::make('open_state')
+                    ->label('الحالة توّا')
+                    ->badge()
+                    ->state(fn (Store $record) => $record->statusText())
+                    ->color(fn (Store $record) => $record->isAcceptingOrders() ? 'success' : 'gray'),
 
                 IconColumn::make('is_active')
                     ->label('مفعّل')
@@ -105,14 +108,16 @@ class StoresTable
             ->recordActions([
                 ShareLink::make(fn (Store $record) => route('link.store', $record))->iconButton()->tooltip('رابط المشاركة'),
                 Action::make('toggleOpen')
-                    ->label(fn (Store $record) => $record->is_open ? 'غلق المتجر' : 'فتح المتجر')
-                    ->icon(fn (Store $record) => $record->is_open ? 'heroicon-o-lock-closed' : 'heroicon-o-lock-open')
-                    ->color(fn (Store $record) => $record->is_open ? 'danger' : 'success')
+                    ->label(fn (Store $record) => $record->isAcceptingOrders() ? 'غلق المتجر' : 'افتح توّا')
+                    ->icon(fn (Store $record) => $record->isAcceptingOrders() ? 'heroicon-o-lock-closed' : 'heroicon-o-lock-open')
+                    ->color(fn (Store $record) => $record->isAcceptingOrders() ? 'danger' : 'success')
                     ->action(function (Store $record) {
-                        $record->update(['is_open' => ! $record->is_open]);
+                        // خارج ساعات العمل: يفتح يدوياً (يتجاهل الساعات لين وقت الفتح العادي)
+                        $record->toggleManual();
 
                         Notification::make()
-                            ->title($record->is_open ? 'المتجر مفتوح توّا' : 'المتجر مغلق توّا')
+                            ->title($record->isAcceptingOrders() ? 'المتجر مفتوح توّا' : 'المتجر مغلق توّا')
+                            ->body($record->statusText())
                             ->success()
                             ->send();
                     }),

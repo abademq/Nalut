@@ -407,7 +407,7 @@ function productCard(p, storeOpen) {
           : p.options?.length ? '<div class="tiny" style="color:var(--ok)">فيه إضافات</div>' : ''}
       <div class="bottom">
         <div><span class="price">${money(effPrice(p))}</span> ${hasDiscount(p) ? `<span class="strike">${num(p.price).toFixed(2)}</span>` : ''}</div>
-        ${!off && storeOpen ? `<div class="row" style="gap:6px">${q ? `<span class="qtybadge">×${q}</span>` : ''}<button class="addbtn" aria-label="أضف">+</button></div>` : ''}
+        ${!off ? `<div class="row" style="gap:6px">${q ? `<span class="qtybadge">×${q}</span>` : ''}<button class="addbtn" aria-label="أضف">+</button></div>` : ''}
       </div>
     </div>
   </div>`;
@@ -642,12 +642,12 @@ async function storePage({ params, alive }) {
       </div>
       ${s.description ? `<p class="small muted" style="margin:8px 0 0">${esc(s.description)}</p>` : ''}
       <div class="row" style="margin-top:10px;flex-wrap:wrap">
-        <span class="pill ${open ? 'ok' : 'err'}">${open ? 'مفتوح توّا' : 'مغلق حالياً'}</span>
+        <span class="pill ${open ? 'ok' : 'err'}">${esc(s.status_text || (open ? 'مفتوح توّا' : 'مغلق حالياً'))}</span>
         ${s.phone ? `<a class="btn ghost small" href="tel:${esc(s.phone)}">${ICONS.phone.replace('<svg', '<svg width="16" height="16"')} اتصل</a>` : ''}
         ${s.lat && s.lng ? `<a class="btn ghost small" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lng}">${ICONS.pin.replace('<svg', '<svg width="16" height="16"')} الموقع</a>` : ''}
       </div>
     </div>
-    ${!open ? '<div class="info center">المتجر مغلق توّا — تقدر تتصفح بس ما تقدرش تطلب</div>' : ''}
+    ${!open ? `<div class="info center">${esc(s.closed_message || 'المتجر مغلق توّا — تقدر تجهّز سلتك وتطلب لما يفتح')}</div>` : ''}
     ${(res.banners || []).length ? `<div style="margin-top:12px">${bannersHtml(res.banners)}</div>` : ''}
     ${(res.announcements || []).map((a) => `<div class="announce" style="margin-top:12px;${a.bg_color ? `background:${esc(a.bg_color)};` : ''}${a.text_color ? `color:${esc(a.text_color)}` : ''}">${esc(a.text)}</div>`).join('')}
     ${(res.ready_carts || []).length ? `<div class="section-title">سلات جاهزة</div><div class="ready-carts">${res.ready_carts.map((c) => `
@@ -669,7 +669,6 @@ async function storePage({ params, alive }) {
     if (p) productSheet(p, s, () => refreshStoreBits());
   });
   $$('[data-ready]').forEach((el) => el.onclick = async () => {
-    if (!open) return toast('المتجر مغلق توّا', 'err');
     try { await applyCart(await GET('/ready-carts/' + el.dataset.ready)); } catch (e) { toast(e.message, 'err'); }
   });
 
@@ -712,7 +711,6 @@ function productSheet(p, store, onAdded) {
   const inCart = Cart.data.storeId === store.id ? Cart.qtyOf(p.id) : 0;
   const max = maxQty(p) == null ? null : maxQty(p) - inCart;
   const reason = !p.is_available ? 'غير متوفر توّا'
-      : !store.is_accepting ? 'المتجر مغلق توّا'
         : (max != null && max < 1) ? 'وصلت للحد المسموح من الصنف هذا' : null;
   const canOrder = !reason;
 
@@ -1035,9 +1033,11 @@ route('/cart', async ({ alive }) => {
         <div class="sum-row total"><span>الإجمالي</span><span>${money(q.total)}</span></div>
         ${num(q.wallet_paid) > 0 ? `<div class="sum-row minus"><span>من المحفظة</span><span>− ${money(q.wallet_paid)}</span></div>
           <div class="sum-row bold"><span>${num(q.cash_due) > 0 ? 'تدفع نقداً للسائق' : 'مدفوع بالكامل'}</span><span>${money(q.cash_due)}</span></div>` : ''}
-        ${q.below_min_order ? `<div class="info">الحد الأدنى للطلب من المتجر هذا ${money(q.min_order)}. زيد أصناف بـ ${money(num(q.min_order) - num(q.subtotal))}.</div>` : ''}`;
-      place.disabled = !!q.below_min_order;
-      place.textContent = `تأكيد الطلب · ${money(q.total)}`;
+        ${q.below_min_order ? `<div class="info">الحد الأدنى للطلب من المتجر هذا ${money(q.min_order)}. زيد أصناف بـ ${money(num(q.min_order) - num(q.subtotal))}.</div>` : ''}
+        ${q.store_accepting === false ? `<div class="info">🕒 ${esc(q.store_closed_message || 'المتجر مغلق توّا')}</div>` : ''}`;
+      // المتجر مسكّر: السلة تقعد جاهزة، بس ما يطلبش لين يفتح
+      place.disabled = !!q.below_min_order || q.store_accepting === false;
+      place.textContent = q.store_accepting === false ? '🕒 المتجر مغلق توّا' : `تأكيد الطلب · ${money(q.total)}`;
     } catch (e) {
       if (my !== qseq) return;
       sum.innerHTML = `<div class="error">${esc(e.message)}</div>`;

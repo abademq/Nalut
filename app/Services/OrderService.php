@@ -29,7 +29,7 @@ class OrderService
         $store = Store::findOrFail($data['store_id']);
 
         if (! $store->isAcceptingOrders()) {
-            throw ValidationException::withMessages(['store_id' => Texts::get('msg.store_closed')]);
+            throw ValidationException::withMessages(['store_id' => $store->closedMessage()]);
         }
 
         $address = $customer->addresses()->findOrFail($data['address_id']);
@@ -229,6 +229,9 @@ class OrderService
         }
 
         return [
+            // المتجر مسكّر: الزبون يقدر يجهّز سلته، بس زر الطلب يتقفل برسالة
+            'store_accepting' => $store->isAcceptingOrders(),
+            'store_closed_message' => $store->isAcceptingOrders() ? null : $store->closedMessage(),
             'subtotal' => $subtotal,
             'delivery_fee' => $deliveryFee,
             'discount' => $discount,

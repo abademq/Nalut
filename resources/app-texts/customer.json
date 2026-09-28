@@ -590,6 +590,11 @@
   "vars": null
  },
  {
+  "text": "المتجر مغلق توّا",
+  "group": "cart_screen",
+  "vars": null
+ },
+ {
   "text": "أقل طلب من هذا المتجر {min_order} د.ل",
   "group": "cart_screen",
   "vars": "{min_order}"
@@ -848,6 +853,11 @@
   "text": "توصيل سريع لباب بيتك",
   "group": "home_screen",
   "vars": null
+ },
+ {
+  "text": "مغلق · يفتح {time}",
+  "group": "home_screen",
+  "vars": "{time}"
  },
  {
   "text": "مغلق",
@@ -1430,11 +1440,6 @@
   "vars": null
  },
  {
-  "text": "المتجر مغلق توّا",
-  "group": "store_screen",
-  "vars": null
- },
- {
   "text": "وصلت للحد المسموح من الصنف هذا",
   "group": "store_screen",
   "vars": null
@@ -1473,6 +1478,11 @@
   "text": "أقصى كمية في الطلب: {maxPerOrder}",
   "group": "store_screen",
   "vars": "{maxPerOrder}"
+ },
+ {
+  "text": "🕒 المتجر مغلق توّا — تقدر تضيفه للسلة وتطلب لما يفتح",
+  "group": "store_screen",
+  "vars": null
  },
  {
   "text": "اختار «{option}» أول",
@@ -1575,7 +1585,7 @@
   "vars": "{count} {subtotal}"
  },
  {
-  "text": "المتجر مغلق توّا — تقدر تتصفح بس ما تقدرش تطلب",
+  "text": "المتجر مغلق توّا — تقدر تجهّز سلتك وتطلب لما يفتح",
   "group": "store_screen",
   "vars": null
  },

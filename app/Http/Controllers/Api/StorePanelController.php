@@ -39,6 +39,12 @@ class StorePanelController extends Controller
         return response()->json([
             'store' => [
                 'id' => $store->id, 'name' => $store->name, 'is_open' => (bool) $store->is_open,
+                // الحالة الفعلية (المفتاح + ساعات العمل + الفتح اليدوي)
+                'is_accepting' => $store->isAcceptingOrders(),
+                'status_text' => $store->statusText(),
+                'opens_at' => $store->opens_at ? substr($store->opens_at, 0, 5) : null,
+                'closes_at' => $store->closes_at ? substr($store->closes_at, 0, 5) : null,
+                'force_open_until' => $store->isForcedOpen() ? $store->force_open_until : null,
             ],
             'today' => [
                 'orders' => $store->orders()->whereBetween('created_at', [$from, $to])->count(),
@@ -60,9 +66,15 @@ class StorePanelController extends Controller
     public function toggleOpen(Request $request): JsonResponse
     {
         $store = $this->store($request);
-        $store->update(['is_open' => ! $store->is_open]);
+        // مفتوح خارج الساعات لو فتحه يدوياً (فتح بدري / سكّر متأخر)
+        $accepting = $store->toggleManual();
 
-        return response()->json(['is_open' => (bool) $store->fresh()->is_open]);
+        return response()->json([
+            'is_open' => (bool) $store->is_open,
+            'is_accepting' => $accepting,
+            'status_text' => $store->statusText(),
+            'message' => $accepting ? 'المتجر مفتوح — '.$store->statusText() : 'المتجر مغلق — الزبائن يقدرو يجهّزو سلاتهم بس ما يطلبوش',
+        ]);
     }
 
     public function orders(Request $request): JsonResponse

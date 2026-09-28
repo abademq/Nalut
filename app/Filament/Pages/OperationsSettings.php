@@ -44,6 +44,7 @@ class OperationsSettings extends Page
         'merchant' => 'لوحة المتجر (الموقع)',
         'support' => 'تذاكر الدعم',
         'stock' => 'المخزون',
+        'stores' => 'فتح وإغلاق المتاجر',
         'banners' => 'الإعلانات',
         'delivery' => 'التوصيل والعمولة',
         'tracking' => 'التتبّع',

@@ -16,19 +16,20 @@ class Dashboard extends BaseDashboard
 
     protected function getHeaderActions(): array
     {
-        $open = (bool) Merchant::store()?->is_open;
+        $store = Merchant::store();
+        $open = (bool) $store?->isAcceptingOrders();
 
         return [
             Action::make('toggleOpen')
-                ->label($open ? 'المتجر مفتوح — اضغط للإغلاق' : 'المتجر مغلق — اضغط للفتح')
+                ->label(($open ? 'اضغط للإغلاق' : 'افتح توّا').' · '.($store?->statusText() ?? ''))
                 ->icon($open ? 'heroicon-o-lock-open' : 'heroicon-o-lock-closed')
                 ->color($open ? 'success' : 'gray')
                 ->requiresConfirmation()
                 ->action(function () {
                     $store = Merchant::store();
                     abort_unless($store, 403);
-                    $store->update(['is_open' => ! $store->is_open]);
-                    Notification::make()->title($store->is_open ? 'المتجر مفتوح' : 'المتجر مغلق')->success()->send();
+                    $open = $store->toggleManual();
+                    Notification::make()->title($open ? 'المتجر مفتوح' : 'المتجر مغلق')->body($store->statusText())->success()->send();
                 }),
         ];
     }

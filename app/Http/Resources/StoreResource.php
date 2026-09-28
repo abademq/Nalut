@@ -30,6 +30,10 @@ class StoreResource extends JsonResource
             'rating_avg' => (float) $this->rating_avg,
             'rating_count' => $this->rating_count,
             'is_accepting' => $this->isAcceptingOrders(),
+            'opens_at' => $this->opens_at ? substr($this->opens_at, 0, 5) : null,
+            'closes_at' => $this->closes_at ? substr($this->closes_at, 0, 5) : null,
+            'status_text' => $this->statusText(),
+            'closed_message' => $this->isAcceptingOrders() ? null : $this->closedMessage(),
             'is_favorite' => FavoriteIds::has($request->user(), Store::class, $this->id),
             'distance_km' => $this->when(isset($this->distance_km), fn () => $this->distance_km),
             'sections' => $this->whenLoaded('sections', fn () => $this->sections->map(fn ($s) => [

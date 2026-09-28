@@ -5,10 +5,10 @@ namespace App\Filament\Merchant\Pages;
 use App\Support\Merchant;
 use BackedEnum;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
-use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -28,7 +28,7 @@ class StoreProfile extends Page
     protected string $view = 'filament.pages.app-settings';
 
     /** الخانات المسموحة — أي شي غيرها ما يتحفظش */
-    public const FIELDS = ['is_open', 'description', 'phone', 'address', 'logo', 'cover', 'opens_at', 'closes_at', 'prep_time_minutes'];
+    public const FIELDS = ['description', 'phone', 'address', 'logo', 'cover', 'opens_at', 'closes_at', 'prep_time_minutes'];
 
     public ?array $data = [];
 
@@ -60,7 +60,8 @@ class StoreProfile extends Page
                     ->description('الاسم والنوع والموقع وأقل قيمة طلب تتعدّل من الإدارة — تواصل معاهم لو تبي تغيّرها.')
                     ->columns(2)
                     ->schema([
-                        Toggle::make('is_open')->label('المتجر مفتوح توّا ويستقبل طلبات')->columnSpanFull(),
+                        Placeholder::make('open_hint')->hiddenLabel()->columnSpanFull()
+                            ->content('فتح وإغلاق المتجر من زر «متجري» فوق — يقدر يفتح حتى خارج الأوقات (لو فتحت بدري أو سكّرت متأخر).'),
                         TimePicker::make('opens_at')->label('يفتح الساعة')->timezone('UTC')->seconds(false),
                         TimePicker::make('closes_at')->label('يسكّر الساعة')->timezone('UTC')->seconds(false),
                         TextInput::make('prep_time_minutes')->label('وقت التحضير المعتاد (دقيقة)')->numeric()->minValue(1)->maxValue(600),
