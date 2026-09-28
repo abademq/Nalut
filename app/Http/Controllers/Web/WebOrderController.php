@@ -87,7 +87,7 @@ class WebOrderController extends Controller
     public static function version(): string
     {
         $t = 0;
-        foreach (['app.js', 'app.css', 'sw.js'] as $f) {
+        foreach (['app.js', 'app.css', 'sw.js', 'blurhash.js'] as $f) {
             $t = max($t, (int) @filemtime(public_path("weborder/$f")));
         }
 

@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasBlurHashes;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Banner extends Model
 {
+    use HasBlurHashes;
+
+    protected const BLURHASH = ['image' => 'image_hash'];
+
     protected $fillable = [
         'title', 'subtitle', 'image', 'color', 'store_id', 'url',
         'placement', 'app_section_id', 'show_store_id',
@@ -73,6 +78,7 @@ class Banner extends Model
             'title' => $this->title,
             'subtitle' => $this->subtitle,
             'image' => $this->image ? asset('storage/'.$this->image) : null,
+            'blurhash' => $this->image ? $this->image_hash : null,
             'color' => $this->color,
             'store_id' => $this->store_id,
             'url' => $this->url,

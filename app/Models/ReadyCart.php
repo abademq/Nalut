@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasBlurHashes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /** سلة جاهزة: أصناف من متجر واحد تنضاف للسلة بضغطة */
 class ReadyCart extends Model
 {
+    use HasBlurHashes;
+
+    protected const BLURHASH = ['image' => 'image_hash'];
+
     protected $fillable = ['store_id', 'name', 'description', 'image', 'items', 'sort', 'is_active'];
 
     protected function casts(): array

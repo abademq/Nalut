@@ -18,6 +18,9 @@ class ProductResource extends JsonResource
             'image' => $this->image ? asset('storage/'.$this->image) : null,
             // كل الصور بالترتيب — الأولى هي الرئيسية
             'images' => $this->imageUrls(),
+            // ضبابية بألوان الصورة لين تتحمّل (نفس ترتيب images)
+            'blurhash' => $this->blurHashFor($this->image),
+            'image_hashes' => array_map(fn ($p) => $this->blurHashFor($p), array_values(array_filter((array) $this->images))),
             'price' => (float) $this->price,
             'discount_price' => $this->discount_price ? (float) $this->discount_price : null,
             'is_available' => (bool) $this->is_available,
@@ -50,6 +53,7 @@ class ProductResource extends JsonResource
                     'name' => $v->name,
                     // صورة الاختيار: الزبون يختار «أحمر» تطلعله صورة الصنف بالأحمر
                     'image' => $v->imageUrl(),
+                    'blurhash' => $v->image ? $v->image_hash : null,
                     'extra_price' => (float) $v->extra_price,
                     // 1 = مرة وحدة، أكثر = الزبون يقدر يزيد (مثلاً سيخ كباب × 3)
                     'max_qty' => max(1, (int) ($v->max_qty ?? 1)),

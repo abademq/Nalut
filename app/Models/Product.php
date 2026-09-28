@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\BlurHash;
 use App\Support\Options;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -33,8 +34,15 @@ class Product extends Model
             'stock_quantity' => 'integer',
             'images' => 'array',
             'ingredients' => 'array',
+            'image_hashes' => 'array',
             'sold_out_at' => 'datetime',
         ];
+    }
+
+    /** BlurHash للصورة (أو null) */
+    public function blurHashFor(?string $path): ?string
+    {
+        return $path ? (((array) ($this->image_hashes ?? []))[$path] ?? null) : null;
     }
 
     /** أقصى عدد مكوّنات للصنف */
@@ -109,6 +117,17 @@ class Product extends Model
                 $rest = array_values(array_diff((array) $p->images, [$p->getOriginal('image'), $p->image]));
                 $images = array_values(array_filter([$p->image, ...$rest]));
                 $p->images = $images ?: null;
+            }
+
+            // BlurHash لكل صورة (الجديدة بس تتحسب، والمحذوفة تنشال)
+            $images = array_values(array_filter((array) $p->images));
+            $old = (array) ($p->image_hashes ?? []);
+            if (array_keys($old) != $images || in_array(null, $old, true)) {
+                $hashes = [];
+                foreach ($images as $path) {
+                    $hashes[$path] = $old[$path] ?? BlurHash::fromPath($path);
+                }
+                $p->image_hashes = $hashes ?: null;
             }
 
             // المنتج اللي تخفّى لأنه خلص يرجع يظهر أول ما المخزون يرجع

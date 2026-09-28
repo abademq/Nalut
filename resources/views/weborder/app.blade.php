@@ -38,6 +38,7 @@
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <noscript><p style="padding:24px;text-align:center">الموقع يحتاج JavaScript.</p></noscript>
     <script>window.APP_CONFIG = @json($config);</script>
+    <script src="/weborder/blurhash.js?v={{ $v }}" defer></script>
     <script src="/weborder/app.js?v={{ $v }}" defer></script>
 @endif
 </body>

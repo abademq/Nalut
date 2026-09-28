@@ -171,6 +171,8 @@ const Cart = {
   },
 };
 
+// BlurHash: ضبابية بألوان الصورة لين تتحمّل (blurhash.js يتكفّل بالباقي)
+const bh = (h) => (h ? ` data-bh="${esc(h)}"` : '');
 const effPrice = (p) => num(p.discount_price ?? p.price);
 const hasDiscount = (p) => p.discount_price != null && num(p.discount_price) < num(p.price);
 function findValue(product, id) {
@@ -374,9 +376,9 @@ function renderNav(tab) {
 function storeCard(s) {
   const closed = !s.is_accepting;
   return `<div class="store-card ${closed ? 'closed' : ''}" data-go="/store/${s.id}">
-    <div class="cover">${s.cover ? `<img src="${esc(s.cover)}" alt="" loading="lazy">` : ''}
+    <div class="cover">${s.cover ? `<img src="${esc(s.cover)}"${bh(s.cover_blurhash)} alt="" loading="lazy">` : ''}
       <span class="status-badge pill ${closed ? 'err' : 'ok'}">${closed ? 'مغلق حالياً' : 'مفتوح توّا'}</span>
-      <div class="logo">${s.logo ? `<img src="${esc(s.logo)}" alt="" loading="lazy">` : '🏪'}</div>
+      <div class="logo">${s.logo ? `<img src="${esc(s.logo)}"${bh(s.logo_blurhash)} alt="" loading="lazy">` : '🏪'}</div>
     </div>
     <div class="body">
       <div class="name">${esc(s.name)}</div>
@@ -395,7 +397,7 @@ function productCard(p, storeOpen) {
   const q = Cart.data.storeId && Cart.qtyOf(p.id);
   const off = !p.is_available;
   return `<div class="product ${off ? 'off' : ''}" data-product="${p.id}">
-    <div class="ph">${p.image ? `<img src="${esc(p.image)}" alt="" loading="lazy">` : '🍽️'}
+    <div class="ph">${p.image ? `<img src="${esc(p.image)}"${bh(p.blurhash)} alt="" loading="lazy">` : '🍽️'}
       ${off ? '<span class="tag grey">غير متوفر</span>' : ''}</div>
     <div class="pinfo">
       <div class="n">${esc(p.name)}</div>
@@ -490,7 +492,7 @@ const bannersFor = (c, section, fallback) => {
 const bannersHtml = (list) => list.length ? `<div class="banners">${list.map((b) => {
   BANNERS.set(String(b.id), b);
   return `<div class="banner" data-banner="${b.id}" style="${b.color ? `background:${esc(b.color)}` : ''}">
-        ${b.image ? `<img src="${esc(b.image)}" alt="" loading="lazy">` : ''}
+        ${b.image ? `<img src="${esc(b.image)}"${bh(b.blurhash)} alt="" loading="lazy">` : ''}
         ${b.title || b.subtitle ? `<div class="txt">${b.title ? `<b>${esc(b.title)}</b>` : ''}${b.subtitle ? `<span>${esc(b.subtitle)}</span>` : ''}</div>` : ''}</div>`;
 }).join('')}</div>` : '';
 document.addEventListener('click', (e) => {
@@ -520,7 +522,7 @@ route('/', async ({ alive }) => {
     ${ann.map((a) => `<a class="announce" ${a.link ? `href="${esc(a.link)}" target="_blank" rel="noopener"` : ''} style="${a.bg_color ? `background:${esc(a.bg_color)};` : ''}${a.text_color ? `color:${esc(a.text_color)}` : ''}">${esc(a.text)}</a>`).join('')}
     <div id="home-banners">${bannersHtml(bannersFor(c, Home.section, fallback))}</div>
     ${sections.length ? `<div class="sections">${sections.map((s) => `<div class="section-tile ${Home.section === s.id ? 'on' : ''}" data-section="${s.id}" style="${s.color ? `background:${esc(s.color)}22` : ''}">
-        ${s.image ? `<img src="${esc(s.image)}" alt="">` : `<div class="em">${esc(s.emoji || '🏪')}</div>`}<b>${esc(s.name)}</b></div>`).join('')}</div>` : ''}
+        ${s.image ? `<img src="${esc(s.image)}"${bh(s.blurhash)} alt="">` : `<div class="em">${esc(s.emoji || '🏪')}</div>`}<b>${esc(s.name)}</b></div>`).join('')}</div>` : ''}
     <div class="search">${ICONS.search}<input class="input" id="q" type="search" placeholder="دوّر على متجر أو مطعم" value="${esc(Home.q)}"></div>
     <div class="chips" id="types"></div>
     <div class="toolbar">
@@ -629,9 +631,9 @@ async function storePage({ params, alive }) {
   $('#share', acts).onclick = () => share(s.name, '/store/' + s.id);
 
   view.innerHTML = `
-    <div class="store-hero"><div class="cover">${s.cover ? `<img src="${esc(s.cover)}" alt="">` : ''}</div></div>
+    <div class="store-hero"><div class="cover">${s.cover ? `<img src="${esc(s.cover)}"${bh(s.cover_blurhash)} alt="">` : ''}</div></div>
     <div class="store-head">
-      <div class="logo">${s.logo ? `<img src="${esc(s.logo)}" alt="">` : '🏪'}</div>
+      <div class="logo">${s.logo ? `<img src="${esc(s.logo)}"${bh(s.logo_blurhash)} alt="">` : '🏪'}</div>
       <h1>${esc(s.name)}</h1>
       <div class="row small muted" style="flex-wrap:wrap;gap:4px 12px">
         ${s.type ? `<span>${esc(s.type)}</span>` : ''}<span>⭐ ${num(s.rating_avg).toFixed(1)} (${s.rating_count || 0})</span>
@@ -725,6 +727,10 @@ function productSheet(p, store, onAdded) {
   const anyVariant = (p.options || []).some((o) => (o.values || []).some((v) => v.image));
   const low = p.left != null;
   // صورة الاختيار: الزبون يختار «أحمر» ← الصورة الأولى تولّي صورة الأحمر
+  // الضبابية لكل صورة (صور الصنف + صور الاختيارات)
+  const hashOf = new Map();
+  baseImages.forEach((u, i) => hashOf.set(u, (p.image_hashes || [])[i] || (i === 0 ? p.blurhash : null)));
+  for (const o of p.options || []) for (const v of o.values || []) if (v.image) hashOf.set(v.image, v.blurhash);
   const variantImage = () => {
     for (const o of p.options || []) for (const v of o.values || []) if (v.image && sel[v.id]) return v.image;
     return null;
@@ -732,7 +738,7 @@ function productSheet(p, store, onAdded) {
   const galleryHtml = () => {
     const vi = variantImage();
     const images = [...(vi ? [vi] : []), ...baseImages.filter((u) => u !== vi)];
-    return images.length ? `<div class="gallery"><div class="track">${images.map((u) => `<img src="${esc(u)}" alt="">`).join('')}</div>
+    return images.length ? `<div class="gallery"><div class="track">${images.map((u) => `<img src="${esc(u)}"${bh(hashOf.get(u))} alt="">`).join('')}</div>
       ${images.length > 1 ? `<div class="dots">${images.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('')}</div>` : ''}</div>` : '';
   };
   let shownVariant = null;
@@ -794,11 +800,11 @@ function productSheet(p, store, onAdded) {
         const can = canOrder && v.is_available;
         const pr = !v.is_available ? '<span class="tiny muted">مش متوفر</span>'
           : num(v.extra_price) <= 0 ? '<span class="pr free">مجاناً</span>' : `<span class="pr">+${num(v.extra_price).toFixed(2)} د.ل</span>`;
-        const th = v.image ? `<img class="thumb" src="${esc(v.image)}" alt="">` : '';
+        const th = v.image ? `<img class="thumb" src="${esc(v.image)}"${bh(v.blurhash)} alt="">` : '';
         // وحدة بس وفيها صور (الألوان): مربعات بالصور
         if (o.type === 'single' && swatches) {
           return `<div class="swatch ${n ? 'on' : ''} ${can ? '' : 'disabled'}" data-single="${o.id}" data-v="${v.id}">
-            ${v.image ? `<img src="${esc(v.image)}" alt="">` : '<span class="noimg">🖼️</span>'}<span class="nm">${esc(v.name)}</span>${num(v.extra_price) > 0 ? `<span class="pr">+${num(v.extra_price).toFixed(2)}</span>` : ''}</div>`;
+            ${v.image ? `<img src="${esc(v.image)}"${bh(v.blurhash)} alt="">` : '<span class="noimg">🖼️</span>'}<span class="nm">${esc(v.name)}</span>${num(v.extra_price) > 0 ? `<span class="pr">+${num(v.extra_price).toFixed(2)}</span>` : ''}</div>`;
         }
         if (o.type === 'single') {
           return `<div class="opt ${n ? 'on' : ''} ${can ? '' : 'disabled'}" data-single="${o.id}" data-v="${v.id}"><span class="mark round"></span>${th}<span class="nm">${esc(v.name)}</span>${pr}</div>`;
@@ -1384,7 +1390,7 @@ route('/favorites', async ({ alive }) => {
     ${stores.length ? `<div class="section-title">المتاجر</div><div class="stores">${stores.map(storeCard).join('')}</div>` : ''}
     ${products.length ? `<div class="section-title">الأصناف</div><div class="products">${products.map((x) => `
       <div class="product" data-go="/store/${x.store.id}/p/${x.product.id}">
-        <div class="ph">${x.product.image ? `<img src="${esc(x.product.image)}" alt="" loading="lazy">` : '🍽️'}</div>
+        <div class="ph">${x.product.image ? `<img src="${esc(x.product.image)}"${bh(x.product.blurhash)} alt="" loading="lazy">` : '🍽️'}</div>
         <div class="pinfo"><div class="n">${esc(x.product.name)}</div><div class="d">${esc(x.store.name)}</div>
         <div class="bottom"><span class="price">${money(effPrice(x.product))}</span></div></div></div>`).join('')}</div>` : ''}
     ${!stores.length && !products.length ? '<div class="empty"><div class="big">❤️</div><p>ما عندكش مفضلة لسه — اضغط ❤️ على أي متجر أو صنف</p></div>' : ''}`;

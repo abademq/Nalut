@@ -69,6 +69,10 @@ systemctl restart nalut-scheduler nalut-queue
 
 php artisan up
 
+# BlurHash للصور القديمة اللي ما عندهاش (يكمّل الناقص بس — كـ www-data باش ما يخلّيش ملفات باسم root)
+echo "==> BlurHash للصور"
+sudo -u www-data php artisan images:blurhash 2>&1 | tail -1 || true
+
 echo
 echo "تم النشر."
 echo "ملاحظة: مواقع السائقين في الكاش وتنمسح مع optimize:clear —"

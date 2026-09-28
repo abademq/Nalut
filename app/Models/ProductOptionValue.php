@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasBlurHashes;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProductOptionValue extends Model
 {
+    use HasBlurHashes;
+
+    protected const BLURHASH = ['image' => 'image_hash'];
+
     protected $fillable = ['product_option_id', 'name', 'image', 'extra_price', 'max_qty', 'is_available', 'sort'];
 
     protected function casts(): array

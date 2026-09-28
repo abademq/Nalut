@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasBlurHashes;
 use App\Support\LocalDay;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Store extends Model
 {
+    use HasBlurHashes;
+
+    protected const BLURHASH = ['logo' => 'logo_hash', 'cover' => 'cover_hash'];
+
     use SoftDeletes;
 
     protected $fillable = [

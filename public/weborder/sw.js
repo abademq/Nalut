@@ -1,7 +1,7 @@
 /* موقع الطلب — Service Worker بسيط: الصفحة تفتح حتى لو النت ضعيف، والطلبات للخادم دائماً مباشرة */
 const V = '__V__';
 const CACHE = 'wo-' + V;
-const SHELL = ['/weborder/app.css?v=' + V, '/weborder/app.js?v=' + V, '/weborder/icon-192.png'];
+const SHELL = ['/weborder/app.css?v=' + V, '/weborder/app.js?v=' + V, '/weborder/blurhash.js?v=' + V, '/weborder/icon-192.png'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

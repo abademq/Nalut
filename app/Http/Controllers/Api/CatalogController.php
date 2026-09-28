@@ -98,6 +98,7 @@ class CatalogController extends Controller
                 ->map(fn ($c) => [
                     'id' => $c->id, 'name' => $c->name, 'description' => $c->description,
                     'image' => $c->image ? asset('storage/'.$c->image) : null,
+                    'blurhash' => $c->image ? $c->image_hash : null,
                     'price' => $c->price(), 'items_count' => count($c->lines()),
                 ])->values(),
         ]);
