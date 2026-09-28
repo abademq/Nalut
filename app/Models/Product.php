@@ -214,7 +214,13 @@ class Product extends Model
             foreach ($this->options()->with('values')->get() as $o) {
                 $newOption = $copy->options()->create($o->only(['name', 'type', 'is_required', 'max_choices', 'sort']));
                 foreach ($o->values as $v) {
-                    $newOption->values()->create($v->only(['name', 'extra_price', 'max_qty', 'is_available', 'sort']));
+                    $attrs = $v->only(['name', 'extra_price', 'max_qty', 'is_available', 'sort']);
+                    // صورة الاختيار: ملف مستقل للنسخة
+                    if ($v->image && $disk->exists($v->image)) {
+                        $attrs['image'] = "options/{$this->store_id}/".Str::random(24).'.'.pathinfo($v->image, PATHINFO_EXTENSION);
+                        $disk->copy($v->image, $attrs['image']);
+                    }
+                    $newOption->values()->create($attrs);
                 }
             }
 

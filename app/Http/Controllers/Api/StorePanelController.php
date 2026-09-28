@@ -346,6 +346,17 @@ class StorePanelController extends Controller
         return response()->json(['data' => new ProductResource($product->fresh()->load('options.values'))]);
     }
 
+    /** رفع صورة لاختيار (لون، نوع...) — ترجع مسار يتبعت مع حفظ الإضافات */
+    public function uploadOptionImage(Request $request): JsonResponse
+    {
+        $store = $this->store($request);
+        $request->validate(['image' => ['required', 'image', 'max:5120']]);
+
+        $path = $request->file('image')->store("options/{$store->id}", 'public');
+
+        return response()->json(['path' => $path, 'url' => asset('storage/'.$path)], 201);
+    }
+
     /** نسخة من الصنف بكل تفاصيله — تبدا مخفية لين المتجر يعدّلها */
     public function duplicateProduct(Request $request, Product $product): JsonResponse
     {

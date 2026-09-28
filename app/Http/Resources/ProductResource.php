@@ -48,6 +48,8 @@ class ProductResource extends JsonResource
                 'values' => $o->values->map(fn ($v) => [
                     'id' => $v->id,
                     'name' => $v->name,
+                    // صورة الاختيار: الزبون يختار «أحمر» تطلعله صورة الصنف بالأحمر
+                    'image' => $v->imageUrl(),
                     'extra_price' => (float) $v->extra_price,
                     // 1 = مرة وحدة، أكثر = الزبون يقدر يزيد (مثلاً سيخ كباب × 3)
                     'max_qty' => max(1, (int) ($v->max_qty ?? 1)),

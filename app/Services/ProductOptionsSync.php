@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -27,7 +28,38 @@ class ProductOptionsSync
         'options.*.values.*.extra_price' => ['nullable', 'numeric', 'min:0', 'max:10000'],
         'options.*.values.*.max_qty' => ['nullable', 'integer', 'min:1', 'max:20'],
         'options.*.values.*.is_available' => ['nullable', 'boolean'],
+        // صورة الاختيار: مسار رفعته «store/option-images»، أو الرابط الحالي، أو null = بدون صورة
+        'options.*.values.*.image' => ['nullable', 'string', 'max:500'],
     ];
+
+    /**
+     * صورة الاختيار من التطبيق:
+     * ما انبعتتش = تقعد زي ما هي · null/فاضية = تنشال · نفس الحالية (مسار أو رابط) = تقعد ·
+     * مسار جديد = لازم يكون مرفوع لنفس المتجر (options/{store}/...) وموجود.
+     */
+    private function resolveImage(Product $product, ?string $current, array $v): ?string
+    {
+        if (! array_key_exists('image', $v)) {
+            return $current;
+        }
+        $img = trim((string) $v['image']);
+        if ($img === '') {
+            return null;
+        }
+        $prefix = asset('storage').'/';
+        if (str_starts_with($img, $prefix)) {
+            $img = substr($img, strlen($prefix));
+        }
+        if ($img === $current) {
+            return $current;
+        }
+        if (! str_starts_with($img, "options/{$product->store_id}/") || str_contains($img, '..')
+            || ! Storage::disk('public')->exists($img)) {
+            throw ValidationException::withMessages(['options' => 'صورة اختيار مش صالحة — عاود ارفعها.']);
+        }
+
+        return $img;
+    }
 
     public function sync(Product $product, array $options): void
     {
@@ -65,6 +97,7 @@ class ProductOptionsSync
                     $value = isset($v['id']) ? $oldValues->get((int) $v['id']) : null;
                     $vAttrs = [
                         'name' => trim($v['name']),
+                        'image' => $this->resolveImage($product, $value?->image, $v),
                         'extra_price' => round((float) ($v['extra_price'] ?? 0), 2),
                         // الخيار الواحد (حجم مثلاً) ما يتكررش
                         'max_qty' => $single ? 1 : max(1, (int) ($v['max_qty'] ?? 1)),

@@ -721,13 +721,25 @@ function productSheet(p, store, onAdded) {
       if (first) sel[first.id] = 1;
     }
   }
-  const images = p.images?.length ? p.images : (p.image ? [p.image] : []);
+  const baseImages = p.images?.length ? p.images : (p.image ? [p.image] : []);
+  const anyVariant = (p.options || []).some((o) => (o.values || []).some((v) => v.image));
   const low = p.left != null;
+  // صورة الاختيار: الزبون يختار «أحمر» ← الصورة الأولى تولّي صورة الأحمر
+  const variantImage = () => {
+    for (const o of p.options || []) for (const v of o.values || []) if (v.image && sel[v.id]) return v.image;
+    return null;
+  };
+  const galleryHtml = () => {
+    const vi = variantImage();
+    const images = [...(vi ? [vi] : []), ...baseImages.filter((u) => u !== vi)];
+    return images.length ? `<div class="gallery"><div class="track">${images.map((u) => `<img src="${esc(u)}" alt="">`).join('')}</div>
+      ${images.length > 1 ? `<div class="dots">${images.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('')}</div>` : ''}</div>` : '';
+  };
+  let shownVariant = null;
 
   const { el, close } = sheet(`
-    ${images.length ? `<div class="gallery"><div class="track">${images.map((u) => `<img src="${esc(u)}" alt="">`).join('')}</div>
-      ${images.length > 1 ? `<div class="dots">${images.map((_, i) => `<i class="${i ? '' : 'on'}"></i>`).join('')}</div>` : ''}</div>` : ''}
-    <div class="sheet-body ${images.length ? '' : 'no-gallery'}">
+    <div id="gal">${galleryHtml()}</div>
+    <div class="sheet-body ${baseImages.length || anyVariant ? '' : 'no-gallery'}">
       <div class="row between sheet-head" style="align-items:flex-start">
         <h2 style="margin:0;font-size:21px" class="grow">${esc(p.name)}</h2>
         <button class="iconbtn" data-fav>${p.is_favorite ? ICONS.heartFill : ICONS.heart}</button>
@@ -746,12 +758,22 @@ function productSheet(p, store, onAdded) {
     <div class="sheet-foot" id="foot"></div>`);
 
   // نقاط الصور
-  const track = $('.track', el);
-  if (track && images.length > 1) {
-    track.addEventListener('scroll', debounce(() => {
-      const i = Math.round(Math.abs(track.scrollLeft) / track.clientWidth);
-      $$('.dots i', el).forEach((d, k) => d.classList.toggle('on', k === i));
-    }, 60));
+  function bindGallery() {
+    const track = $('.track', el);
+    if (track && $$('.track img', el).length > 1) {
+      track.addEventListener('scroll', debounce(() => {
+        const i = Math.round(Math.abs(track.scrollLeft) / track.clientWidth);
+        $$('.dots i', el).forEach((d, k) => d.classList.toggle('on', k === i));
+      }, 60));
+    }
+  }
+  bindGallery();
+  function drawGallery() {
+    const vi = variantImage();
+    if (vi === shownVariant) return;
+    shownVariant = vi;
+    $('#gal', el).innerHTML = galleryHtml();
+    bindGallery();
   }
   $('[data-fav]', el).onclick = (e) => toggleFav('product', p.id, e.currentTarget);
   $('[data-share]', el).onclick = () => share(p.name, `/store/${store.id}/p/${p.id}`);
@@ -766,24 +788,32 @@ function productSheet(p, store, onAdded) {
       const full = o.type !== 'single' && chosen >= limit;
       const tag = o.is_required ? '<span class="pill err">إجباري</span>'
         : `<span class="pill">${o.type === 'single' ? 'اختياري' : `اختياري · لحد ${limit}`}</span>`;
+      const swatches = o.type === 'single' && (o.values || []).some((v) => v.image);
       const rows = (o.values || []).map((v) => {
         const n = sel[v.id] || 0;
         const can = canOrder && v.is_available;
         const pr = !v.is_available ? '<span class="tiny muted">مش متوفر</span>'
           : num(v.extra_price) <= 0 ? '<span class="pr free">مجاناً</span>' : `<span class="pr">+${num(v.extra_price).toFixed(2)} د.ل</span>`;
+        const th = v.image ? `<img class="thumb" src="${esc(v.image)}" alt="">` : '';
+        // وحدة بس وفيها صور (الألوان): مربعات بالصور
+        if (o.type === 'single' && swatches) {
+          return `<div class="swatch ${n ? 'on' : ''} ${can ? '' : 'disabled'}" data-single="${o.id}" data-v="${v.id}">
+            ${v.image ? `<img src="${esc(v.image)}" alt="">` : '<span class="noimg">🖼️</span>'}<span class="nm">${esc(v.name)}</span>${num(v.extra_price) > 0 ? `<span class="pr">+${num(v.extra_price).toFixed(2)}</span>` : ''}</div>`;
+        }
         if (o.type === 'single') {
-          return `<div class="opt ${n ? 'on' : ''} ${can ? '' : 'disabled'}" data-single="${o.id}" data-v="${v.id}"><span class="mark round"></span><span class="nm">${esc(v.name)}</span>${pr}</div>`;
+          return `<div class="opt ${n ? 'on' : ''} ${can ? '' : 'disabled'}" data-single="${o.id}" data-v="${v.id}"><span class="mark round"></span>${th}<span class="nm">${esc(v.name)}</span>${pr}</div>`;
         }
         if ((v.max_qty || 1) <= 1) {
           const dis = !can || (!n && full);
-          return `<div class="opt ${n ? 'on' : ''} ${dis ? 'disabled' : ''}" data-check="${v.id}"><span class="mark"></span><span class="nm">${esc(v.name)}</span>${pr}</div>`;
+          return `<div class="opt ${n ? 'on' : ''} ${dis ? 'disabled' : ''}" data-check="${v.id}"><span class="mark"></span>${th}<span class="nm">${esc(v.name)}</span>${pr}</div>`;
         }
         return `<div class="opt ${can ? '' : 'disabled'}" style="cursor:default"><span class="nm">${esc(v.name)}<div class="tiny muted">لحد ${v.max_qty}</div></span>${pr}
           <div class="stepper sm"><button data-dec="${v.id}" ${!can || !n ? 'disabled' : ''}>−</button><span>${n}</span>
           <button data-inc="${v.id}" data-max="${v.max_qty}" ${!can || n >= v.max_qty || (!n && full) ? 'disabled' : ''}>+</button></div></div>`;
       }).join('');
-      return `<div class="opt-group"><div class="head"><b>${esc(o.name)}</b>${tag}</div>${rows}</div>`;
+      return `<div class="opt-group"><div class="head"><b>${esc(o.name)}</b>${tag}</div>${swatches ? `<div class="swatches">${rows}</div>` : rows}</div>`;
     }).join('');
+    drawGallery();
 
     $$('[data-single]', el).forEach((x) => x.onclick = () => {
       if (x.classList.contains('disabled')) return;

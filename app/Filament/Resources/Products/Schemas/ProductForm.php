@@ -223,6 +223,16 @@ class ProductForm
                                             ->label('متوفر')
                                             ->default(true)
                                             ->inline(false),
+                                        // «أحمر» ← صورة الصنف بالأحمر: تطلع للزبون أول ما يختاره
+                                        FileUpload::make('image')
+                                            ->label('صورة الاختيار (اختياري)')
+                                            ->helperText('مثلاً صورة الصنف باللون هذا — تطلع للزبون لما يختاره.')
+                                            ->image()
+                                            ->imageEditor(false)
+                                            ->maxSize(5120)
+                                            ->disk('public')
+                                            ->directory($storeId ? "options/{$storeId}" : 'options')
+                                            ->columnSpanFull(),
                                     ]),
                             ]),
                     ]),
