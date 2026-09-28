@@ -473,13 +473,38 @@ const emojiIcon = (L, e) => L.divIcon({ html: `<div style="font-size:30px;line-h
 const NALUT = [31.8686, 10.9817];
 
 // ================= الرئيسية =================
+// ===== الإعلانات: كل إعلان ومكانه (الرئيسية / قسم / صفحة متجر / السلة) =====
+const BANNERS = new Map();
+const allBanners = (c) => c.all_banners || c.banners || [];
+const bannersFor = (c, section, fallback) => {
+  const list = allBanners(c);
+  const home = list.filter((b) => (b.placement || 'home') === 'home' || b.placement === 'everywhere');
+  if (!section) return home;
+  const own = list.filter((b) => b.placement === 'section' && b.section_id === section);
+  if (!own.length && fallback) return home;
+  return [...own, ...list.filter((b) => b.placement === 'everywhere')];
+};
+const bannersHtml = (list) => list.length ? `<div class="banners">${list.map((b) => {
+  BANNERS.set(String(b.id), b);
+  return `<div class="banner" data-banner="${b.id}" style="${b.color ? `background:${esc(b.color)}` : ''}">
+        ${b.image ? `<img src="${esc(b.image)}" alt="" loading="lazy">` : ''}
+        ${b.title || b.subtitle ? `<div class="txt">${b.title ? `<b>${esc(b.title)}</b>` : ''}${b.subtitle ? `<span>${esc(b.subtitle)}</span>` : ''}</div>` : ''}</div>`;
+}).join('')}</div>` : '';
+document.addEventListener('click', (e) => {
+  const el = e.target.closest?.('[data-banner]');
+  if (!el) return;
+  const b = BANNERS.get(el.dataset.banner);
+  if (b?.store_id) { if (location.hash !== '#/store/' + b.store_id && !location.pathname.endsWith('/store/' + b.store_id)) go('/store/' + b.store_id); }
+  else if (b?.url) window.open(b.url, '_blank', 'noopener');
+});
+
 const Home = { section: LS.get('home.section', null), type: null, q: '', sort: LS.get('home.sort', ''), openOnly: false };
 
 route('/', async ({ alive }) => {
   const c = await content();
   if (!alive()) return;
   const sections = c.sections || [];
-  const banners = c.banners || [];
+  const fallback = await opt('banners.section_fallback', true);
   const ann = c.announcements || [];
   const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
   const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -490,9 +515,7 @@ route('/', async ({ alive }) => {
       <div class="grow small">تبيه كأنه تطبيق؟ اضغط <b>مشاركة</b> تحت في Safari، وبعدها <b>«إضافة إلى الشاشة الرئيسية»</b>.</div>
       <button class="iconbtn" id="hide-install" aria-label="إخفاء">${ICONS.close}</button></div>` : ''}
     ${ann.map((a) => `<a class="announce" ${a.link ? `href="${esc(a.link)}" target="_blank" rel="noopener"` : ''} style="${a.bg_color ? `background:${esc(a.bg_color)};` : ''}${a.text_color ? `color:${esc(a.text_color)}` : ''}">${esc(a.text)}</a>`).join('')}
-    ${banners.length ? `<div class="banners">${banners.map((b) => `<div class="banner" data-banner="${b.id}" style="${b.color ? `background:${esc(b.color)}` : ''}">
-        ${b.image ? `<img src="${esc(b.image)}" alt="" loading="lazy">` : ''}
-        ${b.title || b.subtitle ? `<div class="txt">${b.title ? `<b>${esc(b.title)}</b>` : ''}${b.subtitle ? `<span>${esc(b.subtitle)}</span>` : ''}</div>` : ''}</div>`).join('')}</div>` : ''}
+    <div id="home-banners">${bannersHtml(bannersFor(c, Home.section, fallback))}</div>
     ${sections.length ? `<div class="sections">${sections.map((s) => `<div class="section-tile ${Home.section === s.id ? 'on' : ''}" data-section="${s.id}" style="${s.color ? `background:${esc(s.color)}22` : ''}">
         ${s.image ? `<img src="${esc(s.image)}" alt="">` : `<div class="em">${esc(s.emoji || '🏪')}</div>`}<b>${esc(s.name)}</b></div>`).join('')}</div>` : ''}
     <div class="search">${ICONS.search}<input class="input" id="q" type="search" placeholder="دوّر على متجر أو مطعم" value="${esc(Home.q)}"></div>
@@ -509,17 +532,14 @@ route('/', async ({ alive }) => {
   $('#sort').value = Home.sort;
   $('#hide-install')?.addEventListener('click', () => { LS.set('hide.install', 1); $('.install-hint').remove(); });
 
-  $$('[data-banner]').forEach((el) => el.onclick = () => {
-    const b = banners.find((x) => String(x.id) === el.dataset.banner);
-    if (b?.store_id) go('/store/' + b.store_id);
-    else if (b?.url) window.open(b.url, '_blank', 'noopener');
-  });
   $$('[data-section]').forEach((el) => el.onclick = () => {
     const id = +el.dataset.section;
     Home.section = Home.section === id ? null : id;
     Home.type = null;
     LS.set('home.section', Home.section);
     $$('[data-section]').forEach((x) => x.classList.toggle('on', +x.dataset.section === Home.section));
+    // الإعلانات تتبدّل حسب القسم
+    $('#home-banners').innerHTML = bannersHtml(bannersFor(c, Home.section, fallback));
     loadTypes(); loadStores();
   });
   $('#q').addEventListener('input', debounce((e) => { Home.q = e.target.value.trim(); loadStores(); }, 350));
@@ -621,6 +641,7 @@ async function storePage({ params, alive }) {
       </div>
     </div>
     ${!open ? '<div class="info center">المتجر مغلق توّا — تقدر تتصفح بس ما تقدرش تطلب</div>' : ''}
+    ${(res.banners || []).length ? `<div style="margin-top:12px">${bannersHtml(res.banners)}</div>` : ''}
     ${(res.announcements || []).map((a) => `<div class="announce" style="margin-top:12px;${a.bg_color ? `background:${esc(a.bg_color)};` : ''}${a.text_color ? `color:${esc(a.text_color)}` : ''}">${esc(a.text)}</div>`).join('')}
     ${(res.ready_carts || []).length ? `<div class="section-title">سلات جاهزة</div><div class="ready-carts">${res.ready_carts.map((c) => `
       <div class="ready-cart" data-ready="${c.id}"><div class="bold">${esc(c.name)}</div>
@@ -822,7 +843,10 @@ route('/cart', async ({ alive }) => {
   if (!alive()) return;
   if (!list.some((a) => a.id === Checkout.addressId)) Checkout.addressId = (list.find((a) => a.is_default) || list[0])?.id ?? null;
 
+  const cartBanners = await content().then((c) => allBanners(c).filter((b) => b.placement === 'cart')).catch(() => []);
+  if (!alive()) return;
   view.innerHTML = `
+    ${bannersHtml(cartBanners)}
     <div class="card" id="lines"></div>
     <div class="card">
       <div class="row between"><b>عنوان التوصيل</b><button class="linkbtn" data-go="/addresses/new?back=cart">+ عنوان جديد</button></div>

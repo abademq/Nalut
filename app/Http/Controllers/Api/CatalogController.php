@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\StoreResource;
 use App\Models\Announcement;
+use App\Models\Banner;
 use App\Models\ReadyCart;
 use App\Models\Store;
 use App\Models\StoreType;
@@ -92,6 +93,7 @@ class CatalogController extends Controller
             'data' => (new StoreResource($store))->additional([]),
             // شريط عروض المتجر + السلات الجاهزة
             'announcements' => Announcement::live()->where('store_id', $store->id)->get()->map->toApp()->values(),
+            'banners' => Banner::live()->where('placement', 'store')->where('show_store_id', $store->id)->get()->map->toApp()->values(),
             'ready_carts' => ReadyCart::where('store_id', $store->id)->where('is_active', true)->orderBy('sort')->get()
                 ->map(fn ($c) => [
                     'id' => $c->id, 'name' => $c->name, 'description' => $c->description,

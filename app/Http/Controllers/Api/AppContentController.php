@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Filament\Pages\AppSettings;
 use App\Filament\Pages\BrandingSettings;
 use App\Http\Controllers\Controller;
+use App\Models\Announcement;
+use App\Models\AppSection;
 use App\Models\Banner;
 use App\Support\Options;
+use App\Support\Sounds;
 use App\Support\Texts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,21 +29,25 @@ class AppContentController extends Controller
             : 'customer';
 
         $out = [
-            'about'    => AppSettings::values(),
+            'about' => AppSettings::values(),
             'branding' => ['name' => AppSettings::values()['name'], 'logo_url' => BrandingSettings::logoUrl()],
             // التعديلات بس: {النص الأصلي: النص الجديد}
-            'texts'    => (object) Texts::overrides($app),
-            'options'  => (object) Options::publicValues(),
+            'texts' => (object) Texts::overrides($app),
+            'options' => (object) Options::publicValues(),
             // صوت الإشعارات من «أصوات الإشعارات»: النغمة (داخل التطبيق) ورابط الصوت الخاص
-            'sound'    => \App\Support\Sounds::forApp($app),
+            'sound' => Sounds::forApp($app),
         ];
 
         if ($app === 'customer') {
-            $out['banners'] = Banner::live()->get()->map->toApp()->values();
+            $banners = Banner::live()->get();
+            // النسخ القديمة من التطبيق: إعلانات الرئيسية بس (ما تعرفش تفرز)
+            $out['banners'] = $banners->whereIn('placement', ['home', 'everywhere', null])->map->toApp()->values();
+            // النسخ الجديدة: الكل، والتطبيق يوري كل إعلان في مكانه
+            $out['all_banners'] = $banners->where('placement', '!=', 'store')->map->toApp()->values();
             // أقسام التطبيق (مطاعم، متاجر...) وشريط العروض العام
-            $out['sections'] = \App\Models\AppSection::where('is_active', true)->with('types')->orderBy('sort')->get()
+            $out['sections'] = AppSection::where('is_active', true)->with('types')->orderBy('sort')->get()
                 ->map->toApp()->values();
-            $out['announcements'] = \App\Models\Announcement::live()->whereNull('store_id')->get()->map->toApp()->values();
+            $out['announcements'] = Announcement::live()->whereNull('store_id')->get()->map->toApp()->values();
         }
 
         if ($app === 'store') {

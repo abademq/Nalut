@@ -138,6 +138,11 @@ class Options
                 'label' => 'إظهار «متبقي X فقط» للزبون لما الكمية تنزل لـ',
                 'help' => '0 = ما يطلعش أبداً'],
 
+            // ===== الإعلانات =====
+            'banners.section_fallback' => ['type' => 'bool', 'default' => true, 'public' => true,
+                'label' => 'القسم اللي ما عندوش إعلانات خاصة: نوريو إعلانات الرئيسية',
+                'help' => 'لو مطفي، القسم اللي ما عندوش إعلانات يطلع بدون شريط إعلانات'],
+
             // ===== التوصيل =====
             'delivery.base_fee' => ['type' => 'float', 'default' => config('delivery.base_fee', 5), 'min' => 0, 'max' => 1000,
                 'label' => 'رسوم التوصيل الأساسية (د.ل)',

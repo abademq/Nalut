@@ -42,6 +42,7 @@ class OperationsSettings extends Page
         'settlement' => 'واصل التسوية',
         'web' => 'موقع الطلب',
         'stock' => 'المخزون',
+        'banners' => 'الإعلانات',
         'delivery' => 'التوصيل والعمولة',
         'tracking' => 'التتبّع',
         'wallet' => 'كروت الشحن',
