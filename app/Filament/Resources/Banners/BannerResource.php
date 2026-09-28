@@ -68,7 +68,7 @@ class BannerResource extends Resource
 
             FileUpload::make('image')->label('الصورة')
                 ->image()->disk('public')->directory('banners')->maxSize(3072)
-                ->helperText('المقاس المناسب 1200×500 تقريباً')
+                ->helperText('عريضة 1200×500 بكسل تقريباً (2.4:1)، والكلام المهم في النص — الأطراف ممكن تنقص في بعض الشاشات. لحد 3 ميغا.')
                 ->columnSpanFull(),
 
             ColorPicker::make('color')->label('لون الخلفية')

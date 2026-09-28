@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\Engagement;
 
+use App\Filament\Concerns\GuardedByPermission;
 use App\Models\AppSection;
-use App\Models\StoreType;
 use BackedEnum;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -23,7 +23,7 @@ use UnitEnum;
 /** أقسام تطبيق الزبون: مطاعم، متاجر إلكترونية، متاجر... الزبون يختار القسم أول */
 class AppSectionResource extends Resource
 {
-    use \App\Filament\Concerns\GuardedByPermission;
+    use GuardedByPermission;
 
     public const PERM_VIEW = 'settings.manage';
 
@@ -56,7 +56,8 @@ class AppSectionResource extends Resource
             TextInput::make('subtitle')->label('وصف قصير')->maxLength(80)->placeholder('مطاعم ومقاهي وحلويات'),
             TextInput::make('emoji')->label('رمز')->maxLength(8)->placeholder('🍔'),
             ColorPicker::make('color')->label('اللون')->default('#D84315'),
-            FileUpload::make('image')->label('صورة (اختياري)')->image()->disk('public')->directory('sections')->maxSize(1024),
+            FileUpload::make('image')->label('صورة (اختياري)')->image()->disk('public')->directory('sections')->maxSize(1024)
+                ->helperText('مربعة 512×512 بكسل (1:1) — أيقونة أو صورة واضحة وهي صغيرة.'),
             TextInput::make('sort')->label('الترتيب')->numeric()->default(0),
             Toggle::make('is_active')->label('مفعّل')->default(true),
             Placeholder::make('types_hint')->label('')

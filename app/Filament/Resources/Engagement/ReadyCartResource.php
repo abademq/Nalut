@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Engagement;
 
+use App\Filament\Concerns\GuardedByPermission;
 use App\Models\Product;
 use App\Models\ReadyCart;
 use App\Models\Store;
@@ -24,7 +25,7 @@ use UnitEnum;
 /** سلات جاهزة: مجموعة أصناف من متجر، الزبون يضيفها للسلة بضغطة */
 class ReadyCartResource extends Resource
 {
-    use \App\Filament\Concerns\GuardedByPermission;
+    use GuardedByPermission;
 
     public const PERM_VIEW = 'products.manage';
 
@@ -57,7 +58,8 @@ class ReadyCartResource extends Resource
                 ->options(fn () => Store::orderBy('name')->pluck('name', 'id')),
             TextInput::make('name')->label('اسم السلة')->required()->maxLength(80)->placeholder('سلة الفطور العائلية'),
             TextInput::make('description')->label('وصف قصير')->maxLength(160)->columnSpanFull(),
-            FileUpload::make('image')->label('صورة (اختياري)')->image()->disk('public')->directory('ready-carts')->maxSize(2048),
+            FileUpload::make('image')->label('صورة (اختياري)')->image()->disk('public')->directory('ready-carts')->maxSize(2048)
+                ->helperText('مربعة 1080×1080 بكسل (1:1)، الأكل في النص.'),
             TextInput::make('sort')->label('الترتيب')->numeric()->default(0),
             Repeater::make('items')->label('الأصناف')->required()->minItems(1)->columnSpanFull()->columns(3)
                 ->schema([

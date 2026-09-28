@@ -64,12 +64,14 @@ class StoreForm
 
                 FileUpload::make('logo')
                     ->label('الشعار')
+                    ->helperText('مربع 512×512 بكسل (1:1)، الشعار في النص — يطلع صغير ودائري.')
                     ->image()
                     ->disk('public')
                     ->directory('stores'),
 
                 FileUpload::make('cover')
                     ->label('صورة الغلاف')
+                    ->helperText('عريضة 1200×500 بكسل تقريباً (2.4:1) — حط المهم في النص لأن الأطراف ممكن تنقص في بعض الشاشات.')
                     ->image()
                     ->disk('public')
                     ->directory('stores'),

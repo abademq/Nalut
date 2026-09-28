@@ -69,8 +69,8 @@ class StoreProfile extends Page
                         Textarea::make('description')->label('الوصف')->rows(3)->maxLength(500)->columnSpanFull(),
                     ]),
                 Section::make('الصور')->columns(2)->schema([
-                    FileUpload::make('logo')->label('الشعار')->image()->disk('public')->directory('stores')->maxSize(3072),
-                    FileUpload::make('cover')->label('صورة الغلاف')->image()->disk('public')->directory('stores')->maxSize(5120),
+                    FileUpload::make('logo')->label('الشعار')->helperText('مربع 512×512 بكسل (1:1)، الشعار في النص.')->image()->disk('public')->directory('stores')->maxSize(3072),
+                    FileUpload::make('cover')->label('صورة الغلاف')->helperText('عريضة 1200×500 بكسل تقريباً (2.4:1)، المهم في النص.')->image()->disk('public')->directory('stores')->maxSize(5120),
                 ]),
             ]);
     }
