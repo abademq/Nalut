@@ -2,11 +2,13 @@
 
 namespace App\Filament\Auth;
 
+use App\Support\Merchant;
 use App\Support\Recaptcha;
 use Filament\Auth\Http\Responses\Contracts\LoginResponse;
 use Filament\Auth\Pages\Login as BaseLogin;
 use Filament\Schemas\Components\Html;
 use Filament\Schemas\Schema;
+use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\ValidationException;
 
@@ -59,6 +61,22 @@ class Login extends BaseLogin
 HTML;
     }
 
+    /** الخانة اللي يطلع تحتها خطأ reCAPTCHA */
+    protected function captchaErrorField(): string
+    {
+        return 'email';
+    }
+
+    /** رابط لأصحاب المتاجر: يدخلو لوحة متجرهم برقم الهاتف */
+    public function getSubheading(): string|Htmlable|null
+    {
+        if (static::class !== self::class || ! Merchant::enabled()) {
+            return parent::getSubheading();
+        }
+
+        return new HtmlString('صاحب متجر؟ <a href="'.e(url('/merchant/login')).'" style="color:#D84315;font-weight:700;text-decoration:underline">ادخل لوحة متجرك من هني</a>');
+    }
+
     public function authenticate(): ?LoginResponse
     {
         if (! Recaptcha::adminEnabled()) {
@@ -72,7 +90,7 @@ HTML;
 
         if (! Recaptcha::verify($token, request()->ip())) {
             throw ValidationException::withMessages([
-                'data.email' => 'أكّد إنك مش روبوت (علّم على مربع reCAPTCHA).',
+                'data.'.$this->captchaErrorField() => 'أكّد إنك مش روبوت (علّم على مربع reCAPTCHA).',
             ]);
         }
 

@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Products\Tables;
 
 use App\Filament\Support\ShareLink;
 use App\Models\Product;
+use App\Support\Merchant;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -22,7 +23,8 @@ use Filament\Tables\Table;
 
 class ProductsTable
 {
-    public static function configure(Table $table): Table
+    /** @param  bool  $merchant  لوحة المتجر: بدون عمود/فلتر المتجر والمحذوفات */
+    public static function configure(Table $table, bool $merchant = false): Table
     {
         return $table
             ->defaultSort('id', 'desc')
@@ -40,7 +42,14 @@ class ProductsTable
                 TextColumn::make('store.name')
                     ->label('المتجر')
                     ->searchable()
-                    ->badge(),
+                    ->badge()
+                    ->visible(! $merchant),
+
+                TextColumn::make('section.name')
+                    ->label('القسم')
+                    ->placeholder('—')
+                    ->visible($merchant)
+                    ->visibleFrom('md'),
 
                 TextColumn::make('price')
                     ->label('السعر')
@@ -49,6 +58,8 @@ class ProductsTable
 
                 TextColumn::make('discount_price')
                     ->label('سعر العرض')
+                    // على الموبايل (لوحة المتجر) نخلّيو الأهم: الاسم والسعر والحالة
+                    ->visibleFrom($merchant ? 'md' : null)
                     ->formatStateUsing(fn ($state) => $state
                         ? number_format((float) $state, 2).' د.ل'
                         : '—')
@@ -92,11 +103,14 @@ class ProductsTable
                         default => null,
                     }),
             ])
-            ->filters([
-                SelectFilter::make('store_id')
-                    ->label('المتجر')
-                    ->relationship('store', 'name')
-                    ->searchable(),
+            ->filters(array_values(array_filter([
+                $merchant ? SelectFilter::make('menu_section_id')
+                    ->label('القسم')
+                    ->relationship('section', 'name', fn ($query) => $query->where('store_id', Merchant::storeId()))
+                    : SelectFilter::make('store_id')
+                        ->label('المتجر')
+                        ->relationship('store', 'name')
+                        ->searchable(),
 
                 Filter::make('hidden')
                     ->label('المخفية عن الزبائن')
@@ -108,8 +122,8 @@ class ProductsTable
                         ->whereNotNull('low_stock_alert')
                         ->whereColumn('stock_quantity', '<=', 'low_stock_alert')),
 
-                TrashedFilter::make()->label('المحذوفة'),
-            ])
+                $merchant ? null : TrashedFilter::make()->label('المحذوفة'),
+            ])))
             ->recordActions([
                 ShareLink::make(fn ($record) => route('link.product', ['store' => $record->store_id, 'product' => $record->id]))
                     ->iconButton()->tooltip('رابط المشاركة'),
@@ -156,14 +170,14 @@ class ProductsTable
                         $record->update(['is_available' => ! $record->is_available]);
                     }),
 
-                ViewAction::make()->label('عرض'),
+                ViewAction::make()->label('عرض')->visible(! $merchant),
                 EditAction::make()->label('تعديل'),
             ])
             ->toolbarActions([
-                BulkActionGroup::make([
+                BulkActionGroup::make(array_values(array_filter([
                     DeleteBulkAction::make()->label('حذف'),
-                    RestoreBulkAction::make()->label('استرجاع'),
-                ]),
+                    $merchant ? null : RestoreBulkAction::make()->label('استرجاع'),
+                ]))),
             ]);
     }
 }

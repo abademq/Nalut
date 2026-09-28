@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Support\Merchant;
+use Filament\Models\Contracts\FilamentUser;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
@@ -11,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable implements \Filament\Models\Contracts\FilamentUser
+class User extends Authenticatable implements FilamentUser
 {
     use HasApiTokens, HasFactory, \Illuminate\Notifications\Notifiable, SoftDeletes;
 
@@ -25,14 +27,14 @@ class User extends Authenticatable implements \Filament\Models\Contracts\Filamen
     protected function casts(): array
     {
         return [
-            'role'              => UserRole::class,
-            'roles'             => 'array',
-            'fcm_tokens'        => 'array',
-            'permissions'       => 'array',
-            'is_active'         => 'boolean',
-            'password'          => 'hashed',
+            'role' => UserRole::class,
+            'roles' => 'array',
+            'fcm_tokens' => 'array',
+            'permissions' => 'array',
+            'is_active' => 'boolean',
+            'password' => 'hashed',
             'phone_verified_at' => 'datetime',
-            'last_seen_at'      => 'datetime',
+            'last_seen_at' => 'datetime',
         ];
     }
 
@@ -212,9 +214,17 @@ class User extends Authenticatable implements \Filament\Models\Contracts\Filamen
         return in_array($key, $this->permissions, true);
     }
 
-    /** الدخول للوحة التحكم */
+    /** الدخول للوحات: الإدارة (admin) أو لوحة المتجر على الموقع (merchant) */
     public function canAccessPanel($panel = null): bool
     {
-        return $this->hasRole(UserRole::Admin) && $this->is_active;
+        if (! $this->is_active) {
+            return false;
+        }
+
+        if ($panel?->getId() === 'merchant') {
+            return Merchant::canUse($this);
+        }
+
+        return $this->hasRole(UserRole::Admin);
     }
 }

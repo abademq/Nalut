@@ -16,8 +16,13 @@ use Filament\Schemas\Schema;
 
 class ProductForm
 {
-    public static function configure(Schema $schema): Schema
+    /**
+     * @param  int|null  $storeId  لوحة المتجر (/merchant): المتجر ثابت — ما فيش اختيار متجر
+     */
+    public static function configure(Schema $schema, ?int $storeId = null): Schema
     {
+        $store = fn ($get) => $storeId ?: ((int) $get('store_id') ?: null);
+
         return $schema
             ->components([
                 Select::make('store_id')
@@ -25,15 +30,16 @@ class ProductForm
                     ->relationship('store', 'name')
                     ->searchable()
                     ->required()
-                    ->live(),
+                    ->live()
+                    ->visible($storeId === null),
 
                 Select::make('menu_section_id')
                     ->label('القسم')
-                    ->options(fn ($get) => $get('store_id')
-                        ? MenuSection::where('store_id', $get('store_id'))->pluck('name', 'id')
+                    ->options(fn ($get) => $store($get)
+                        ? MenuSection::where('store_id', $store($get))->orderBy('sort')->pluck('name', 'id')
                         : [])
                     ->searchable()
-                    ->helperText('اختار المتجر أول'),
+                    ->helperText($storeId ? 'الأقسام من صفحة «أقسام القائمة»' : 'اختار المتجر أول'),
 
                 TextInput::make('name')
                     ->label('اسم المنتج')
@@ -80,7 +86,7 @@ class ProductForm
                     ->addActionLabel('+ مكوّن')
                     ->dehydrateStateUsing(fn ($state) => Product::normalizeIngredients(array_values((array) $state)))
                     // المطاعم والمقاهي بس (يتفعّل من نوع المتجر أو صفحة المتجر)
-                    ->visible(fn ($get) => Store::ingredientsEnabledFor((int) $get('store_id') ?: null))
+                    ->visible(fn ($get) => Store::ingredientsEnabledFor($store($get)))
                     ->columnSpanFull(),
 
                 FileUpload::make('images')
@@ -153,6 +159,7 @@ class ProductForm
                         Repeater::make('options')
                             ->hiddenLabel()
                             ->relationship('options')
+                            ->defaultItems(0)
                             ->orderColumn('sort')
                             ->collapsible()
                             ->itemLabel(fn (array $state) => $state['name'] ?? null)

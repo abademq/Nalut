@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\DriverMapController;
 use App\Http\Controllers\Admin\SettlementPrintController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Web\AppLinkController;
+use App\Http\Controllers\Web\MerchantAlertsController;
 use App\Http\Controllers\Web\WebOrderController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 $webOrder = function () {
     Route::get('manifest.webmanifest', [WebOrderController::class, 'manifest']);
     Route::get('sw.js', [WebOrderController::class, 'serviceWorker']);
-    Route::get('{any?}', [WebOrderController::class, 'shell'])->where('any', '^(?!api/|admin|livewire|storage/|weborder/|admin-api|settlements/|payments/|up$|\.well-known).*$');
+    Route::get('{any?}', [WebOrderController::class, 'shell'])->where('any', '^(?!api/|admin|merchant|livewire|storage/|weborder/|admin-api|settlements/|payments/|up$|\.well-known).*$');
 };
 
 // على الدومين الفرعي (WEB_ORDER_DOMAIN في .env) — قبل باقي المسارات باش «/» يفتح الموقع
@@ -33,6 +34,10 @@ Route::middleware(['web', 'auth'])
 // تنبيهات اللوحة الفورية (صوت + إشعار المتصفح)
 Route::middleware(['web', 'auth'])
     ->get('admin-api/alerts', [AlertsController::class, 'poll']);
+
+// لوحة المتجر على الموقع: صوت الطلب الجديد
+Route::middleware(['web', 'auth', 'throttle:30,1'])
+    ->get('merchant-api/pending', [MerchantAlertsController::class, 'pending']);
 
 // روابط تفتح التطبيق مباشرة (متجر / صنف / شاشة) — وصفحة بديلة لو التطبيق مش مثبّت
 

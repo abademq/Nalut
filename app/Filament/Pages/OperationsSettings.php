@@ -41,6 +41,7 @@ class OperationsSettings extends Page
         'security' => 'الحماية',
         'settlement' => 'واصل التسوية',
         'web' => 'موقع الطلب',
+        'merchant' => 'لوحة المتجر (الموقع)',
         'stock' => 'المخزون',
         'banners' => 'الإعلانات',
         'delivery' => 'التوصيل والعمولة',

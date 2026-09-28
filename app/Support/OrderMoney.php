@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Order;
+use Filament\Facades\Filament;
 use Illuminate\Http\Request;
 
 /**
@@ -17,6 +18,10 @@ class OrderMoney
     public static function viewer(?Request $request = null): string
     {
         $request ??= request();
+        // لوحة المتجر على الموقع = نفس اللي يشوفه المتجر في التطبيق
+        if (Filament::getCurrentPanel()?->getId() === 'merchant') {
+            return 'store';
+        }
         if ($request->is('api/v1/store/*')) {
             return 'store';
         }
