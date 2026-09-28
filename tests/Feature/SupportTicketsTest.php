@@ -3,12 +3,14 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Resources\TicketCategories\Pages\ManageTicketCategories;
 use App\Filament\Resources\Tickets\Pages\ListTickets;
 use App\Filament\Resources\Tickets\Pages\ViewTicket;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Models\Store;
 use App\Models\Ticket;
+use App\Models\TicketCategory;
 use App\Models\User;
 use App\Services\SupportService;
 use Filament\Facades\Filament;
@@ -150,5 +152,40 @@ class SupportTicketsTest extends TestCase
             'is_active' => true, 'permissions' => ['orders.view']]);
         $this->actingAs($op, 'web');
         $this->get('/admin/tickets')->assertForbidden();
+    }
+
+    public function test_admin_edits_categories_and_apps_follow(): void
+    {
+        $this->actingAs($this->admin, 'web');
+        Filament::setCurrentPanel('admin');
+
+        Livewire::test(ManageTicketCategories::class)->assertOk()
+            ->callAction('create', ['app' => 'customer', 'label' => 'تأخير في التوصيل', 'is_active' => true])
+            ->assertHasNoActionErrors();
+        $new = TicketCategory::firstWhere('label', 'تأخير في التوصيل');
+        $this->assertNotEmpty($new->key);
+
+        // نوقفو «اقتراح» ونغيّرو اسم «شي آخر»
+        TicketCategory::where('app', 'customer')->where('key', 'suggestion')->update(['is_active' => false]);
+
+        Sanctum::actingAs($this->customer);
+        $keys = collect($this->getJson('/api/v1/support/categories')->json('categories'))->pluck('key');
+        $this->assertTrue($keys->contains($new->key));
+        $this->assertFalse($keys->contains('suggestion'));
+        $this->postJson('/api/v1/support/tickets', ['category' => 'suggestion', 'body' => 'موقوف'])->assertStatus(422);
+
+        $id = $this->postJson('/api/v1/support/tickets', ['category' => 'other', 'body' => 'سؤال'])->assertCreated()->json('data.id');
+        TicketCategory::where('app', 'customer')->where('key', 'other')->update(['label' => 'أسئلة عامة']);
+        $this->getJson("/api/v1/support/tickets/$id")->assertJsonPath('data.category_label', 'أسئلة عامة');
+
+        // عليه تذاكر: ما ينحذفش
+        $this->actingAs($this->admin, 'web');
+        $other = TicketCategory::where('app', 'customer')->where('key', 'other')->first();
+        Livewire::test(ManageTicketCategories::class)
+            ->callTableAction('delete', $other);
+        $this->assertNotNull($other->fresh());
+        Livewire::test(ManageTicketCategories::class)
+            ->callTableAction('delete', $new);
+        $this->assertNull($new->fresh());
     }
 }

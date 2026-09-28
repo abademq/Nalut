@@ -34,8 +34,8 @@ class Ticket extends Model
 
     public const APPS = ['customer' => 'زبون', 'driver' => 'سائق', 'store' => 'متجر'];
 
-    /** أنواع المشاكل لكل تطبيق */
-    public const CATEGORIES = [
+    /** الأنواع الأولية — بعدها تتعدّل من اللوحة («أنواع مشاكل الدعم») */
+    public const DEFAULT_CATEGORIES = [
         'customer' => [
             'order' => 'مشكلة في طلب',
             'payment' => 'الدفع والمحفظة',
@@ -63,14 +63,22 @@ class Ticket extends Model
         ],
     ];
 
+    /** الأنواع المفعّلة لتطبيق — بالترتيب اللي في اللوحة */
     public static function categoriesFor(string $app): array
     {
-        return self::CATEGORIES[$app] ?? self::CATEGORIES['customer'];
+        $list = TicketCategory::where('app', $app)->where('is_active', true)
+            ->orderBy('sort')->orderBy('id')->pluck('label', 'key')->all();
+
+        // الجدول فاضي (قبل الترحيل مثلاً) = الأولية
+        return $list ?: (self::DEFAULT_CATEGORIES[$app] ?? self::DEFAULT_CATEGORIES['customer']);
     }
 
+    /** الاسم حتى لو النوع توقف بعدين — التذاكر القديمة تقعد تبان صح */
     public function categoryLabel(): string
     {
-        return self::categoriesFor($this->app)[$this->category] ?? $this->category;
+        return once(fn () => TicketCategory::where('app', $this->app)->where('key', $this->category)->value('label'))
+            ?? self::DEFAULT_CATEGORIES[$this->app][$this->category]
+            ?? $this->category;
     }
 
     public function statusLabel(): string
