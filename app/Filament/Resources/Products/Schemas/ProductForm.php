@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Products\Schemas;
 
 use App\Models\MenuSection;
 use App\Models\Product;
+use App\Models\Store;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -78,6 +79,8 @@ class ProductForm
                     ->itemLabel(fn (array $state): ?string => ($state['name'] ?? null) ? ($state['name'].(($state['removable'] ?? true) ? '' : ' (أساسي)')) : null)
                     ->addActionLabel('+ مكوّن')
                     ->dehydrateStateUsing(fn ($state) => Product::normalizeIngredients(array_values((array) $state)))
+                    // المطاعم والمقاهي بس (يتفعّل من نوع المتجر أو صفحة المتجر)
+                    ->visible(fn ($get) => Store::ingredientsEnabledFor((int) $get('store_id') ?: null))
                     ->columnSpanFull(),
 
                 FileUpload::make('images')

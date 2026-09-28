@@ -58,19 +58,22 @@ class OrderInfolist
                         ->columnSpanFull()
                         ->listWithLineBreaks()
                         ->bulleted()
+                        ->html()
                         ->state(fn (Order $record) => $record->items
                             ->map(function ($i) {
-                                $line = "{$i->quantity} × {$i->name}  —  "
-                                    .number_format($i->line_total, 2).' د.ل';
+                                $line = e("{$i->quantity} × {$i->name}  —  "
+                                    .number_format($i->line_total, 2).' د.ل');
 
-                                $opts = $i->optionsText();
-
-                                if ($opts !== '') {
-                                    $line .= "  ({$opts})";
+                                // الزيادة بالأخضر والإزالة بالأحمر — نفس تطبيق المتجر
+                                if (($added = $i->addedText()) !== '') {
+                                    $line .= '<br><span style="color:#15803d;font-weight:600">+ '.e($added).'</span>';
+                                }
+                                if (($removed = $i->removedText()) !== '') {
+                                    $line .= '<br><span style="color:#b91c1c;font-weight:700">✕ بدون: '.e($removed).'</span>';
                                 }
 
                                 if (filled($i->note)) {
-                                    $line .= "  [ملاحظة: {$i->note}]";
+                                    $line .= '<br><span style="color:#b45309">ملاحظة: '.e($i->note).'</span>';
                                 }
 
                                 return $line;

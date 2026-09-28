@@ -67,6 +67,12 @@ class Product extends Model
         return array_values($out);
     }
 
+    /** المتجر مفعّل عنده خيار المكوّنات (من اللوحة) */
+    public function ingredientsEnabled(): bool
+    {
+        return Store::ingredientsEnabledFor($this->store_id);
+    }
+
     /** @return array<int, array{name: string, removable: bool}> */
     public function ingredientsList(): array
     {
@@ -76,6 +82,10 @@ class Product extends Model
     /** أسماء المكوّنات اللي الزبون يقدر يشيلها */
     public function removableIngredients(): array
     {
+        if (! $this->ingredientsEnabled()) {
+            return [];
+        }
+
         return array_values(array_map(fn ($i) => $i['name'],
             array_filter($this->ingredientsList(), fn ($i) => $i['removable'])));
     }

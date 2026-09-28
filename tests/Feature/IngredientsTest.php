@@ -3,14 +3,17 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Filament\Resources\Products\Pages\EditProduct;
 use App\Models\DeliveryZone;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\Store;
+use App\Models\StoreType;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Once;
 use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 use Tests\TestCase;
@@ -28,7 +31,8 @@ class IngredientsTest extends TestCase
         parent::setUp();
         Http::fake();
         $this->owner = User::create(['name' => 'متجر', 'phone' => '0911111111', 'role' => UserRole::Store->value, 'is_active' => true]);
-        $this->store = Store::create(['user_id' => $this->owner->id, 'name' => 'مطعم', 'slug' => 'm', 'is_open' => true, 'is_active' => true, 'lat' => 31.8686, 'lng' => 10.9817]);
+        $type = StoreType::create(['name' => 'مطاعم', 'is_active' => true, 'has_ingredients' => true]);
+        $this->store = Store::create(['user_id' => $this->owner->id, 'store_type_id' => $type->id, 'name' => 'مطعم', 'slug' => 'm', 'is_open' => true, 'is_active' => true, 'lat' => 31.8686, 'lng' => 10.9817]);
         DeliveryZone::create(['name' => 'z', 'center_lat' => 31.8686, 'center_lng' => 10.9817, 'radius_km' => 10, 'is_active' => true]);
     }
 
@@ -76,6 +80,8 @@ class IngredientsTest extends TestCase
             'items' => [['product_id' => $p->id, 'quantity' => 2, 'remove' => ['بصل', 'مايونيز']]]])->assertCreated();
 
         $this->assertSame('بدون: بصل، مايونيز', $res->json('data.items.0.options_text'));
+        $this->assertSame('بصل، مايونيز', $res->json('data.items.0.removed_text'));
+        $this->assertSame('', $res->json('data.items.0.added_text'));
         $this->assertEquals(36, $res->json('data.items.0.line_total'));
         $this->assertTrue($res->json('data.items.0.options.0.removed'));
 
@@ -106,6 +112,53 @@ class IngredientsTest extends TestCase
 
         $p->update(['ingredients' => [['name' => 'بصل', 'removable' => true]]]);
         $this->getJson("/api/v1/saved-carts/$id")->assertOk()->assertJsonPath('lines.0.remove', ['بصل']);
+    }
+
+    public function test_feature_follows_store_type_and_store_override(): void
+    {
+        $p = $this->burger();
+        [, $a] = $this->customer();
+        $order = fn () => $this->postJson('/api/v1/orders', ['store_id' => $this->store->id, 'address_id' => $a->id,
+            'items' => [['product_id' => $p->id, 'quantity' => 1, 'remove' => ['بصل']]]]);
+
+        // النوع موقوف (مثلاً صيدلية): المكوّنات ما تطلعش ولا تنشال
+        $this->store->type->update(['has_ingredients' => false]);
+        Once::flush();
+        $this->getJson("/api/v1/stores/{$this->store->id}")->assertOk()->assertJsonPath('data.products.0.ingredients', []);
+        $order()->assertStatus(422);
+
+        // المتجر مفعّل له بروحه
+        $this->store->update(['ingredients_mode' => 'on']);
+        Once::flush();
+        $order()->assertCreated();
+
+        // وتطبيق المتجر يعرف
+        Sanctum::actingAs($this->owner);
+        $this->getJson('/api/v1/store/products')->assertJsonPath('ingredients_enabled', true);
+        $this->store->update(['ingredients_mode' => 'off']);
+        Sanctum::actingAs($this->owner->fresh());
+        $this->getJson('/api/v1/store/products')->assertJsonPath('ingredients_enabled', false);
+    }
+
+    public function test_store_sees_additions_and_removals_separately(): void
+    {
+        $p = $this->burger();
+        $opt = $p->options()->create(['name' => 'الإضافات', 'type' => 'multi', 'max_choices' => 3]);
+        $v = $opt->values()->create(['name' => 'زيادة صوص', 'extra_price' => 1, 'is_available' => true]);
+        [, $a] = $this->customer();
+
+        $res = $this->postJson('/api/v1/orders', ['store_id' => $this->store->id, 'address_id' => $a->id,
+            'items' => [['product_id' => $p->id, 'quantity' => 1, 'options' => [['id' => $v->id]], 'remove' => ['بصل']]]])->assertCreated();
+
+        $this->assertSame('الإضافات: زيادة صوص', $res->json('data.items.0.added_text'));
+        $this->assertSame('بصل', $res->json('data.items.0.removed_text'));
+
+        // لوحة التحكم: الزيادة بالأخضر والإزالة بالأحمر
+        $this->actingAs(User::create(['name' => 'a', 'phone' => '0900000000', 'role' => UserRole::Admin->value, 'is_active' => true]));
+        Livewire::test(ViewOrder::class, ['record' => Order::first()->id])
+            ->assertOk()
+            ->assertSeeHtml('color:#15803d')
+            ->assertSee('✕ بدون: بصل');
     }
 
     public function test_admin_edits_ingredients(): void

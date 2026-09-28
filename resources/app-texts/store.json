@@ -95,6 +95,16 @@
   "vars": null
  },
  {
+  "text": "بدون: {list}",
+  "group": "item_extras",
+  "vars": "{list}"
+ },
+ {
+  "text": "ملاحظة: {note}",
+  "group": "item_extras",
+  "vars": "{note}"
+ },
+ {
   "text": "، ",
   "group": "models",
   "vars": null
@@ -393,11 +403,6 @@
   "text": "بطاقة مصرفية",
   "group": "receipt_widget",
   "vars": null
- },
- {
-  "text": "ملاحظة: {note}",
-  "group": "receipt_widget",
-  "vars": "{note}"
  },
  {
   "text": "ما نقدرش نوصل للخادم.",

@@ -193,6 +193,8 @@ class DemoData extends Command
         [$lat, $lng] = self::CENTER;
 
         return Store::create($attrs + [
+            // خيار المكوّنات: المطاعم والمقاهي التجريبية مفعّل، الباقي حسب النوع
+            'ingredients_mode' => in_array($typeKey, ['food', 'cafe'], true) ? 'on' : null,
             'user_id' => $owner->id,
             'store_type_id' => $types[$typeKey] ?? reset($types),
             'slug' => 'demo-'.$this->ownerSeq,

@@ -170,6 +170,9 @@ class OrderResource extends JsonResource
                 'unit_price' => (float) $i->unit_price,
                 'options' => $i->options,
                 'options_text' => $i->optionsText(),
+                // للتلوين: الزيادة (أخضر) والإزالة «بدون» (أحمر)
+                'added_text' => $i->addedText(),
+                'removed_text' => $i->removedText(),
                 'line_total' => (float) $i->line_total,
                 'note' => $i->note,
             ])),

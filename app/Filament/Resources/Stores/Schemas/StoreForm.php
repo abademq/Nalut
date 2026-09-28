@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\Stores\Schemas;
 
 use App\Filament\Forms\MapPicker;
+use App\Models\Store;
 use App\Models\User;
+use App\Support\Options;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -93,7 +95,7 @@ class StoreForm
                     ->label('نسبة العمولة %')
                     ->numeric()
                     ->required()
-                    ->default(fn () => \App\Support\Options::get('delivery.default_commission_percent'))
+                    ->default(fn () => Options::get('delivery.default_commission_percent'))
                     ->minValue(0)
                     ->maxValue(100),
 
@@ -109,7 +111,7 @@ class StoreForm
                     ->required()
                     ->minValue(1)
                     ->maxValue(600)
-                    ->default(fn () => \App\Support\Options::get('orders.default_prep_minutes')),
+                    ->default(fn () => Options::get('orders.default_prep_minutes')),
 
                 TimePicker::make('opens_at')
                     ->label('وقت الفتح')
@@ -130,6 +132,13 @@ class StoreForm
                     ->label('مفعّل')
                     ->default(true)
                     ->helperText('لو أوقفته، ما يظهرش للزبائن نهائياً'),
+
+                Select::make('ingredients_mode')
+                    ->label('خيار المكوّنات (بدون بصل...)')
+                    ->options(Store::INGREDIENTS_MODES)
+                    ->placeholder('حسب نوع المتجر')
+                    ->native(false)
+                    ->helperText(fn ($record) => 'فاضي = حسب نوع المتجر'.($record?->type ? ' («'.$record->type->name.'»: '.($record->type->has_ingredients ? 'مفعّل' : 'موقوف').')' : '')),
             ]);
     }
 }

@@ -24,7 +24,7 @@ class ProductResource extends JsonResource
             // الظهور (المتجر يخفي الصنف على الزبائن بعيد عن التوفّر)
             'is_visible' => (bool) ($this->is_visible ?? true),
             // المكوّنات — removable = الزبون يقدر يطلبه «بدون»
-            'ingredients' => $this->ingredientsList(),
+            'ingredients' => $this->ingredientsEnabled() ? $this->ingredientsList() : [],
             // للزبون: «متوفر X قطع فقط» — null = ما نكتبوش العدد
             'left' => $this->customerLeft(),
             'is_favorite' => FavoriteIds::has($request->user(), Product::class, $this->id),

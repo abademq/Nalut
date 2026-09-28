@@ -44,6 +44,22 @@ class OrderItem extends Model
             ->implode($sep);
     }
 
+    /** «بصل، بطاطا» — المكوّنات اللي الزبون شالها */
+    public function removedText(): string
+    {
+        return collect($this->options ?? [])->filter(fn ($o) => is_array($o) && ! empty($o['removed']))
+            ->pluck('value')->implode('، ');
+    }
+
+    /** الإضافات والخيارات بدون «بدون» */
+    public function addedText(string $sep = ' · '): string
+    {
+        $copy = clone $this;
+        $copy->options = collect($this->options ?? [])->reject(fn ($o) => is_array($o) && ! empty($o['removed']))->values()->all();
+
+        return $copy->optionsText($sep);
+    }
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

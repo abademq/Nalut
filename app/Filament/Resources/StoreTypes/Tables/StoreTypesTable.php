@@ -8,6 +8,7 @@ use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 
 class StoreTypesTable
@@ -22,6 +23,7 @@ class StoreTypesTable
                 TextColumn::make('stores_count')->label('عدد المتاجر')->counts('stores')->badge(),
                 TextColumn::make('sort')->label('الترتيب')->sortable(),
                 IconColumn::make('is_active')->label('مفعّل')->boolean(),
+                ToggleColumn::make('has_ingredients')->label('المكوّنات'),
             ])
             ->recordActions([
                 ViewAction::make()->label('عرض'),

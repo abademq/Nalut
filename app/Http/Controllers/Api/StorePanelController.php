@@ -224,9 +224,14 @@ class StorePanelController extends Controller
 
     public function products(Request $request): JsonResponse
     {
-        $products = $this->store($request)->products()->with('options.values')->orderBy('sort')->get();
+        $store = $this->store($request);
+        $products = $store->products()->with('options.values')->orderBy('sort')->get();
 
-        return response()->json(['data' => ProductResource::collection($products)]);
+        return response()->json([
+            'data' => ProductResource::collection($products),
+            // خانة «المكوّنات» تطلع في تطبيق المتجر بس لو مفعّلة له من اللوحة
+            'ingredients_enabled' => $store->ingredientsEnabled(),
+        ]);
     }
 
     public function storeProduct(Request $request): JsonResponse
