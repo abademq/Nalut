@@ -127,9 +127,9 @@ const Cart = {
   get lines() { return this.data.lines; },
   get isEmpty() { return this.data.lines.length === 0; },
   get count() { return this.data.lines.reduce((s, l) => s + l.qty, 0); },
-  key(pid, options, note) {
+  key(pid, options, note, removed) {
     const ids = Object.keys(options || {}).sort((a, b) => a - b);
-    return pid + '|' + ids.map((i) => i + '×' + options[i]).join(',') + '|' + (note || '').trim();
+    return pid + '|' + ids.map((i) => i + '×' + options[i]).join(',') + '|' + [...(removed || [])].sort().join(',') + '|' + (note || '').trim();
   },
   optionsPrice(line) {
     let s = 0;
@@ -143,14 +143,15 @@ const Cart = {
   total(line) { return this.unit(line) * line.qty; },
   get subtotal() { return this.data.lines.reduce((s, l) => s + this.total(l), 0); },
   qtyOf(pid) { return this.data.lines.filter((l) => l.product.id === pid).reduce((s, l) => s + l.qty, 0); },
-  add(product, storeId, storeName, qty = 1, note = '', options = {}) {
+  add(product, storeId, storeName, qty = 1, note = '', options = {}, removed = []) {
     const opts = {};
     for (const [k, v] of Object.entries(options || {})) if (v > 0) opts[k] = v;
+    const rm = [...new Set(removed || [])].sort();
     note = (note || '').trim();
     if (this.data.storeId !== storeId) this.data = { storeId, storeName, lines: [] };
-    const key = this.key(product.id, opts, note);
-    const ex = this.data.lines.find((l) => this.key(l.product.id, l.options, l.note) === key);
-    if (ex) ex.qty += qty; else this.data.lines.push({ product, qty, note, options: opts });
+    const key = this.key(product.id, opts, note, rm);
+    const ex = this.data.lines.find((l) => this.key(l.product.id, l.options, l.note, l.removed) === key);
+    if (ex) ex.qty += qty; else this.data.lines.push({ product, qty, note, options: opts, removed: rm });
     this.save();
   },
   setQty(line, qty) {
@@ -165,6 +166,7 @@ const Cart = {
       quantity: l.qty,
       ...(l.note ? { note: l.note } : {}),
       ...(Object.keys(l.options || {}).length ? { options: Object.entries(l.options).map(([id, q]) => ({ id: +id, qty: q })) } : {}),
+      ...((l.removed || []).length ? { remove: l.removed } : {}),
     }));
   },
 };
@@ -175,8 +177,9 @@ function findValue(product, id) {
   for (const o of product.options || []) for (const v of o.values || []) if (v.id === id) return v;
   return null;
 }
-function optionsText(product, options) {
+function optionsText(product, options, removed) {
   const parts = [];
+  if ((removed || []).length) parts.push('بدون: ' + removed.join('، '));
   for (const o of product.options || []) {
     const chosen = (o.values || []).filter((v) => options?.[v.id]).map((v) => options[v.id] > 1 ? `${v.name} ×${options[v.id]}` : v.name);
     if (chosen.length) parts.push(`${o.name}: ${chosen.join('، ')}`);
@@ -203,7 +206,7 @@ async function applyCart(res, openCart = true) {
   for (const l of lines) {
     const opts = {};
     for (const o of l.options || []) opts[o.id] = o.qty || 1;
-    Cart.add(l.product, store.id, store.name || '', l.quantity || 1, l.note || '', opts);
+    Cart.add(l.product, store.id, store.name || '', l.quantity || 1, l.note || '', opts, l.remove || []);
   }
   if ((res.missing || []).length) toast('مش متوفر توّا: ' + res.missing.join('، '), 'err');
   if (openCart) go('/cart');
@@ -700,6 +703,7 @@ route('/s/:id/p/:pid', storePage, { tab: 'home', title: ' ' });
 /** ورقة الصنف: صور، وصف، إضافات، ملاحظة، كمية — والصنف اللي نفد للتصفح بس */
 function productSheet(p, store, onAdded) {
   const sel = {};
+  const removed = new Set(); // المكوّنات اللي الزبون شالها
   let qty = 1;
   const inCart = Cart.data.storeId === store.id ? Cart.qtyOf(p.id) : 0;
   const max = maxQty(p) == null ? null : maxQty(p) - inCart;
@@ -730,9 +734,10 @@ function productSheet(p, store, onAdded) {
       <div class="row" style="margin-top:4px"><span class="price" style="font-size:19px">${money(effPrice(p))}</span>
         ${hasDiscount(p) ? `<span class="strike">${num(p.price).toFixed(2)}</span><span class="pill err">وفّر ${(num(p.price) - effPrice(p)).toFixed(2)}</span>` : ''}</div>
       ${p.description ? `<p style="margin:10px 0 0;white-space:pre-line">${esc(p.description)}</p>` : ''}
+      <div id="ings"></div>
       <div id="opts"></div>
       ${canOrder ? `<label class="field" style="margin-top:16px"><span>ملاحظة على هذا الصنف</span>
-        <textarea class="textarea" id="note" maxlength="200" placeholder="بدون بصل، حار، مشوي أكثر..."></textarea></label>` : ''}
+        <textarea class="textarea" id="note" maxlength="200" placeholder="حار، مشوي أكثر..."></textarea></label>` : ''}
       ${canOrder && low ? `<div class="tiny" style="color:var(--warn);font-weight:700">متوفر ${p.left} قطع فقط</div>`
         : canOrder && p.max_per_order ? `<div class="tiny muted">أقصى كمية في الطلب: ${p.max_per_order}</div>` : ''}
     </div>
@@ -797,6 +802,27 @@ function productSheet(p, store, onAdded) {
     $$('[data-dec]', el).forEach((b) => b.onclick = () => { const v = +b.dataset.dec; if ((sel[v] || 0) <= 1) delete sel[v]; else sel[v]--; drawOptions(); drawFoot(); });
   }
 
+  // المكوّنات: اللي ينشال يتضغط ويولّي «بدون ...»
+  function drawIngredients() {
+    const ings = p.ingredients || [];
+    const box = $('#ings', el);
+    if (!ings.length) { box.innerHTML = ''; return; }
+    const any = canOrder && ings.some((i) => i.removable);
+    box.innerHTML = `<div class="opt-group"><div class="head"><b>المكوّنات</b></div>
+      ${any ? '<div class="tiny muted" style="margin:-4px 0 8px">اضغط على أي مكوّن تبيه يتشال</div>' : ''}
+      <div class="ings">${ings.map((i) => {
+        const can = canOrder && i.removable;
+        const off = removed.has(i.name);
+        return `<button type="button" class="ing ${off ? 'off' : ''} ${can ? '' : 'fixed'}" ${can ? `data-ing="${esc(i.name)}"` : 'disabled'}>${off ? '⊖ بدون ' : can ? '✓ ' : ''}${esc(i.name)}</button>`;
+      }).join('')}</div>
+      ${removed.size ? `<div class="tiny" style="color:var(--err);font-weight:700;margin-top:6px">بدون: ${esc([...removed].join('، '))}</div>` : ''}</div>`;
+    $$('[data-ing]', box).forEach((b) => b.onclick = () => {
+      const n = b.dataset.ing;
+      if (removed.has(n)) removed.delete(n); else removed.add(n);
+      drawIngredients();
+    });
+  }
+
   function drawFoot() {
     const foot = $('#foot', el);
     if (!canOrder) { foot.innerHTML = `<button class="btn block" disabled>🚫 ${esc(reason)}</button>`; return; }
@@ -811,12 +837,13 @@ function productSheet(p, store, onAdded) {
         const ok = await confirmBox('سلة من متجر ثاني', `عندك أصناف من «${Cart.data.storeName}». الطلب الواحد من متجر واحد فقط.\n\nتبي نفرّغ السلة ونبدا من جديد؟`, 'فرّغ وابدا', 'رجوع');
         if (!ok) return;
       }
-      Cart.add(p, store.id, store.name, qty, $('#note', el)?.value || '', { ...sel });
+      Cart.add(p, store.id, store.name, qty, $('#note', el)?.value || '', { ...sel }, [...removed]);
       close();
       toast('انضاف للسلة ✅', 'ok');
       onAdded && onAdded();
     };
   }
+  drawIngredients();
   drawOptions();
   drawFoot();
 }
@@ -872,7 +899,7 @@ route('/cart', async ({ alive }) => {
 
   function drawLines() {
     $('#lines').innerHTML = Cart.lines.map((l, i) => {
-      const t = optionsText(l.product, l.options);
+      const t = optionsText(l.product, l.options, l.removed);
       const mx = maxQty(l.product);
       return `<div class="cart-line">
         <div class="grow">

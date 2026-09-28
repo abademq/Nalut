@@ -245,6 +245,8 @@ class StorePanelController extends Controller
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
             'max_per_order' => ['nullable', 'integer', 'min:1'],
             'low_stock_alert' => ['nullable', 'integer', 'min:0'],
+            // المكوّنات: مصفوفة أو JSON نص (من multipart)
+            'ingredients' => ['nullable'],
             ...self::IMAGE_RULES,
         ]);
 
@@ -254,6 +256,8 @@ class StorePanelController extends Controller
         if (($data['is_available'] ?? true) && ($data['track_stock'] ?? false) && (int) ($data['stock_quantity'] ?? 0) <= 0) {
             throw ValidationException::withMessages(['stock_quantity' => 'اكتب الكمية المتوفرة (أكثر من صفر) أو طفّي «تتبّع الكمية».']);
         }
+
+        $data['ingredients'] = Product::normalizeIngredients($data['ingredients'] ?? []);
 
         $product = $store->products()->create($data);
 
@@ -277,13 +281,20 @@ class StorePanelController extends Controller
             'stock_quantity' => ['nullable', 'integer', 'min:0'],
             'max_per_order' => ['nullable', 'integer', 'min:1'],
             'low_stock_alert' => ['nullable', 'integer', 'min:0'],
+            // المكوّنات: مصفوفة أو JSON نص (من multipart)
+            'ingredients' => ['nullable'],
             ...self::IMAGE_RULES,
         ]);
 
         [$images, $removed] = $this->resolveImages($request, (array) $product->images, $product->store_id);
         unset($data['image'], $data['images'], $data['remove_images'], $data['main_image']);
 
+        unset($data['ingredients']);
         $product->fill(array_filter($data, fn ($v) => ! is_null($v)));
+
+        if ($request->exists('ingredients')) {
+            $product->ingredients = Product::normalizeIngredients($request->input('ingredients'));
+        }
 
         // يبي يفتحه وهو خالص: لازم كمية جديدة
         if ($request->boolean('is_available') && $product->isOutOfStock()) {

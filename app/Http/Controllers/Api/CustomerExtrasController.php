@@ -83,7 +83,13 @@ class CustomerExtrasController extends Controller
         // الإضافات محفوظة في الطلب بالاسم — نرجعوها لأرقامها الحالية
         $lines = $items->map(function ($i) use ($products) {
             $options = [];
+            $remove = [];
             foreach ((array) $i->options as $o) {
+                if (! empty($o['removed'])) {
+                    $remove[] = (string) ($o['value'] ?? '');
+
+                    continue;
+                }
                 $option = $products->get($i->product_id)?->options->firstWhere('name', $o['option'] ?? null);
                 $value = $option?->values->firstWhere('name', $o['value'] ?? null);
                 if ($value) {
@@ -91,7 +97,7 @@ class CustomerExtrasController extends Controller
                 }
             }
 
-            return ['product_id' => $i->product_id, 'quantity' => $i->quantity, 'note' => $i->note, 'options' => $options];
+            return ['product_id' => $i->product_id, 'quantity' => $i->quantity, 'note' => $i->note, 'options' => $options, 'remove' => $remove];
         })->all();
 
         return response()->json($carts->build($order->store, $lines));
@@ -127,6 +133,8 @@ class CustomerExtrasController extends Controller
             'items.*.options' => ['nullable', 'array', 'max:40'],
             'items.*.options.*.id' => ['required', 'integer'],
             'items.*.options.*.qty' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'items.*.remove' => ['nullable', 'array', 'max:30'],
+            'items.*.remove.*' => ['string', 'max:60'],
         ], [], ['name' => 'اسم السلة']);
 
         $user = $request->user();
@@ -143,7 +151,8 @@ class CustomerExtrasController extends Controller
             ->whereIn('id', array_column($data['items'], 'product_id'))->pluck('id')->all();
         $items = collect($data['items'])->filter(fn ($i) => in_array((int) $i['product_id'], $valid, true))
             ->map(fn ($i) => ['product_id' => (int) $i['product_id'], 'quantity' => (int) $i['quantity'], 'note' => $i['note'] ?? null,
-                'options' => collect(OrderService::selectedOptions($i))->map(fn ($n, $id) => ['id' => $id, 'qty' => $n])->values()->all()])
+                'options' => collect(OrderService::selectedOptions($i))->map(fn ($n, $id) => ['id' => $id, 'qty' => $n])->values()->all(),
+                'remove' => OrderService::selectedRemovals($i)])
             ->values()->all();
 
         abort_if($items === [], 422, 'الأصناف مش من المتجر هذا.');

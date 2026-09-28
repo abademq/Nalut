@@ -337,6 +337,9 @@ class OrderService
 
             [$optionsPrice, $chosen] = $this->priceOptions($product, $item);
 
+            // «بدون بصل» — تنحفظ مع الإضافات عشان تطلع في كل مكان (المتجر، الواصل، السائق)
+            $chosen = array_merge($this->removedIngredients($product, $item), $chosen);
+
             $unitPrice = $product->effectivePrice();
 
             $lines[] = [
@@ -385,6 +388,32 @@ class OrderService
     }
 
     /** @return array{0: float, 1: list<array{option: string, value: string, price: float, qty: int}>} */
+    /** المكوّنات اللي الزبون طلب يشيلها: items.*.remove = ["بصل", ...] */
+    public static function selectedRemovals(array $item): array
+    {
+        return array_values(array_unique(array_filter(array_map(
+            fn ($n) => trim((string) $n), (array) ($item['remove'] ?? [])
+        ))));
+    }
+
+    private function removedIngredients(Product $product, array $item): array
+    {
+        $allowed = $product->removableIngredients();
+        $out = [];
+
+        foreach (self::selectedRemovals($item) as $name) {
+            // ما نسكتوش عليها: الزبون ممكن عنده حساسية — لازم يعرف إنها ما تنشالش
+            if (! in_array($name, $allowed, true)) {
+                throw ValidationException::withMessages([
+                    'items' => Texts::get('msg.ingredient_not_removable', ['value' => $name, 'name' => $product->name]),
+                ]);
+            }
+            $out[] = ['option' => Product::REMOVED_LABEL, 'value' => $name, 'price' => 0.0, 'qty' => 1, 'removed' => true];
+        }
+
+        return $out;
+    }
+
     private function priceOptions(Product $product, array $item): array
     {
         $selected = self::selectedOptions($item);

@@ -226,6 +226,10 @@ img { display: block; max-width: 100%; }
 .gallery .dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.6); }
 .gallery .dots i.on { background: #fff; width: 18px; border-radius: 4px; }
 .opt-group { margin-top: 16px; }
+.ings { display: flex; flex-wrap: wrap; gap: 6px; }
+.ing { border: 1px solid #D1D5DB; background: #fff; color: inherit; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 14px; cursor: pointer; }
+.ing.off { background: #FEF2F2; border-color: #FCA5A5; color: #B91C1C; font-weight: 700; }
+.ing.fixed { background: #F3F4F6; color: #4B5563; cursor: default; }
 .opt-group .head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .opt-group .head b { font-size: 16px; }
 .opt { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid #F3F4F6; cursor: pointer; }

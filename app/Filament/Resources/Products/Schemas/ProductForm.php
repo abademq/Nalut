@@ -62,6 +62,24 @@ class ProductForm
                     ->rows(3)
                     ->columnSpanFull(),
 
+                Repeater::make('ingredients')
+                    ->label('المكوّنات')
+                    ->helperText('تطلع للزبون تحت الصنف. اللي «ينشال» الزبون يقدر يطلبه بدونه (بدون بصل، بدون مايونيز...).')
+                    ->schema([
+                        TextInput::make('name')->label('المكوّن')->required()->maxLength(60),
+                        Toggle::make('removable')->label('الزبون يقدر يشيله')->default(true)->inline(false),
+                    ])
+                    ->columns(2)
+                    ->grid(2)
+                    ->defaultItems(0)
+                    ->maxItems(Product::MAX_INGREDIENTS)
+                    ->reorderable()
+                    ->collapsible()
+                    ->itemLabel(fn (array $state): ?string => ($state['name'] ?? null) ? ($state['name'].(($state['removable'] ?? true) ? '' : ' (أساسي)')) : null)
+                    ->addActionLabel('+ مكوّن')
+                    ->dehydrateStateUsing(fn ($state) => Product::normalizeIngredients(array_values((array) $state)))
+                    ->columnSpanFull(),
+
                 FileUpload::make('images')
                     ->label('صور المنتج')
                     ->helperText('الصورة الأولى هي الرئيسية — اسحب الصور لتغيير الترتيب.')

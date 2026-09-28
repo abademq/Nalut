@@ -55,7 +55,10 @@ class CartBuilder
                 }
             }
 
-            $out[] = ['product' => new ProductResource($p), 'quantity' => $qty, 'note' => $l['note'] ?? null, 'options' => $options];
+            // «بدون» اللي لسه تنشال بس — لو المتجر غيّر المكوّنات الزبون يشوفها في الصنف
+            $remove = array_values(array_intersect(OrderService::selectedRemovals($l), $p->removableIngredients()));
+
+            $out[] = ['product' => new ProductResource($p), 'quantity' => $qty, 'note' => $l['note'] ?? null, 'options' => $options, 'remove' => $remove];
         }
 
         return [

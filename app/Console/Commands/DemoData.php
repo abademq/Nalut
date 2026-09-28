@@ -233,6 +233,7 @@ class DemoData extends Command
             'is_visible' => ! ($p['hidden'] ?? false),
             'sold_out_at' => array_key_exists('stock', $p) && $p['stock'] <= 0 ? now() : null,
             'images' => $images ?: null,
+            'ingredients' => Product::normalizeIngredients($p['ingredients'] ?? []) ?: null,
             'sort' => $p['sort'] ?? 0,
         ]);
 
@@ -269,20 +270,21 @@ class DemoData extends Command
         $extras = ['name' => 'الإضافات', 'max' => 4, 'values' => [
             ['زيادة صوص', 0, 1], ['زيادة ثوم', 0, 1], ['سيخ كباب إضافي', 5, 3], ['جبنة', 1.5, 1], ['بطاطا', 2, 2], ['هريسة', 0, 1, false],
         ]];
-        $without = ['name' => 'بدون', 'max' => 5, 'values' => [['بدون بصل', 0], ['بدون مخلل', 0], ['بدون هريسة', 0], ['بدون صوص', 0]]];
 
         // ---- 1) مطعم كامل: كل أنواع الإضافات ----
         $s = $this->store($types, 'food', ['name' => 'مطعم الجبل (تجريبي)', 'description' => 'شاورما، برجر، بيتزا — مطعم تجريبي فيه كل أنواع الإضافات',
             'min_order' => 10, 'prep_time_minutes' => 20]);
         $sec = $this->sections($s, ['شاورما', 'برجر', 'بيتزا', 'وجبات', 'مشروبات', 'حلويات']);
-        $shawarma = $this->product($s, $sec, ['name' => 'شاورما دجاج', 'price' => 12, 'section' => 'شاورما', 'desc' => 'خبز صاج، ثوم، مخلل', 'images' => 3, 'options' => [$size, $extras, $without]]);
+        $shawarma = $this->product($s, $sec, ['name' => 'شاورما دجاج', 'price' => 12, 'section' => 'شاورما', 'desc' => 'شاورما على الفحم', 'images' => 3, 'options' => [$size, $extras],
+            'ingredients' => [['name' => 'خبز صاج', 'removable' => false], ['name' => 'دجاج', 'removable' => false], 'ثوم', 'مخلل', 'بطاطا', 'هريسة', 'بصل']]);
         $this->product($s, $sec, ['name' => 'شاورما لحم', 'price' => 15, 'discount' => 13, 'section' => 'شاورما', 'desc' => 'عرض: سعر مخفّض', 'options' => [$size, $extras]]);
         $this->product($s, $sec, ['name' => 'صحن شاورما عائلي', 'price' => 45, 'section' => 'شاورما', 'desc' => 'أقصى 2 في الطلب', 'max' => 2]);
-        $this->product($s, $sec, ['name' => 'برجر كلاسيك', 'price' => 18, 'section' => 'برجر', 'options' => [
-            ['name' => 'نوع الخبز', 'type' => 'single', 'values' => [['خبز عادي', 0], ['خبز بريوش', 2], ['بدون خبز (خس)', 0]]],
-            ['name' => 'درجة الاستواء', 'type' => 'single', 'required' => true, 'values' => [['متوسط', 0], ['مستوي زيادة', 0]]],
-            ['name' => 'إضافات البرجر', 'max' => 3, 'values' => [['شريحة لحم إضافية', 7, 2], ['بيض', 1.5, 2], ['جبنة شيدر', 2, 3], ['هالبينو', 1]]],
-        ]]);
+        $this->product($s, $sec, ['name' => 'برجر كلاسيك', 'price' => 18, 'section' => 'برجر',
+            'ingredients' => [['name' => 'شريحة لحم', 'removable' => false], 'جبنة', 'خس', 'طماطم', 'بصل', 'مخلل', 'كاتشب', 'مايونيز'], 'options' => [
+                ['name' => 'نوع الخبز', 'type' => 'single', 'values' => [['خبز عادي', 0], ['خبز بريوش', 2], ['بدون خبز (خس)', 0]]],
+                ['name' => 'درجة الاستواء', 'type' => 'single', 'required' => true, 'values' => [['متوسط', 0], ['مستوي زيادة', 0]]],
+                ['name' => 'إضافات البرجر', 'max' => 3, 'values' => [['شريحة لحم إضافية', 7, 2], ['بيض', 1.5, 2], ['جبنة شيدر', 2, 3], ['هالبينو', 1]]],
+            ]]);
         $this->product($s, $sec, ['name' => 'بيتزا مارجريتا', 'price' => 25, 'section' => 'بيتزا', 'images' => 2, 'options' => [
             ['name' => 'الحجم', 'type' => 'single', 'required' => true, 'values' => [['صغير', 0], ['وسط', 8], ['كبير', 15], ['عائلي', 25, 1, false]]],
             ['name' => 'العجينة', 'type' => 'single', 'required' => true, 'values' => [['رقيقة', 0], ['سميكة', 2], ['محشية جبنة', 6]]],

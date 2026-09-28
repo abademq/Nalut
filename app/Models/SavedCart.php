@@ -30,6 +30,7 @@ class SavedCart extends Model
                 'quantity' => max(1, (int) ($i['quantity'] ?? 1)),
                 'note' => $i['note'] ?? null,
                 'options' => array_values((array) ($i['options'] ?? [])),
+                'remove' => array_values((array) ($i['remove'] ?? [])),
             ])
             ->filter(fn ($i) => $i['product_id'] > 0)
             ->values()->all();

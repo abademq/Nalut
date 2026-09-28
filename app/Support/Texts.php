@@ -105,6 +105,7 @@ class Texts
             'msg.option_required' => ['رسائل الطلب', 'اختيار «{option}» مطلوب في «{name}».', '{option} الخيار · {name} المنتج'],
             'msg.option_too_many' => ['رسائل الطلب', 'تجاوزت الحد المسموح في «{option}».', '{option} = الخيار'],
             'msg.option_max_qty' => ['رسائل الطلب', '«{value}» يتزاد لحد {max} بس.', '{value} الإضافة · {max} أقصى عدد'],
+            'msg.ingredient_not_removable' => ['رسائل الطلب', '«{value}» ما ينشالش من «{name}» — المتجر غيّر المكوّنات، راجع الصنف وعاود.', '{value} المكوّن · {name} المنتج'],
             'msg.option_unavailable' => ['رسائل الطلب', '«{value}» مش متوفر توّا في «{name}».', '{value} الإضافة · {name} المنتج'],
             'msg.cancel_too_late' => ['رسائل الطلب', 'المتجر بدا يحضّر طلبك — ما عادش ينلغى. تواصل مع المتجر.'],
             'msg.cancel_disabled' => ['رسائل الطلب', 'إلغاء الطلب من التطبيق مش متاح. تواصل مع الدعم.'],

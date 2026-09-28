@@ -46,6 +46,8 @@ class OrderController extends Controller
             'items.*.options' => ['nullable', 'array', 'max:40'],
             'items.*.options.*.id' => ['required', 'integer'],
             'items.*.options.*.qty' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'items.*.remove' => ['nullable', 'array', 'max:30'],
+            'items.*.remove.*' => ['string', 'max:60'],
         ]);
 
         $order = $this->orders->create($request->user(), $data);
@@ -74,6 +76,8 @@ class OrderController extends Controller
             'items.*.options' => ['nullable', 'array', 'max:40'],
             'items.*.options.*.id' => ['required', 'integer'],
             'items.*.options.*.qty' => ['nullable', 'integer', 'min:1', 'max:20'],
+            'items.*.remove' => ['nullable', 'array', 'max:30'],
+            'items.*.remove.*' => ['string', 'max:60'],
         ]);
 
         return response()->json($this->orders->quote($request->user(), $data));

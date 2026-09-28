@@ -13,7 +13,7 @@ class Product extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'store_id', 'menu_section_id', 'name', 'description', 'image', 'images',
+        'store_id', 'menu_section_id', 'name', 'description', 'ingredients', 'image', 'images',
         'price', 'discount_price', 'is_available', 'is_visible', 'sort',
         'track_stock', 'stock_quantity', 'max_per_order', 'low_stock_alert', 'sold_out_at',
     ];
@@ -28,8 +28,56 @@ class Product extends Model
             'track_stock' => 'boolean',
             'stock_quantity' => 'integer',
             'images' => 'array',
+            'ingredients' => 'array',
             'sold_out_at' => 'datetime',
         ];
+    }
+
+    /** أقصى عدد مكوّنات للصنف */
+    public const MAX_INGREDIENTS = 30;
+
+    /** كلمة «بدون» اللي تطلع في الطلب والواصل: «بدون: بصل، مايونيز» */
+    public const REMOVED_LABEL = 'بدون';
+
+    /**
+     * ينظّف قائمة المكوّنات اللي جاية من اللوحة أو تطبيق المتجر.
+     * يقبل: ["بصل", ...] أو [{name, removable}] أو JSON نص.
+     *
+     * @return array<int, array{name: string, removable: bool}>
+     */
+    public static function normalizeIngredients(mixed $raw): array
+    {
+        if (is_string($raw)) {
+            $raw = json_decode($raw, true);
+        }
+
+        $out = [];
+        foreach ((array) $raw as $i) {
+            $name = trim((string) (is_array($i) ? ($i['name'] ?? '') : $i));
+            $name = mb_substr(preg_replace('/\s+/u', ' ', $name), 0, 60);
+            if ($name === '' || isset($out[$name])) {
+                continue;
+            }
+            $out[$name] = ['name' => $name, 'removable' => is_array($i) ? filter_var($i['removable'] ?? true, FILTER_VALIDATE_BOOLEAN) : true];
+            if (count($out) >= self::MAX_INGREDIENTS) {
+                break;
+            }
+        }
+
+        return array_values($out);
+    }
+
+    /** @return array<int, array{name: string, removable: bool}> */
+    public function ingredientsList(): array
+    {
+        return self::normalizeIngredients($this->ingredients ?? []);
+    }
+
+    /** أسماء المكوّنات اللي الزبون يقدر يشيلها */
+    public function removableIngredients(): array
+    {
+        return array_values(array_map(fn ($i) => $i['name'],
+            array_filter($this->ingredientsList(), fn ($i) => $i['removable'])));
     }
 
     /** أقصى عدد صور للمنتج */

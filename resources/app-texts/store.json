@@ -1130,6 +1130,36 @@
   "vars": null
  },
  {
+  "text": "المكوّنات",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "تطلع للزبون، ويقدر يطلب «بدون» أي مكوّن. اضغط على المكوّن باش تخليه أساسي (ما ينشالش) 🔒",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "بصل، طماطم، مايونيز",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "أضف",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "الزبون يقدر يشيله — اضغط باش تخليه أساسي",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "أساسي — ما ينشالش",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
   "text": "ما قدرناش نفتحو الصور. تأكد من الصلاحيات.",
   "group": "product_form_screen",
   "vars": null
@@ -1225,7 +1255,7 @@
   "vars": null
  },
  {
-  "text": "المكوّنات، الحجم، أي تفاصيل تهم الزبون",
+  "text": "الحجم، طريقة التحضير، أي تفاصيل تهم الزبون",
   "group": "product_form_screen",
   "vars": null
  },

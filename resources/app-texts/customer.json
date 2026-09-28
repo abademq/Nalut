@@ -10,6 +10,11 @@
   "vars": "{statusCode}"
  },
  {
+  "text": "بدون",
+  "group": "cart",
+  "vars": null
+ },
+ {
   "text": "، ",
   "group": "cart",
   "vars": null
@@ -1338,6 +1343,26 @@
   "text": "أضف · {qty} د.ل",
   "group": "store_screen",
   "vars": "{qty}"
+ },
+ {
+  "text": "المكوّنات",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "اضغط على أي مكوّن تبيه يتشال",
+  "group": "store_screen",
+  "vars": null
+ },
+ {
+  "text": "بدون {name}",
+  "group": "store_screen",
+  "vars": "{name}"
+ },
+ {
+  "text": "بدون: {list}",
+  "group": "store_screen",
+  "vars": "{list}"
  },
  {
   "text": "مجاناً",
