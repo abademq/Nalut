@@ -150,6 +150,19 @@ class ProductsTable
                             ->send();
                     }),
 
+                // نسخة من الصنف بكل تفاصيله (صور، إضافات، مكوّنات) — تبدا مخفية وتفتح للتعديل
+                Action::make('duplicate')
+                    ->label('نسخ الصنف')
+                    ->icon('heroicon-o-document-duplicate')
+                    ->color('gray')
+                    ->requiresConfirmation()
+                    ->modalDescription('نعملو نسخة بكل التفاصيل (الصور، الإضافات، المكوّنات، الأقسام). النسخة تبدا مخفية عن الزبائن لين تعدّلها وتظهرها.')
+                    ->action(function (Product $record, $livewire) {
+                        $copy = $record->duplicate();
+                        Notification::make()->title('تم النسخ')->body('عدّل النسخة وبعدين ظهّرها للزبائن.')->success()->send();
+                        $livewire->redirect($livewire::getResource()::getUrl('edit', ['record' => $copy]));
+                    }),
+
                 Action::make('toggleVisible')
                     ->label(fn (Product $record) => $record->is_visible ? 'إخفاء عن الزبائن' : 'إظهار للزبائن')
                     ->icon(fn (Product $record) => $record->is_visible ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')

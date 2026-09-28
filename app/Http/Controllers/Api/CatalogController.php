@@ -86,7 +86,7 @@ class CatalogController extends Controller
             'type',
             'sections',
             // المخفي عن الزبائن ما يطلعش أصلاً (غير المتوفر يطلع «غير متوفر»)
-            'products' => fn ($q) => $q->visible()->orderBy('sort')->with('options.values'),
+            'products' => fn ($q) => $q->visible()->orderBy('sort')->with(['options.values', 'extraSections:id']),
         ]);
 
         return response()->json([

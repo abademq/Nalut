@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class MenuSection extends Model
@@ -23,5 +24,11 @@ class MenuSection extends Model
     public function products(): HasMany
     {
         return $this->hasMany(Product::class)->orderBy('sort');
+    }
+
+    /** أصناف من أقسام ثانية تظهر كمان هني (مثلاً قسم «العروض») */
+    public function extraProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'menu_section_product');
     }
 }

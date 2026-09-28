@@ -41,6 +41,16 @@ class ProductForm
                     ->searchable()
                     ->helperText($storeId ? 'الأقسام من صفحة «أقسام القائمة»' : 'اختار المتجر أول'),
 
+                // نفس الصنف يطلع كمان في أقسام ثانية (مثلاً «العروض») — بدون ما نكرروه
+                Select::make('extraSections')
+                    ->label('يظهر كمان في الأقسام')
+                    ->relationship('extraSections', 'name',
+                        fn ($query, $get) => $query->where('store_id', $store($get) ?? 0)
+                            ->where('menu_sections.id', '!=', (int) $get('menu_section_id')))
+                    ->multiple()
+                    ->preload()
+                    ->helperText('اختياري: الصنف نفسه (نفس السعر والمخزون) يطلع تحت أكثر من قسم عند الزبون.'),
+
                 TextInput::make('name')
                     ->label('اسم المنتج')
                     ->required(),

@@ -615,8 +615,10 @@ async function storePage({ params, alive }) {
   const s = res.data;
   const open = s.is_accepting;
   const products = s.products || [];
-  const sections = (s.sections || []).map((sec) => ({ ...sec, items: products.filter((p) => p.section_id === sec.id) })).filter((x) => x.items.length);
-  const loose = products.filter((p) => !sections.some((sec) => sec.id === p.section_id));
+  // الصنف ممكن يظهر في أكثر من قسم (مثلاً «شاورما» و«العروض»)
+  const secIds = (p) => (p.section_ids && p.section_ids.length) ? p.section_ids : (p.section_id ? [p.section_id] : []);
+  const sections = (s.sections || []).map((sec) => ({ ...sec, items: products.filter((p) => secIds(p).includes(sec.id)) })).filter((x) => x.items.length);
+  const loose = products.filter((p) => !sections.some((sec) => secIds(p).includes(sec.id)));
   if (loose.length) sections.push({ id: 0, name: sections.length ? 'أصناف أخرى' : 'القائمة', items: loose });
 
   setTop({ title: s.name, back: true });

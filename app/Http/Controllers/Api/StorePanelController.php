@@ -225,7 +225,7 @@ class StorePanelController extends Controller
     public function products(Request $request): JsonResponse
     {
         $store = $this->store($request);
-        $products = $store->products()->with('options.values')->orderBy('sort')->get();
+        $products = $store->products()->with(['options.values', 'extraSections:id'])->orderBy('sort')->get();
 
         return response()->json([
             'data' => ProductResource::collection($products),
@@ -252,6 +252,8 @@ class StorePanelController extends Controller
             'low_stock_alert' => ['nullable', 'integer', 'min:0'],
             // المكوّنات: مصفوفة أو JSON نص (من multipart)
             'ingredients' => ['nullable'],
+            // أقسام إضافية يظهر فيها: مصفوفة أو JSON نص (من multipart)
+            'extra_section_ids' => ['nullable'],
             ...self::IMAGE_RULES,
         ]);
 
@@ -264,7 +266,11 @@ class StorePanelController extends Controller
 
         $data['ingredients'] = Product::normalizeIngredients($data['ingredients'] ?? []);
 
+        unset($data['extra_section_ids']);
         $product = $store->products()->create($data);
+        if ($request->filled('extra_section_ids')) {
+            $product->syncExtraSections($request->input('extra_section_ids'));
+        }
 
         return response()->json(['data' => new ProductResource($product)], 201);
     }
@@ -288,13 +294,15 @@ class StorePanelController extends Controller
             'low_stock_alert' => ['nullable', 'integer', 'min:0'],
             // المكوّنات: مصفوفة أو JSON نص (من multipart)
             'ingredients' => ['nullable'],
+            // أقسام إضافية يظهر فيها: مصفوفة أو JSON نص (من multipart)
+            'extra_section_ids' => ['nullable'],
             ...self::IMAGE_RULES,
         ]);
 
         [$images, $removed] = $this->resolveImages($request, (array) $product->images, $product->store_id);
         unset($data['image'], $data['images'], $data['remove_images'], $data['main_image']);
 
-        unset($data['ingredients']);
+        unset($data['ingredients'], $data['extra_section_ids']);
         $product->fill(array_filter($data, fn ($v) => ! is_null($v)));
 
         if ($request->exists('ingredients')) {
@@ -314,6 +322,13 @@ class StorePanelController extends Controller
         $product->images = $images;
         $product->save();
 
+        // الأقسام الإضافية: لو انبعتت نبدّلوها، ولو القسم الأساسي تغيّر نشيلوه منها
+        if ($request->exists('extra_section_ids')) {
+            $product->syncExtraSections($request->input('extra_section_ids'));
+        } elseif ($product->wasChanged('menu_section_id') && $product->menu_section_id) {
+            $product->extraSections()->detach($product->menu_section_id);
+        }
+
         // نمسحو الملفات بعد ما ينحفظ المنتج — لو الحفظ فشل ما نخسروش الصور
         Storage::disk('public')->delete($removed);
 
@@ -329,6 +344,19 @@ class StorePanelController extends Controller
         $sync->sync($product, $data['options']);
 
         return response()->json(['data' => new ProductResource($product->fresh()->load('options.values'))]);
+    }
+
+    /** نسخة من الصنف بكل تفاصيله — تبدا مخفية لين المتجر يعدّلها */
+    public function duplicateProduct(Request $request, Product $product): JsonResponse
+    {
+        abort_unless($product->store_id === $this->store($request)->id, 403);
+
+        $copy = $product->duplicate();
+
+        return response()->json([
+            'message' => 'تم نسخ الصنف — النسخة مخفية عن الزبائن لين تعدّلها وتظهرها.',
+            'data' => new ProductResource($copy->load('extraSections:id')),
+        ], 201);
     }
 
     public function destroyProduct(Request $request, Product $product): JsonResponse

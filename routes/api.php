@@ -87,6 +87,7 @@ Route::prefix('v1')->group(function () {
             Route::post('products', [StorePanelController::class, 'storeProduct']);
             Route::post('products/{product}', [StorePanelController::class, 'updateProduct']);
             Route::put('products/{product}/options', [StorePanelController::class, 'syncProductOptions']);
+            Route::post('products/{product}/duplicate', [StorePanelController::class, 'duplicateProduct']);
             Route::delete('products/{product}', [StorePanelController::class, 'destroyProduct']);
             Route::get('sections', [StorePanelController::class, 'sections']);
             Route::post('sections', [StorePanelController::class, 'storeSection']);

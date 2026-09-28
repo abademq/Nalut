@@ -37,6 +37,8 @@ class ProductResource extends JsonResource
             'state' => $this->state(),
             'sold_out' => $this->isOutOfStock(),
             'section_id' => $this->menu_section_id,
+            // كل الأقسام اللي يظهر فيها (الأساسي أول) — الصنف يطلع تحت كل واحد منهم
+            'section_ids' => $this->sectionIds(),
             'options' => $this->whenLoaded('options', fn () => $this->options->map(fn ($o) => [
                 'id' => $o->id,
                 'name' => $o->name,

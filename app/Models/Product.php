@@ -5,8 +5,12 @@ namespace App\Models;
 use App\Support\Options;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class Product extends Model
 {
@@ -143,6 +147,81 @@ class Product extends Model
     public function options(): HasMany
     {
         return $this->hasMany(ProductOption::class)->orderBy('sort');
+    }
+
+    /** أقسام إضافية يظهر فيها الصنف (غير قسمه الأساسي) — مثلاً «العروض» */
+    public function extraSections(): BelongsToMany
+    {
+        return $this->belongsToMany(MenuSection::class, 'menu_section_product');
+    }
+
+    /** كل الأقسام اللي يظهر فيها: الأساسي أول، وبعده الإضافية */
+    public function sectionIds(): array
+    {
+        $extra = $this->relationLoaded('extraSections')
+            ? $this->extraSections->pluck('id')->all()
+            : $this->extraSections()->pluck('menu_sections.id')->all();
+
+        return array_values(array_unique(array_filter([$this->menu_section_id, ...$extra])));
+    }
+
+    /**
+     * الأقسام الإضافية — بس أقسام نفس المتجر، وبدون القسم الأساسي.
+     *
+     * @param  array<int|string>|string|null  $ids  (من multipart ممكن تجي JSON نص)
+     */
+    public function syncExtraSections(array|string|null $ids): void
+    {
+        if (is_string($ids)) {
+            $ids = json_decode($ids, true) ?: [];
+        }
+        $valid = MenuSection::where('store_id', $this->store_id)
+            ->whereIn('id', array_map('intval', (array) $ids))
+            ->where('id', '!=', (int) $this->menu_section_id)
+            ->pluck('id')->all();
+
+        $this->extraSections()->sync($valid);
+        $this->unsetRelation('extraSections');
+    }
+
+    /**
+     * نسخة جديدة من الصنف بكل تفاصيله: الصور (نسخ ملفات جديدة)، الإضافات، المكوّنات، الأقسام.
+     * النسخة تبدا مخفية عن الزبائن — المتجر يعدّلها ويظهرها لما تجهز.
+     */
+    public function duplicate(): self
+    {
+        return DB::transaction(function () {
+            $disk = Storage::disk('public');
+
+            // كل نسخة عندها ملفات صورها — حذف صورة من وحدة ما يمسحهاش من الثانية
+            $images = [];
+            foreach ((array) $this->images as $path) {
+                if (! $path || ! $disk->exists($path)) {
+                    continue;
+                }
+                $new = dirname($path).'/'.Str::random(24).'.'.pathinfo($path, PATHINFO_EXTENSION);
+                $disk->copy($path, $new);
+                $images[] = $new;
+            }
+
+            $copy = $this->replicate(['image', 'images', 'sold_out_at', 'deleted_at']);
+            $copy->name = mb_substr($this->name.' (نسخة)', 0, 120);
+            $copy->images = $images ?: null;
+            $copy->is_visible = false;
+            $copy->sort = (int) static::where('store_id', $this->store_id)->max('sort') + 1;
+            $copy->save();
+
+            foreach ($this->options()->with('values')->get() as $o) {
+                $newOption = $copy->options()->create($o->only(['name', 'type', 'is_required', 'max_choices', 'sort']));
+                foreach ($o->values as $v) {
+                    $newOption->values()->create($v->only(['name', 'extra_price', 'max_qty', 'is_available', 'sort']));
+                }
+            }
+
+            $copy->extraSections()->sync($this->extraSections()->pluck('menu_sections.id'));
+
+            return $copy->fresh(['options.values']);
+        });
     }
 
     public function effectivePrice(): float

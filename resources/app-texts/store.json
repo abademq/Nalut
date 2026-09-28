@@ -1275,6 +1275,16 @@
   "vars": null
  },
  {
+  "text": "يظهر كمان في الأقسام (اختياري)",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
+  "text": "نفس الصنف بنفس السعر والمخزون — مثلاً تحطه في «العروض» زادة.",
+  "group": "product_form_screen",
+  "vars": null
+ },
+ {
   "text": "السعر (د.ل) *",
   "group": "product_form_screen",
   "vars": null
@@ -1403,6 +1413,11 @@
   "text": "الكمية توّا {qty} — المنتج مفتوح للطلب",
   "group": "products_tab",
   "vars": "{qty}"
+ },
+ {
+  "text": "تم نسخ الصنف — النسخة مخفية عن الزبائن لين تعدّلها وتظهرها.",
+  "group": "products_tab",
+  "vars": null
  },
  {
   "text": "حذف المنتج",
@@ -1561,6 +1576,11 @@
  },
  {
   "text": "إظهار للزبائن",
+  "group": "products_tab",
+  "vars": null
+ },
+ {
+  "text": "نسخ الصنف",
   "group": "products_tab",
   "vars": null
  },
