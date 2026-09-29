@@ -31,6 +31,25 @@ class DriverLocationService
         $index  = array_filter($index, fn ($ts) => $ts >= $cutoff);
 
         Cache::put(self::INDEX_KEY, $index, self::TTL * 5);
+
+        self::persist($driverId, $lat, $lng);
+    }
+
+    /**
+     * «آخر موقع معروف» — نكتبوه في جدول السائق مرة كل دقيقة بالكثير
+     * (مش مع كل تحديث)، باش الخريطة توري وين كان السائق بعد ما يطفي.
+     */
+    private static function persist(int $driverId, float $lat, float $lng): void
+    {
+        if (! Cache::add("driver:loc:saved:$driverId", 1, 60)) {
+            return;
+        }
+
+        \App\Models\DriverProfile::where('user_id', $driverId)->update([
+            'current_lat'         => $lat,
+            'current_lng'         => $lng,
+            'location_updated_at' => now(),
+        ]);
     }
 
     public static function get(int $driverId): ?array

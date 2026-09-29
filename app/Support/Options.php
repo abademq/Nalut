@@ -225,6 +225,9 @@ class Options
             'show.driver.balance' => ['type' => 'bool', 'default' => true, 'label' => 'رصيده والتسويات (حسابي)'],
 
             // ===== التتبّع =====
+            'tracking.map_last_seen_hours' => ['type' => 'int', 'default' => 24, 'min' => 0, 'max' => 168,
+                'label' => 'خريطة اللوحة: نوري آخر موقع للسائق غير المتاح لمدة (ساعات)',
+                'help' => 'السائق اللي طفّى يطلع رمادي في آخر مكان كان فيه. 0 = ما نوروش إلا المتاحين.'],
             'tracking.refresh_seconds' => ['type' => 'int', 'default' => 5, 'min' => 3, 'max' => 60, 'public' => true,
                 'label' => 'تحديث خريطة التتبّع عند الزبون كل (ثانية)',
                 'help' => 'أقل = أسرع لكن ضغط أكثر على السيرفر.'],

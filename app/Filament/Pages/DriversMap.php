@@ -8,7 +8,7 @@ use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
 /**
- * خريطة حيّة للسائقين — البيانات تجي من DriverMapController
+ * خريطة حيّة: السائقين (المتاح + آخر موقع) والمتاجر ومناطق التوصيل — البيانات تجي من DriverMapController
  * كل 15 ثانية، فالصفحة نفسها ما تستعلمش من قاعدة البيانات.
  */
 class DriversMap extends Page
@@ -28,11 +28,11 @@ class DriversMap extends Page
 
     public static function getNavigationLabel(): string
     {
-        return 'خريطة السائقين';
+        return 'خريطة العمليات';
     }
 
     public function getTitle(): string
     {
-        return 'خريطة السائقين';
+        return 'خريطة العمليات';
     }
 }
