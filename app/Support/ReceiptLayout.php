@@ -102,7 +102,7 @@ class ReceiptLayout
         $on = fn (string $k, bool $d = true) => filter_var($old($k, $d ? '1' : '0'), FILTER_VALIDATE_BOOLEAN);
         $scale = (float) Setting::get('receipt.font_scale', '1') ?: 1;
         $sz = fn (float $v) => (int) round($v * $scale);
-        $header = (string) Setting::get('receipt.header', 'توصيل نالوت');
+        $header = (string) Setting::get('receipt.header', 'ازانكس');
 
         $b = [];
         if ($on('show_logo', ! $store)) {

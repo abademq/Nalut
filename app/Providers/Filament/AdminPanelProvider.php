@@ -30,8 +30,15 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(Login::class)
+            // هوية ازانكس: الأخضر #075C52 أساسي، والبرتقالي #FF7900 للتنبيه/الإبراز
+            ->brandName('ازانكس')
+            ->brandLogo(fn () => asset('brand/azanx-logo.svg'))
+            ->darkModeBrandLogo(fn () => asset('brand/azanx-logo-white.svg'))
+            ->brandLogoHeight('2rem')
+            ->favicon(fn () => asset('brand/favicon.png'))
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => \App\Support\BrandColors::GREEN,
+                'warning' => \App\Support\BrandColors::ORANGE,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

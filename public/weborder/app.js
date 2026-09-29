@@ -424,8 +424,8 @@ async function render() {
 
 function setTop(opts) {
   if (!opts) {
-    const logo = C.logo ? `<img src="${esc(C.logo)}" alt="">` : '<span class="logo-fallback">🛵</span>';
-    topbar.innerHTML = `<a class="brand" data-go="/">${logo}<span>${esc(C.name || '')}</span></a><span class="spacer"></span>`;
+    // شعار ازانكس ثابت (من ملفات الهوية) — مش من الشعار المرفوع للفواتير
+    topbar.innerHTML = `<a class="brand" data-go="/"><img class="wordmark" src="/brand/azanx-logo.svg" alt="${esc(C.name || 'ازانكس')}"></a><span class="spacer"></span>`;
     return;
   }
   topbar.innerHTML = `${opts.back ? `<button class="iconbtn" id="back" aria-label="رجوع">${ICONS.back}</button>` : ''}
@@ -1698,7 +1698,7 @@ route('/support/:id', async ({ params, alive, onLeave }) => {
 
 route('/login', async ({ query }) => {
   if (Auth.in) return go(query.next || '/', true);
-  const logo = C.logo ? `<img class="logo-big" src="${esc(C.logo)}" alt="">` : '<div class="logo-big fallback">🛵</div>';
+  const logo = '<img class="logo-word" src="/brand/azanx-logo.svg" alt="ازانكس">';
   let mode = 'password'; // password | otp | signup
   let step = 'phone';    // phone | code
   let phone = LS.get('phone', '');
@@ -1708,7 +1708,7 @@ route('/login', async ({ query }) => {
 
   function draw(err = '') {
     view.innerHTML = `<div class="auth">
-      ${logo}<h1>${esc(C.name || '')}</h1><p class="center muted" style="margin:0 0 16px">اطلب من المتصفح — بدون تطبيق</p>
+      ${logo}<p class="center" style="margin:0 0 4px;color:var(--brand);font-weight:800;font-size:16px">${esc(C.tagline || 'ازانكس… طلبك لعند باب الحوش')}</p><p class="center muted" style="margin:0 0 16px">اطلب من المتصفح — بدون تطبيق</p>
       <div class="card">
         ${step === 'phone' ? `<div class="tabs">
           <button data-mode="password" class="${mode === 'password' ? 'on' : ''}">كلمة المرور</button>

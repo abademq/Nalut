@@ -175,11 +175,6 @@
   "vars": null
  },
  {
-  "text": "توصيل نالوت",
-  "group": "main",
-  "vars": null
- },
- {
   "text": "عنوان",
   "group": "models",
   "vars": null
@@ -905,12 +900,12 @@
   "vars": null
  },
  {
-  "text": "اطلب من مطاعم نالوت",
+  "text": "اطلب ازانكس",
   "group": "home_screen",
   "vars": null
  },
  {
-  "text": "توصيل سريع لباب بيتك",
+  "text": "وخلّي الباقي علينا",
   "group": "home_screen",
   "vars": null
  },
@@ -966,11 +961,6 @@
  },
  {
   "text": "سائق",
-  "group": "login_screen",
-  "vars": null
- },
- {
-  "text": "اطلب من مطاعم ومتاجر نالوت",
   "group": "login_screen",
   "vars": null
  },

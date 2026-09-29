@@ -39,6 +39,7 @@ class WebOrderController extends Controller
                 'api' => '/api/v1',
                 'name' => $about['name'] ?? config('app.name'),
                 'logo' => BrandingSettings::logoUrl(),
+                'tagline' => $about['tagline'] ?? '',
                 'recaptcha' => Recaptcha::configured() ? Recaptcha::siteKey() : null,
                 'notice' => (string) Options::get('web.notice'),
                 'whatsapp' => $about['whatsapp'] ?? '',
@@ -62,8 +63,8 @@ class WebOrderController extends Controller
             'start_url' => $base.'/',
             'scope' => $base.'/',
             'display' => 'standalone',
-            'background_color' => '#F7F7F9',
-            'theme_color' => '#D84315',
+            'background_color' => '#075C52',
+            'theme_color' => '#075C52',
             'icons' => [
                 ['src' => '/weborder/icon-192.png', 'sizes' => '192x192', 'type' => 'image/png'],
                 ['src' => '/weborder/icon-512.png', 'sizes' => '512x512', 'type' => 'image/png'],

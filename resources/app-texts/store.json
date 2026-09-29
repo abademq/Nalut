@@ -90,11 +90,6 @@
   "vars": "{generatedAt}"
  },
  {
-  "text": "توصيل نالوت",
-  "group": "daily_report",
-  "vars": null
- },
- {
   "text": "بدون: {list}",
   "group": "item_extras",
   "vars": "{list}"
@@ -815,12 +810,12 @@
   "vars": null
  },
  {
-  "text": "متجري",
+  "text": "تاجر",
   "group": "login_screen",
   "vars": null
  },
  {
-  "text": "منصة توصيل نالوت",
+  "text": "إدارة متجرك وطلباتك",
   "group": "login_screen",
   "vars": null
  },
@@ -906,6 +901,11 @@
  },
  {
   "text": "سجل الطلبات",
+  "group": "order_history_screen",
+  "vars": null
+ },
+ {
+  "text": "متجري",
   "group": "order_history_screen",
   "vars": null
  },

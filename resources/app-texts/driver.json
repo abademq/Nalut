@@ -75,7 +75,32 @@
   "vars": null
  },
  {
-  "text": "سائق نالوت",
+  "text": "شغّل الموقع (GPS) في الهاتف وعاود.",
+  "group": "location_service",
+  "vars": null
+ },
+ {
+  "text": "لازم تسمح للتطبيق يوصل للموقع باش تكون متاح.",
+  "group": "location_service",
+  "vars": null
+ },
+ {
+  "text": "إذن الموقع مقفول من الإعدادات — افتحه للتطبيق وعاود.",
+  "group": "location_service",
+  "vars": null
+ },
+ {
+  "text": "أنت متاح لاستقبال الطلبات",
+  "group": "location_service",
+  "vars": null
+ },
+ {
+  "text": "نشاركو موقعك مع الإدارة والزبون وأنت متاح بس.",
+  "group": "location_service",
+  "vars": null
+ },
+ {
+  "text": "ازانكس كابتن",
   "group": "main",
   "vars": null
  },
@@ -655,7 +680,12 @@
   "vars": null
  },
  {
-  "text": "منصة توصيل نالوت",
+  "text": "كابتن",
+  "group": "login_screen",
+  "vars": null
+ },
+ {
+  "text": "تطبيق شركاء التوصيل",
   "group": "login_screen",
   "vars": null
  },

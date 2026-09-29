@@ -51,7 +51,7 @@ class BrandingSettings extends Page
 
     private const GLOBAL_DEFAULTS = [
         'brand.logo'         => '',
-        'receipt.header'     => 'توصيل نالوت',
+        'receipt.header'     => 'ازانكس',
         'receipt.font_scale' => '1',
         'receipt.auto_print' => 'both',
     ];

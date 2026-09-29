@@ -155,7 +155,7 @@ class ListRechargeCards extends ListRecords
 
                     foreach ($cards as $c) {
                         $html .= '<div class="card">'
-                            .'<div class="brand">توصيل نالوت — كرت شحن</div>'
+                            .'<div class="brand">'.e(\App\Filament\Pages\AppSettings::values()['name']).' — كرت شحن</div>'
                             .'<div class="code">'.e(RechargeCard::format($c->code)).'</div>'
                             .'<div class="amount">'.number_format((float) $c->amount, 2).' د.ل</div>'
                             .'<div class="meta">'

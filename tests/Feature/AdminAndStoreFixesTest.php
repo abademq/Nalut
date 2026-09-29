@@ -149,7 +149,7 @@ class AdminAndStoreFixesTest extends TestCase
         $this->assertSame(['أول', 'عرض'], collect($res->json('banners'))->pluck('title')->all());
         $this->assertSame($this->store->id, $res->json('banners.1.store_id'));
         $this->assertSame('0910000001', $res->json('about.phone'));
-        $this->assertSame('توصيل نالوت', $res->json('about.name'));
+        $this->assertSame('ازانكس', $res->json('about.name'));
     }
 
     public function test_store_detail_has_phone(): void

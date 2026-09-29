@@ -11,7 +11,7 @@
 */
 
 return [
-    'android_package' => env('APP_ANDROID_PACKAGE', 'com.example.nalut_customer'),
+    'android_package' => env('APP_ANDROID_PACKAGE', 'ly.azanx.app'),
 
     // بصمات SHA-256 مفصولة بفاصلة (مفتاح الإصدار، ومفتاح Google Play لو فعّلت Play App Signing)
     'android_sha256' => array_values(array_filter(array_map('trim', explode(',', (string) env('APP_ANDROID_SHA256', ''))))),
