@@ -60,6 +60,7 @@ class MerchantPanelProvider extends PanelProvider
                 Authenticate::class,
             ])
             // صوت لما يوصل طلب جديد (لو الطلبات مفعّلة في اللوحة)
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.brand-font'))
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn () => view('filament.merchant-orders-sound'),

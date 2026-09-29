@@ -1,4 +1,6 @@
 /* موقع الطلب — نفس روح تطبيق الزبون */
+/* خط ازانكس (عناوين وأزرار) — لو الملف مش موجود يرجع لـ Cairo */
+@font-face { font-family: 'AzanX'; src: url('/brand/fonts/azanx-heavy.ttf') format('truetype'); font-weight: 400 900; font-display: swap; }
 :root {
   /* هوية ازانكس: أخضر أساسي، برتقالي للأزرار الرئيسية والأسعار */
   --brand: #075C52;
@@ -308,3 +310,6 @@ img { display: block; max-width: 100%; }
 
 .closed-site { max-width: 420px; margin: 18vh auto; text-align: center; padding: 20px; }
 .closed-logo { width: 90px; height: 90px; border-radius: 22px; margin: 0 auto 12px; }
+
+/* عناوين الهوية */
+h1, h2, h3, .section-title, .btn, .price, .floating-cart, .auth h1, .store-head h1 { font-family: 'AzanX', 'Cairo', system-ui, sans-serif; font-weight: 400; letter-spacing: 0; }

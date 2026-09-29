@@ -68,6 +68,7 @@ class AdminPanelProvider extends PanelProvider
             ->databaseNotifications()
             ->databaseNotificationsPolling('15s')
             // صوت + إشعار المتصفح لما يوصل تنبيه جديد
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.brand-font'))
             ->renderHook(
                 PanelsRenderHook::BODY_END,
                 fn () => view('filament.admin-alerts-sound'),
