@@ -105,6 +105,71 @@
   "vars": "{note}"
  },
  {
+  "text": "النسخة {v}",
+  "group": "legal",
+  "vars": "{v}"
+ },
+ {
+  "text": "قبل ما تكمّل",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "باش تستعمل التطبيق، اقرا ووافق على الوثائق هذي. تقدر تفتح أي وحدة وتقراها كاملة.",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "قريت ووافقت على «{title}»",
+  "group": "legal",
+  "vars": "{title}"
+ },
+ {
+  "text": "اقرا «{title}»",
+  "group": "legal",
+  "vars": "{title}"
+ },
+ {
+  "text": "نبي توصلني العروض والتخفيضات (اختياري)",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "تقدر توقفها في أي وقت من «حسابي». إشعارات طلباتك توصلك في كل الحالات.",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "حفظ",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "موافق ومتابعة",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "ما نوافقش (تسجيل الخروج)",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "الشروط وسياسة الخصوصية",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "العروض والتخفيضات",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "إشعارات ورسائل تسويقية — إشعارات طلباتك توصل في كل الحالات",
+  "group": "legal",
+  "vars": null
+ },
+ {
   "text": "، ",
   "group": "models",
   "vars": null
@@ -1461,11 +1526,6 @@
  },
  {
   "text": "مقبلات، سندويتشات، مشروبات...",
-  "group": "products_tab",
-  "vars": null
- },
- {
-  "text": "حفظ",
   "group": "products_tab",
   "vars": null
  },

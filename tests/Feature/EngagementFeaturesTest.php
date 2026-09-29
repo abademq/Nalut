@@ -4,6 +4,11 @@ namespace Tests\Feature;
 
 use App\Enums\OrderStatus;
 use App\Enums\UserRole;
+use App\Filament\Resources\Engagement\AnnouncementResource;
+use App\Filament\Resources\Engagement\AppSectionResource;
+use App\Filament\Resources\Engagement\ReadyCartResource;
+use App\Filament\Resources\Messaging\CampaignResource;
+use App\Filament\Resources\Messaging\CampaignResource\ManageCampaigns;
 use App\Models\Announcement;
 use App\Models\AppSection;
 use App\Models\Campaign;
@@ -17,9 +22,12 @@ use App\Models\Store;
 use App\Models\StoreType;
 use App\Models\User;
 use App\Services\OrderService;
+use App\Services\PointsService;
+use App\Services\WalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class EngagementFeaturesTest extends TestCase
@@ -27,15 +35,22 @@ class EngagementFeaturesTest extends TestCase
     use RefreshDatabase;
 
     private Store $store;
+
     private User $owner;
+
     private User $customer;
+
     private $address;
+
     private Product $burger;
+
     private Product $fries;
 
     protected function setUp(): void
     {
         parent::setUp();
+        // الاختبارات هذي قبل شرط «الموافقة الصريحة على العروض» — تتيست الجمهور بدونه
+        Setting::put('opt.marketing.require_opt_in', '0');
         Http::fake();
 
         $this->owner = User::create(['name' => 'صاحب', 'phone' => '0911111111', 'role' => UserRole::Store->value, 'is_active' => true]);
@@ -156,7 +171,7 @@ class EngagementFeaturesTest extends TestCase
         $this->assertSame(40, $this->customer->fresh()->points_balance);
 
         // مرة وحدة بس
-        app(\App\Services\PointsService::class)->award($o->fresh());
+        app(PointsService::class)->award($o->fresh());
         $this->assertSame(40, $this->customer->fresh()->points_balance);
 
         Setting::put('opt.points.earn_mode', 'per_order');
@@ -169,12 +184,12 @@ class EngagementFeaturesTest extends TestCase
     public function test_convert_to_wallet_only_when_mode_is_wallet(): void
     {
         $this->enablePoints('wallet');
-        app(\App\Services\PointsService::class)->adjust($this->customer, 100, 'هدية', null);
+        app(PointsService::class)->adjust($this->customer, 100, 'هدية', null);
 
         Sanctum::actingAs($this->customer);
         $this->postJson('/api/v1/points/convert', ['points' => 5])->assertStatus(422);          // أقل من الحد
         $this->postJson('/api/v1/points/convert', ['points' => 60])->assertOk()->assertJsonPath('balance', 40);
-        $this->assertEquals(6, app(\App\Services\WalletService::class)->balance($this->customer));
+        $this->assertEquals(6, app(WalletService::class)->balance($this->customer));
 
         // الطلب ما يقبلش النقاط لما الوضع «محفظة»
         $o = $this->place([['product_id' => $this->burger->id, 'quantity' => 1]], ['use_points' => true]);
@@ -184,7 +199,7 @@ class EngagementFeaturesTest extends TestCase
     public function test_pay_with_points_at_checkout_and_refund_on_cancel(): void
     {
         $this->enablePoints('checkout');
-        app(\App\Services\PointsService::class)->adjust($this->customer, 50, null, null); // = 5 د.ل
+        app(PointsService::class)->adjust($this->customer, 50, null, null); // = 5 د.ل
 
         Sanctum::actingAs($this->customer);
         $this->postJson('/api/v1/points/convert', ['points' => 20])->assertStatus(422);  // الوضع مش محفظة
@@ -297,15 +312,15 @@ class EngagementFeaturesTest extends TestCase
         ReadyCart::create(['store_id' => $this->store->id, 'name' => 'y', 'items' => [['product_id' => $this->burger->id, 'quantity' => 1]]]);
 
         foreach ([
-            \App\Filament\Resources\Engagement\AppSectionResource::class,
-            \App\Filament\Resources\Engagement\AnnouncementResource::class,
-            \App\Filament\Resources\Engagement\ReadyCartResource::class,
-            \App\Filament\Resources\Messaging\CampaignResource::class,
+            AppSectionResource::class,
+            AnnouncementResource::class,
+            ReadyCartResource::class,
+            CampaignResource::class,
         ] as $r) {
             $this->get($r::getUrl())->assertOk();
         }
 
-        \Livewire\Livewire::test(\App\Filament\Resources\Messaging\CampaignResource\ManageCampaigns::class)
+        Livewire::test(ManageCampaigns::class)
             ->callAction('create', ['title' => 'إشعار', 'channel' => 'push', 'target_role' => 'store',
                 'push_title' => 'مرحبا', 'push_body' => 'نص'])
             ->assertHasNoActionErrors();

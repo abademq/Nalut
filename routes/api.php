@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\CustomerExtrasController;
 use App\Http\Controllers\Api\DriverController;
+use App\Http\Controllers\Api\LegalController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PartyAccountController;
 use App\Http\Controllers\Api\PaymentController;
@@ -23,8 +24,16 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/verify', [AuthController::class, 'verifyOtp'])->middleware(['throttle:10,1', 'appcheck']);
     Route::post('auth/login', [AuthController::class, 'login'])->middleware(['throttle:10,1', 'appcheck']);
     Route::get('app/content', [AppContentController::class, 'show']);
+    // الشروط والخصوصية (تنقرا قبل تسجيل الدخول كمان)
+    Route::get('legal', [LegalController::class, 'index']);
+    Route::get('legal/{key}', [LegalController::class, 'show'])->where('key', '[a-z_\-]+');
 
     Route::middleware('auth:sanctum')->group(function () {
+
+        // ---------- الموافقة الصريحة والرسائل التسويقية ----------
+        Route::get('me/consents', [LegalController::class, 'status']);
+        Route::post('me/consents', [LegalController::class, 'accept']);
+        Route::post('me/marketing', [LegalController::class, 'marketing']);
 
         // ---------- تذاكر الدعم (الزبون، السائق، المتجر) ----------
         Route::get('support/categories', [SupportController::class, 'categories']);

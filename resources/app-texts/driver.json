@@ -10,6 +10,71 @@
   "vars": "{statusCode}"
  },
  {
+  "text": "النسخة {v}",
+  "group": "legal",
+  "vars": "{v}"
+ },
+ {
+  "text": "قبل ما تكمّل",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "باش تستعمل التطبيق، اقرا ووافق على الوثائق هذي. تقدر تفتح أي وحدة وتقراها كاملة.",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "قريت ووافقت على «{title}»",
+  "group": "legal",
+  "vars": "{title}"
+ },
+ {
+  "text": "اقرا «{title}»",
+  "group": "legal",
+  "vars": "{title}"
+ },
+ {
+  "text": "نبي توصلني العروض والتخفيضات (اختياري)",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "تقدر توقفها في أي وقت من «حسابي». إشعارات طلباتك توصلك في كل الحالات.",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "حفظ",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "موافق ومتابعة",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "ما نوافقش (تسجيل الخروج)",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "الشروط وسياسة الخصوصية",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "العروض والتخفيضات",
+  "group": "legal",
+  "vars": null
+ },
+ {
+  "text": "إشعارات ورسائل تسويقية — إشعارات طلباتك توصل في كل الحالات",
+  "group": "legal",
+  "vars": null
+ },
+ {
   "text": "سائق نالوت",
   "group": "main",
   "vars": null
@@ -518,6 +583,31 @@
   "text": "{value} د.ل",
   "group": "earnings_tab",
   "vars": "{value}"
+ },
+ {
+  "text": "استخدام موقعك",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "التطبيق يجمع موقعك الجغرافي وقت ما تكون «متاح» أو عندك طلب، حتى لو التطبيق مسكّر أو في الخلفية، باش:\n\n• نوصّلولك الطلبات القريبة منك\n• الزبون يتابع طلبه وين وصل\n• نحلّو أي مشكلة في التوصيل\n\nلما تكون «غير متاح» يتوقف التتبّع. ما نستعملوش موقعك لأي إعلانات.",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "مش توّا",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "موافق",
+  "group": "home_screen",
+  "vars": null
+ },
+ {
+  "text": "بدون إذن الموقع ما تقدرش تكون متاح وتستقبل طلبات.",
+  "group": "home_screen",
+  "vars": null
  },
  {
   "text": "متاح — تستقبل طلبات",

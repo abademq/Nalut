@@ -3,8 +3,10 @@
 namespace App\Models;
 
 use App\Enums\OrderStatus;
-use App\Enums\UserRole;
 use App\Services\Messaging\Messenger;
+use App\Services\PushService;
+use App\Support\Options;
+use App\Support\Texts;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,26 +32,26 @@ class Campaign extends Model
     {
         return [
             'audience_params' => 'array',
-            'scheduled_at'    => 'datetime',
-            'started_at'      => 'datetime',
-            'finished_at'     => 'datetime',
+            'scheduled_at' => 'datetime',
+            'started_at' => 'datetime',
+            'finished_at' => 'datetime',
         ];
     }
 
     public const AUDIENCES = [
-        'all'      => 'كل الزبائن',
-        'active'   => 'زبائن طلبو خلال آخر X يوم',
+        'all' => 'كل الزبائن',
+        'active' => 'زبائن طلبو خلال آخر X يوم',
         'inactive' => 'زبائن ما طلبوش من X يوم (للاسترجاع)',
-        'store'    => 'زبائن طلبو من متجر معيّن',
-        'numbers'  => 'أرقام محددة',
+        'store' => 'زبائن طلبو من متجر معيّن',
+        'numbers' => 'أرقام محددة',
     ];
 
     public const STATUSES = [
-        'draft'   => 'مسودة',
-        'queued'  => 'مجدولة',
+        'draft' => 'مسودة',
+        'queued' => 'مجدولة',
         'sending' => 'قيد الإرسال',
-        'done'    => 'انتهت',
-        'failed'  => 'فشلت',
+        'done' => 'انتهت',
+        'failed' => 'فشلت',
     ];
 
     public function template(): BelongsTo
@@ -74,17 +76,22 @@ class Campaign extends Model
                 fn ($w) => $w->where(fn ($t) => $t->whereNotNull('fcm_tokens')->orWhereNotNull('fcm_token')),
                 fn ($w) => $w->whereNotNull('phone'));
 
-        // السائقين والمتاجر: الكل بس
+        // السائقين والمتاجر: الكل بس (إعلانات تشغيلية)
         if ($role !== 'customer') {
             return $q;
         }
 
+        // Apple وGoogle: العروض للزبائن بس للي وافق بنفسه (مش الافتراضي)
+        if (Options::get('marketing.require_opt_in')) {
+            $q->whereNotNull('marketing_choice_at');
+        }
+
         return match ($this->audience) {
-            'active'   => $q->whereHas('orders', fn ($o) => $o->where('status', $delivered)->where('created_at', '>=', now()->subDays($days))),
+            'active' => $q->whereHas('orders', fn ($o) => $o->where('status', $delivered)->where('created_at', '>=', now()->subDays($days))),
             'inactive' => $q->whereHas('orders', fn ($o) => $o->where('status', $delivered))
                 ->whereDoesntHave('orders', fn ($o) => $o->where('created_at', '>=', now()->subDays($days))),
-            'store'    => $q->whereHas('orders', fn ($o) => $o->where('store_id', (int) ($p['store_id'] ?? 0))),
-            default    => $q,
+            'store' => $q->whereHas('orders', fn ($o) => $o->where('store_id', (int) ($p['store_id'] ?? 0))),
+            default => $q,
         };
     }
 
@@ -136,9 +143,9 @@ class Campaign extends Model
         }
 
         $this->update([
-            'sent'        => $sent,
-            'failed'      => $failed,
-            'status'      => $sent === 0 && $failed > 0 ? 'failed' : 'done',
+            'sent' => $sent,
+            'failed' => $failed,
+            'status' => $sent === 0 && $failed > 0 ? 'failed' : 'done',
             'finished_at' => now(),
         ]);
     }
@@ -151,10 +158,10 @@ class Campaign extends Model
             'context_id' => $this->id, 'created_at' => now()];
 
         try {
-            $sent = \App\Services\PushService::toUser(
+            $sent = PushService::toUser(
                 $user,
-                \App\Support\Texts::fill((string) $this->push_title, $vars),
-                \App\Support\Texts::fill((string) $this->push_body, $vars),
+                Texts::fill((string) $this->push_title, $vars),
+                Texts::fill((string) $this->push_body, $vars),
                 array_filter(['type' => 'promo', 'campaign_id' => (string) $this->id, 'link' => $this->push_link]),
                 $this->target_role ?: 'customer'
             );

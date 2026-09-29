@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\Setting;
+use App\Support\Perm;
 use BackedEnum;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -29,24 +30,26 @@ class AppSettings extends Page
 
     /** المفاتيح وقيمها الافتراضية */
     public const DEFAULTS = [
-        'about.name'        => 'توصيل نالوت',
-        'about.tagline'     => 'اطلب من مطاعم ومتاجر نالوت',
+        'about.name' => 'توصيل نالوت',
+        'about.tagline' => 'اطلب من مطاعم ومتاجر نالوت',
         'about.description' => 'منصة توصيل محلية تربطك بمطاعم ومتاجر نالوت، وتوصّل طلبك لباب بيتك.',
-        'about.phone'       => '',
-        'about.whatsapp'    => '',
-        'about.email'       => '',
-        'about.facebook'    => '',
-        'about.instagram'   => '',
-        'about.website'     => '',
+        'about.phone' => '',
+        'about.whatsapp' => '',
+        'about.email' => '',
+        'about.facebook' => '',
+        'about.instagram' => '',
+        'about.website' => '',
         // واتساب الدعم الفني — بلاغات السائقين تفتح محادثة معاه
         'about.support_whatsapp' => '',
+        // الاسم القانوني للشركة — يطلع في سياسة الخصوصية والشروط
+        'about.company' => 'شركة القمرة المظلمة لخدمات التكنولوجيا وتقنية المعلومات',
     ];
 
     public ?array $data = [];
 
     public static function canAccess(): bool
     {
-        return \App\Support\Perm::can('settings.manage');
+        return Perm::can('settings.manage');
     }
 
     public static function getNavigationLabel(): string
@@ -84,6 +87,8 @@ class AppSettings extends Page
                     ->description('يظهر في صفحة «عن التطبيق» عند الزبون')
                     ->schema([
                         TextInput::make('name')->label('اسم التطبيق')->required()->maxLength(60),
+                        TextInput::make('company')->label('الاسم القانوني للشركة')->maxLength(150)
+                            ->helperText('يطلع في سياسة الخصوصية والشروط'),
                         TextInput::make('tagline')->label('شعار قصير')->maxLength(100),
                         Textarea::make('description')->label('الوصف')->rows(5)->maxLength(2000),
                     ]),

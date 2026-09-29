@@ -18,9 +18,12 @@ use App\Models\ReportSubscription;
 use App\Models\Setting;
 use App\Models\Store;
 use App\Models\User;
+use App\Services\Messaging\Messenger;
 use App\Services\OrderService;
 use App\Services\Reports\StoreReport;
+use App\Services\WalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
@@ -32,15 +35,19 @@ class MessagingAndAlertsTest extends TestCase
     use RefreshDatabase;
 
     private User $admin;
+
     private Store $store;
+
     private User $customer;
 
     protected function setUp(): void
     {
         parent::setUp();
+        // الاختبارات هذي قبل شرط «الموافقة الصريحة على العروض» — تتيست الجمهور بدونه
+        Setting::put('opt.marketing.require_opt_in', '0');
         Http::fake([
             'graph.facebook.com/*' => Http::sequence()->whenEmpty(Http::response(['messages' => [['id' => 'wamid.X']]])),
-            'dev.resala.ly/*'      => Http::response(['pin' => '4821', 'id' => 'r1']),
+            'dev.resala.ly/*' => Http::response(['pin' => '4821', 'id' => 'r1']),
         ]);
 
         config([
@@ -120,10 +127,10 @@ class MessagingAndAlertsTest extends TestCase
     public function test_whatsapp_failure_falls_back_to_sms(): void
     {
         Setting::put('opt.otp.channel', 'whatsapp_sms');
-        Http::swap(new \Illuminate\Http\Client\Factory);
+        Http::swap(new Factory);
         Http::fake([
             'graph.facebook.com/*' => Http::response(['error' => ['message' => 'not on whatsapp']], 400),
-            'dev.resala.ly/*'      => Http::response(['pin' => '4821', 'id' => 'r1']),
+            'dev.resala.ly/*' => Http::response(['pin' => '4821', 'id' => 'r1']),
         ]);
 
         $this->postJson('/api/v1/auth/otp', ['phone' => '0914444444'])->assertOk()->assertJsonPath('channel', 'sms');
@@ -133,10 +140,10 @@ class MessagingAndAlertsTest extends TestCase
     public function test_whatsapp_only_failure_offers_sms(): void
     {
         Setting::put('opt.otp.channel', 'whatsapp');
-        Http::swap(new \Illuminate\Http\Client\Factory);
+        Http::swap(new Factory);
         Http::fake([
             'graph.facebook.com/*' => Http::response(['error' => ['message' => 'template not found']], 404),
-            'dev.resala.ly/*'      => Http::response(['pin' => '4821', 'id' => 'r1']),
+            'dev.resala.ly/*' => Http::response(['pin' => '4821', 'id' => 'r1']),
         ]);
 
         $this->postJson('/api/v1/auth/otp', ['phone' => '0914444445'])
@@ -202,8 +209,8 @@ class MessagingAndAlertsTest extends TestCase
     {
         $this->order('delivered');
         $this->order('cancelled');
-        app(\App\Services\WalletService::class)->credit($this->store->owner, 300, 'store_earning');
-        app(\App\Services\WalletService::class)->settle($this->store->owner, 120, 'payout', 'تسكير', $this->admin);
+        app(WalletService::class)->credit($this->store->owner, 300, 'store_earning');
+        app(WalletService::class)->settle($this->store->owner, 120, 'payout', 'تسكير', $this->admin);
 
         $v = StoreReport::build($this->store, 'today');
 
@@ -303,7 +310,7 @@ class MessagingAndAlertsTest extends TestCase
     {
         config(['messaging.whatsapp.token' => null]);
         $t = MessageTemplate::create(['name' => 'عرض', 'channel' => 'whatsapp', 'provider_ref' => 'promo']);
-        $log = app(\App\Services\Messaging\Messenger::class)->send($t, '0912345678', [], 'campaign');
+        $log = app(Messenger::class)->send($t, '0912345678', [], 'campaign');
 
         $this->assertSame('skipped', $log->status);
     }

@@ -316,6 +316,80 @@ const route = (pattern, handler, opts = {}) => {
   routes.push({ re, keys, handler, ...opts });
 };
 
+// ================= الشروط والخصوصية + الموافقة الصريحة =================
+const mdLite = (text) => {
+  const fmt = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  let html = '', list = false;
+  for (const raw of String(text || '').split('\n')) {
+    const t = raw.trim();
+    const item = t.startsWith('- ');
+    if (list && !item) { html += '</ul>'; list = false; }
+    if (!t) continue;
+    if (t.startsWith('## ')) html += `<h3 style="margin:18px 0 6px;color:var(--brand)">${fmt(t.slice(3))}</h3>`;
+    else if (item) { html += (list ? '' : '<ul style="padding-inline-start:20px;margin:4px 0">') + `<li>${fmt(t.slice(2))}</li>`; list = true; }
+    else if (t.startsWith('> ')) html += `<p class="muted">${fmt(t.slice(2))}</p>`;
+    else html += `<p style="margin:6px 0">${fmt(t)}</p>`;
+  }
+  return html + (list ? '</ul>' : '');
+};
+async function showLegal(key) {
+  try {
+    const d = (await GET('/legal/' + key)).data;
+    sheet(`<div class="sheet-body no-gallery"><h2 style="margin:0 0 4px">${esc(d.title)}</h2>
+      <div class="tiny muted">النسخة ${d.version}</div><div style="line-height:1.8">${mdLite(d.body)}</div></div>`);
+  } catch (e) { toast(e.message, 'err'); }
+}
+async function legalList() {
+  try {
+    const docs = (await GET('/legal')).data || [];
+    const { el, close } = sheet(`<div class="sheet-body no-gallery"><h2 style="margin:0 0 12px">الشروط والخصوصية</h2>
+      <div class="menu-list">${docs.map((d) => `<div class="item" data-doc="${esc(d.key)}"><span class="ic">📄</span><span class="grow">${esc(d.title)}</span><span class="chev">‹</span></div>`).join('')}</div></div>`);
+    $$('[data-doc]', el).forEach((x) => x.onclick = () => { close(); showLegal(x.dataset.doc); });
+  } catch (e) { toast(e.message, 'err'); }
+}
+// الموافقة: مرة وحدة (أو لو الإدارة غيّرت الشروط تغيير جوهري) — والعروض اختيارية
+const Consent = { checked: false, open: false };
+async function ensureConsent() {
+  if (Consent.checked || Consent.open || !Auth.in) return;
+  let st;
+  try { st = await GET('/me/consents'); } catch { return; }
+  Consent.checked = true;
+  const needed = st.needed || [];
+  const askMk = !st.marketing_asked;
+  if (!needed.length && !askMk) return;
+  Consent.open = true;
+  const bd = document.createElement('div');
+  bd.className = 'backdrop center';
+  bd.innerHTML = `<div class="dialog" style="max-width:460px;width:calc(100% - 32px)">
+    <h3 style="margin:0 0 8px">قبل ما تكمّل</h3>
+    ${needed.length ? '<p class="muted small" style="margin:0 0 12px">باش تستعمل الخدمة، اقرا ووافق على الوثائق هذي:</p>' : ''}
+    ${needed.map((d) => `<label class="switch" style="align-items:flex-start;gap:8px"><input type="checkbox" data-need="${esc(d.key)}">
+      <span>قريت ووافقت على <a href="#" data-read="${esc(d.key)}" style="color:var(--brand);font-weight:700">«${esc(d.title)}»</a></span></label>`).join('')}
+    ${askMk ? `<label class="switch" style="align-items:flex-start;gap:8px"><input type="checkbox" id="mk">
+      <span>نبي توصلني العروض والتخفيضات <span class="tiny muted">(اختياري — تقدر توقفها من «حسابي»)</span></span></label>` : ''}
+    <button class="btn block" id="c-ok" style="margin-top:12px" ${needed.length ? 'disabled' : ''}>${needed.length ? 'موافق ومتابعة' : 'حفظ'}</button>
+    ${needed.length ? '<button class="btn ghost block small" id="c-no" style="margin-top:6px">ما نوافقش (تسجيل الخروج)</button>' : ''}
+  </div>`;
+  document.body.appendChild(bd);
+  const boxes = $$('[data-need]', bd);
+  const sync = () => { $('#c-ok', bd).disabled = boxes.some((b) => !b.checked); };
+  boxes.forEach((b) => b.onchange = sync);
+  $$('[data-read]', bd).forEach((a) => a.onclick = (e) => { e.preventDefault(); showLegal(a.dataset.read); });
+  $('#c-ok', bd).onclick = (e) => busy(e.currentTarget, async () => {
+    try {
+      const mk = $('#mk', bd);
+      await POST('/me/consents', { documents: needed.length ? needed.map((d) => d.key) : ['_none'], ...(mk ? { marketing_opt_in: mk.checked } : {}) });
+      bd.remove(); Consent.open = false;
+    } catch (err) { toast(err.message, 'err'); }
+  });
+  const no = $('#c-no', bd);
+  if (no) no.onclick = async () => {
+    try { await POST('/logout'); } catch {}
+    bd.remove(); Consent.open = false; Consent.checked = false;
+    Auth.clear(); Cart.clear(); go('/login', true);
+  };
+}
+
 let renderToken = 0;
 let pageCleanup = null;
 async function render() {
@@ -335,6 +409,7 @@ async function render() {
   }
 
   renderNav(r.tab);
+  if (Auth.in) ensureConsent();
   setTop(r.title ? { title: r.title, back: r.back !== false } : null);
   view.innerHTML = '<div class="loading"><span class="spinner"></span></div>';
   window.scrollTo(0, 0);
@@ -1435,6 +1510,8 @@ route('/account', async () => {
     </div>
     <div class="card menu-list">
       <div class="item" id="password"><span class="ic">🔑</span><span class="grow">كلمة المرور</span><span class="chev">‹</span></div>
+      <label class="item" style="cursor:pointer"><span class="ic">📣</span><span class="grow">العروض والتخفيضات<div class="tiny muted">إشعارات طلباتك توصل في كل الحالات</div></span><input type="checkbox" id="mk-toggle" hidden><span class="pill" id="mk-state">…</span></label>
+      <div class="item" id="legal"><span class="ic">📄</span><span class="grow">الشروط وسياسة الخصوصية</span><span class="chev">‹</span></div>
       ${C.whatsapp ? `<a class="item" href="https://wa.me/${esc(String(C.whatsapp).replace(/\D/g, '').replace(/^0/, '218'))}" target="_blank" rel="noopener"><span class="ic">💬</span><span class="grow">تواصل معانا (واتساب)</span><span class="chev">‹</span></a>` : ''}
       <div class="item" id="logout"><span class="ic">🚪</span><span class="grow">تسجيل الخروج</span></div>
       <div class="item" id="delete" style="color:var(--err)"><span class="ic" style="background:var(--err-soft);color:var(--err)">🗑️</span><span class="grow">حذف الحساب</span></div>
@@ -1445,6 +1522,15 @@ route('/account', async () => {
     if (!name?.trim()) return;
     try { const r = await PUT('/me', { name: name.trim() }); Auth.save(Auth.token, r.user); render(); toast('تم الحفظ', 'ok'); } catch (e) { toast(e.message, 'err'); }
   };
+  $('#legal').onclick = legalList;
+  GET('/me/consents').then((st) => {
+    let on = !!st.marketing_opt_in && !!st.marketing_asked;
+    const show = () => { const p = $('#mk-state'); if (p) { p.textContent = on ? 'مفعّلة' : 'موقوفة'; p.className = 'pill ' + (on ? 'ok' : ''); } };
+    show();
+    $('#mk-toggle')?.addEventListener('change', async () => {
+      try { const r = await POST('/me/marketing', { opt_in: !on }); on = !on; show(); toast(r.message, 'ok'); } catch (e) { toast(e.message, 'err'); }
+    });
+  }).catch(() => {});
   $('#password').onclick = async () => {
     const pw = await promptBox('كلمة مرور جديدة', { type: 'password', label: '6 حروف على الأقل — تدخل بيها من غير رمز تحقق' });
     if (pw === null) return;
@@ -1647,8 +1733,9 @@ route('/login', async ({ query }) => {
           <div id="sms-wrap"></div>`}
         </form>
       </div>
-      <p class="center tiny muted">بالدخول توافق على <a href="https://dar-almaqam.com.ly/terms.php" target="_blank" rel="noopener" style="text-decoration:underline">الشروط</a> و<a href="https://dar-almaqam.com.ly/privacy.php" target="_blank" rel="noopener" style="text-decoration:underline">سياسة الخصوصية</a>.</p>
+      <p class="center tiny muted">بعد الدخول نطلبو موافقتك على <a href="#" data-read="terms_customer" style="text-decoration:underline">الشروط</a> و<a href="#" data-read="privacy" style="text-decoration:underline">سياسة الخصوصية</a> — تقدر تقراهم من توّا.</p>
     </div>`;
+    $$('[data-read]').forEach((a) => a.onclick = (e) => { e.preventDefault(); showLegal(a.dataset.read); });
 
     $$('[data-mode]').forEach((b) => b.onclick = () => { mode = b.dataset.mode; draw(); });
     $('#f').onsubmit = (e) => { e.preventDefault(); submit(e.submitter || $('#f button[type=submit]')); };

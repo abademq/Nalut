@@ -1,5 +1,6 @@
 <?php
 
+use App\Filament\Pages\AppSettings;
 use App\Http\Controllers\Admin\AlertsController;
 use App\Http\Controllers\Admin\DriverMapController;
 use App\Http\Controllers\Admin\SettlementPrintController;
@@ -7,13 +8,14 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Web\AppLinkController;
 use App\Http\Controllers\Web\MerchantAlertsController;
 use App\Http\Controllers\Web\WebOrderController;
+use App\Models\LegalDocument;
 use Illuminate\Support\Facades\Route;
 
 // ===== موقع الطلب (للآيفون والكمبيوتر) =====
 $webOrder = function () {
     Route::get('manifest.webmanifest', [WebOrderController::class, 'manifest']);
     Route::get('sw.js', [WebOrderController::class, 'serviceWorker']);
-    Route::get('{any?}', [WebOrderController::class, 'shell'])->where('any', '^(?!api/|admin|merchant|livewire|storage/|weborder/|admin-api|settlements/|payments/|up$|\.well-known).*$');
+    Route::get('{any?}', [WebOrderController::class, 'shell'])->where('any', '^(?!api/|admin|merchant|legal/|livewire|storage/|weborder/|admin-api|settlements/|payments/|up$|\.well-known).*$');
 };
 
 // على الدومين الفرعي (WEB_ORDER_DOMAIN في .env) — قبل باقي المسارات باش «/» يفتح الموقع
@@ -38,6 +40,13 @@ Route::middleware(['web', 'auth'])
 // لوحة المتجر على الموقع: صوت الطلب الجديد
 Route::middleware(['web', 'auth', 'throttle:30,1'])
     ->get('merchant-api/pending', [MerchantAlertsController::class, 'pending']);
+
+// الشروط وسياسة الخصوصية — روابط ثابتة لـ Google Play وApp Store
+Route::get('legal/{key}', function (string $key) {
+    $doc = LegalDocument::where('key', str_replace('-', '_', $key))->firstOrFail();
+
+    return view('legal.show', ['doc' => $doc, 'app' => AppSettings::values()['name'] ?? '']);
+})->where('key', '[a-z\-]+')->name('legal.show');
 
 // روابط تفتح التطبيق مباشرة (متجر / صنف / شاشة) — وصفحة بديلة لو التطبيق مش مثبّت
 
