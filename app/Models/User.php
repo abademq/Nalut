@@ -160,9 +160,27 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasOne(DriverProfile::class);
     }
 
+    /** محفظة الزبون (الشحن والدفع) */
     public function wallet(): HasOne
     {
-        return $this->hasOne(Wallet::class);
+        return $this->hasOne(Wallet::class)->where('party', 'customer');
+    }
+
+    /** مستحقات المتجر عند المنصة */
+    public function storeWallet(): HasOne
+    {
+        return $this->hasOne(Wallet::class)->where('party', 'store');
+    }
+
+    /** أجرة التوصيل والكاش اللي عنده للمنصة */
+    public function driverWallet(): HasOne
+    {
+        return $this->hasOne(Wallet::class)->where('party', 'driver');
+    }
+
+    public function wallets(): HasMany
+    {
+        return $this->hasMany(Wallet::class);
     }
 
     /** كل حركات محفظة المستخدم — تستعملها صفحة السجل المالي */
@@ -191,9 +209,15 @@ class User extends Authenticatable implements FilamentUser
         return $this->hasRole($role);
     }
 
-    public function walletBalance(): float
+    public function walletBalance(string $party = 'customer'): float
     {
-        return (float) ($this->wallet?->balance ?? 0);
+        $wallet = match ($party) {
+            'store' => $this->storeWallet,
+            'driver' => $this->driverWallet,
+            default => $this->wallet,
+        };
+
+        return (float) ($wallet?->balance ?? 0);
     }
 
     /**

@@ -277,7 +277,7 @@ class DriverController extends Controller
             'total' => (float) (clone $base)->sum('driver_earning'),
             'delivered' => $profile->delivered_count,
             // الرصيد السالب = كاش المنصة اللي عند السائق
-            'balance' => $request->user()->walletBalance(),
+            'balance' => $request->user()->walletBalance('driver'),
         ]);
     }
 }

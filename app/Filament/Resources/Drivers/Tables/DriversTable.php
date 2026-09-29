@@ -105,7 +105,7 @@ class DriversTable
 
                 TextColumn::make('balance')
                     ->label('الحساب')
-                    ->state(fn (User $record) => (float) ($record->wallet?->balance ?? 0))
+                    ->state(fn (User $record) => (float) ($record->driverWallet?->balance ?? 0))
                     ->formatStateUsing(function ($state) {
                         $v = number_format(abs((float) $state), 2);
 
@@ -190,12 +190,12 @@ class DriversTable
 
                 Filter::make('owes')
                     ->label('عليهم كاش للمنصة')
-                    ->query(fn (Builder $query) => $query->whereHas('wallet',
+                    ->query(fn (Builder $query) => $query->whereHas('driverWallet',
                         fn ($w) => $w->where('balance', '<', 0))),
 
                 Filter::make('credit')
                     ->label('لهم مستحقات')
-                    ->query(fn (Builder $query) => $query->whereHas('wallet',
+                    ->query(fn (Builder $query) => $query->whereHas('driverWallet',
                         fn ($w) => $w->where('balance', '>', 0))),
             ])
             ->recordActions([

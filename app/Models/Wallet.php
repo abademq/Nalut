@@ -8,7 +8,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Wallet extends Model
 {
-    protected $fillable = ['user_id', 'balance', 'is_active'];
+    /** كل صفة لها محفظتها — مستحقات المتجر ما تتخلطش مع شحن صاحبه كزبون */
+    public const PARTIES = [
+        'customer' => 'زبون',
+        'store' => 'متجر',
+        'driver' => 'سائق',
+    ];
+
+    protected $fillable = ['user_id', 'party', 'balance', 'is_active'];
+
+    public function partyLabel(): string
+    {
+        return self::PARTIES[$this->party] ?? $this->party;
+    }
 
     protected function casts(): array
     {

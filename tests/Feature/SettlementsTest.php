@@ -70,8 +70,8 @@ class SettlementsTest extends TestCase
         $this->assertSame(15.0, $n['platform_net']);
 
         // الأرصدة: المتجر له 85، السائق عليه 100
-        $this->assertSame(85.0, $this->owner->fresh()->walletBalance());
-        $this->assertSame(-100.0, $this->driver->fresh()->walletBalance());
+        $this->assertSame(85.0, $this->owner->fresh()->walletBalance('store'));
+        $this->assertSame(-100.0, $this->driver->fresh()->walletBalance('driver'));
     }
 
     public function test_settle_store_and_driver_with_receipts(): void
@@ -87,14 +87,14 @@ class SettlementsTest extends TestCase
 
         $s = $svc->create($this->owner, 'store', 127.5, 'transfer', 'TR-9', null, $this->admin);
         $this->assertSame('ST-'.str_pad((string) $s->id, 6, '0', STR_PAD_LEFT), $s->number);
-        $this->assertSame(0.0, $this->owner->fresh()->walletBalance());
+        $this->assertSame(0.0, $this->owner->fresh()->walletBalance('store'));
         $this->assertSame(2, Order::where('store_settlement_id', $s->id)->count());
         $this->assertSame(0, $svc->statement($this->owner, 'store')['sum']['orders']);
 
         // السائق: جزء بس من اللي عليه
         $d = $svc->create($this->driver, 'driver', 100, 'cash', null, 'دفعة أولى', $this->admin);
         $this->assertSame('receive', $d->direction);
-        $this->assertSame(-50.0, $this->driver->fresh()->walletBalance());
+        $this->assertSame(-50.0, $this->driver->fresh()->walletBalance('driver'));
 
         // الواصل
         $this->actingAs($this->admin, 'web')->get(route('settlements.print', ['settlement' => $s, 'paper' => 'a4']))
@@ -111,7 +111,7 @@ class SettlementsTest extends TestCase
 
         // إلغاء
         $svc->cancel($s, 'غلط في المبلغ', $this->admin);
-        $this->assertSame(127.5, $this->owner->fresh()->walletBalance());
+        $this->assertSame(127.5, $this->owner->fresh()->walletBalance('store'));
         $this->assertSame(0, Order::where('store_settlement_id', $s->id)->count());
     }
 
@@ -132,7 +132,7 @@ class SettlementsTest extends TestCase
             ->set('userId', $this->driver->id)
             ->callAction('settle', ['direction' => 'receive', 'amount' => 100, 'method' => 'cash'])
             ->assertHasNoActionErrors();
-        $this->assertSame(0.0, $this->driver->fresh()->walletBalance());
+        $this->assertSame(0.0, $this->driver->fresh()->walletBalance('driver'));
     }
 
     public function test_visibility_controls_api(): void

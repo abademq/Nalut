@@ -27,6 +27,12 @@ class WalletTransactionsTable
                     ->searchable()
                     ->description(fn (WalletTransaction $record) => $record->wallet?->user?->rolesLabel()),
 
+                TextColumn::make('wallet.party')
+                    ->label('المحفظة')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => \App\Models\Wallet::PARTIES[$state] ?? $state)
+                    ->color(fn ($state) => ['customer' => 'gray', 'store' => 'info', 'driver' => 'warning'][$state] ?? 'gray'),
+
                 TextColumn::make('type')
                     ->label('نوع الحركة')
                     ->badge()

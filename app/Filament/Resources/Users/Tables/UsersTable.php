@@ -31,7 +31,7 @@ class UsersTable
     {
         return $table
             ->defaultSort('id', 'desc')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['wallet', 'driverProfile']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['wallet', 'storeWallet', 'driverWallet', 'driverProfile']))
             ->columns([
                 TextColumn::make('name')
                     ->label('الاسم')
@@ -63,7 +63,12 @@ class UsersTable
                     ->visible(fn () => \App\Services\PointsService::enabled()),
 
                 TextColumn::make('wallet.balance')
-                    ->label('الرصيد')
+                    ->label('رصيد الزبون')
+                    // المتجر والسائق لهم حساب منفصل — يطلع تحت رصيد الزبون
+                    ->description(fn (User $record) => collect([
+                        $record->hasRole('store') ? 'متجر: '.number_format($record->walletBalance('store'), 2) : null,
+                        $record->hasRole('driver') ? 'سائق: '.number_format($record->walletBalance('driver'), 2) : null,
+                    ])->filter()->implode(' · ') ?: null)
                     ->formatStateUsing(fn ($state) => number_format((float) ($state ?? 0), 2).' د.ل')
                     ->color(fn ($state) => match (true) {
                         (float) ($state ?? 0) < 0  => 'danger',
@@ -139,9 +144,11 @@ class UsersTable
                     ->icon('heroicon-o-plus-circle')
                     ->color('success')
                     ->modalHeading(fn (User $record) => 'شحن محفظة: '.$record->name)
-                    ->modalDescription(fn (User $record) => 'الرصيد الحالي: '
+                    ->modalDescription(fn (User $record) => 'رصيد الزبون الحالي: '
                         .number_format($record->walletBalance(), 2).' د.ل')
                     ->schema([
+                        self::partySelect(),
+
                         Select::make('type')
                             ->label('نوع العملية')
                             ->options([
@@ -162,19 +169,22 @@ class UsersTable
                             ->maxLength(200),
                     ])
                     ->action(function (User $record, array $data) {
+                        $party = $data['party'] ?? 'customer';
                         app(WalletService::class)->credit(
                             $record,
                             (float) $data['amount'],
-                            $data['type'],
+                            // حساب المتجر/السائق: تعديل يدوي بس (الشحن النقدي للزبون)
+                            $party === 'customer' ? $data['type'] : 'adjustment',
                             null,
                             $data['note'] ?? null,
-                            auth()->user()
+                            auth()->user(),
+                            $party
                         );
 
                         Notification::make()
                             ->title('تم الشحن')
                             ->body('الرصيد الجديد: '
-                                .number_format($record->fresh()->walletBalance(), 2).' د.ل')
+                                .number_format($record->fresh()->walletBalance($party), 2).' د.ل')
                             ->success()
                             ->send();
                     }),
@@ -196,6 +206,7 @@ class UsersTable
                         ->icon('heroicon-o-minus-circle')
                         ->color('warning')
                         ->schema([
+                            self::partySelect(),
                             TextInput::make('amount')
                                 ->label('المبلغ (د.ل)')
                                 ->numeric()
@@ -214,7 +225,8 @@ class UsersTable
                                 null,
                                 $data['note'],
                                 auth()->user(),
-                                true
+                                true,
+                                $data['party'] ?? 'customer'
                             );
 
                             Notification::make()->title('تم الخصم')->success()->send();
@@ -271,5 +283,19 @@ class UsersTable
                     DeleteBulkAction::make()->label('حذف'),
                 ]),
             ]);
+    }
+
+    /** أي محفظة: الزبون دائماً، والمتجر/السائق لو عنده الدور */
+    private static function partySelect(): Select
+    {
+        return Select::make('party')
+            ->label('المحفظة')
+            ->options(fn (?User $record) => collect(\App\Models\Wallet::PARTIES)
+                ->filter(fn ($label, $party) => $party === 'customer' || $record?->hasRole($party))
+                ->map(fn ($label, $party) => $label.' — '.number_format((float) $record?->walletBalance($party), 2).' د.ل')
+                ->all())
+            ->default('customer')
+            ->required()
+            ->visible(fn (?User $record) => $record && ($record->hasRole('store') || $record->hasRole('driver')));
     }
 }

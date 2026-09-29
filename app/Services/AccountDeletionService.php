@@ -40,9 +40,14 @@ class AccountDeletionService
 
         // السائق والمتجر: فلوس لازم تتسوّى قبل الحذف
         if ($user->hasRole(UserRole::Driver) || $user->hasRole(UserRole::Store)) {
-            $balance = $this->wallets->balance($user);
-            if (abs($balance) >= 0.01) {
-                $reasons[] = 'رصيدك في المحفظة '.number_format($balance, 2).' د.ل — تواصل مع الإدارة لتسويته قبل الحذف.';
+            foreach (['store' => 'متجرك', 'driver' => 'حسابك كسائق'] as $party => $label) {
+                if (! $user->hasRole($party)) {
+                    continue;
+                }
+                $balance = $this->wallets->balance($user, $party);
+                if (abs($balance) >= 0.01) {
+                    $reasons[] = "رصيد $label عند الإدارة ".number_format($balance, 2).' د.ل — تواصل مع الإدارة لتسويته قبل الحذف.';
+                }
             }
             $cash = (float) ($user->driverProfile?->cash_in_hand ?? 0);
             if (abs($cash) >= 0.01) {

@@ -29,7 +29,7 @@ class DriverMapController extends Controller
         );
 
         $drivers = User::withRole('driver')
-            ->with(['driverProfile.zones', 'wallet'])
+            ->with(['driverProfile.zones', 'driverWallet'])
             ->get();
 
         $activeOrders = Order::whereIn('status', OrderStatus::active())
@@ -62,7 +62,7 @@ class DriverMapController extends Controller
 
         foreach ($drivers as $driver) {
             $profile = $driver->driverProfile;
-            $balance = (float) ($driver->wallet?->balance ?? 0);
+            $balance = (float) ($driver->driverWallet?->balance ?? 0);
 
             if ($balance < 0) {
                 $debt += abs($balance);

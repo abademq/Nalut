@@ -36,10 +36,13 @@ class FinanceStatsWidget extends StatsOverviewWidget
             ->sum('total');
 
         // أرصدة موجبة = فلوس المنصة مدينة بيها للمتاجر والسائقين
-        $owed = (float) Wallet::where('balance', '>', 0)->sum('balance');
+        $owed = (float) Wallet::whereIn('party', ['store', 'driver'])->where('balance', '>', 0)->sum('balance');
 
-        // أرصدة سالبة = كاش عند السائقين لسه ما تسلّمش
-        $cashOut = abs((float) Wallet::where('balance', '<', 0)->sum('balance'));
+        // أرصدة سالبة في محافظ السائقين = كاش عندهم لسه ما تسلّمش
+        $cashOut = abs((float) Wallet::where('party', 'driver')->where('balance', '<', 0)->sum('balance'));
+
+        // أرصدة الزبائن = فلوس مشحونة لسه ما تصرفتش في طلبات
+        $customers = (float) Wallet::where('party', 'customer')->where('balance', '>', 0)->sum('balance');
 
         $unusedCards = (float) RechargeCard::where('status', 'unused')->sum('amount');
 
@@ -62,6 +65,10 @@ class FinanceStatsWidget extends StatsOverviewWidget
             Stat::make('كاش عند السائقين', number_format($cashOut, 2).' د.ل')
                 ->description('لسه ما تسلّمش للمنصة')
                 ->color($cashOut > 0 ? 'danger' : 'gray'),
+
+            Stat::make('أرصدة الزبائن', number_format($customers, 2).' د.ل')
+                ->description('مشحونة في المحافظ ولسه ما تصرفتش')
+                ->color('gray'),
 
             Stat::make('كروت غير مستعملة', number_format($unusedCards, 2).' د.ل')
                 ->description('التزام مستقبلي')

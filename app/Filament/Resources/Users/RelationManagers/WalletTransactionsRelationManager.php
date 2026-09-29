@@ -20,13 +20,25 @@ class WalletTransactionsRelationManager extends RelationManager
         return $table
             ->defaultSort('id', 'desc')
             ->heading('السجل المالي')
-            ->description(fn () => 'الرصيد الحالي: '
-                .number_format($this->getOwnerRecord()->walletBalance(), 2).' د.ل')
+            ->description(function () {
+                $u = $this->getOwnerRecord();
+
+                return collect(\App\Models\Wallet::PARTIES)
+                    ->filter(fn ($l, $p) => $p === 'customer' || $u->hasRole($p))
+                    ->map(fn ($l, $p) => "رصيد $l: ".number_format($u->walletBalance($p), 2).' د.ل')
+                    ->implode(' · ');
+            })
             ->columns([
                 TextColumn::make('created_at')
                     ->label('التاريخ')
                     ->dateTime('H:i — d/m/Y')
                     ->sortable(),
+
+                TextColumn::make('wallet.party')
+                    ->label('المحفظة')
+                    ->badge()
+                    ->formatStateUsing(fn ($state) => \App\Models\Wallet::PARTIES[$state] ?? $state)
+                    ->color(fn ($state) => ['customer' => 'gray', 'store' => 'info', 'driver' => 'warning'][$state] ?? 'gray'),
 
                 TextColumn::make('type')
                     ->label('نوع الحركة')

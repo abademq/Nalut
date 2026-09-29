@@ -48,7 +48,8 @@ class SettlementService
     {
         $orders = $this->unsettledOrders($user, $party)->with('store')->orderBy('delivered_at')->get();
         $last = $this->lastSettlement($user, $party);
-        $balance = $this->wallets->balance($user);
+        // محفظة الصفة بس (متجر أو سائق) — مش محفظة الزبون
+        $balance = $this->wallets->balance($user, $party);
 
         $cash = fn (Order $o) => $o->payment_method?->value === 'cash' ? max(0, round((float) $o->total - (float) $o->wallet_paid, 2)) : 0.0;
 
@@ -64,7 +65,7 @@ class SettlementService
         ];
 
         // حركات المحفظة من غير الطلبات والتسويات (تعديل يدوي، استرجاع...) من آخر تسوية
-        $wallet = $this->wallets->walletFor($user);
+        $wallet = $this->wallets->walletFor($user, $party);
         $other = WalletTransaction::where('wallet_id', $wallet->id)
             ->whereNotIn('type', ['store_earning', 'driver_earning', 'cash_collected', 'payout', 'settlement'])
             ->when($last, fn ($q) => $q->where('created_at', '>', $last->created_at))
@@ -110,7 +111,7 @@ class SettlementService
             $before = $st['balance'];
 
             $tx = $this->wallets->settle($user, $amount, $direction === 'pay' ? 'payout' : 'settlement',
-                trim(($direction === 'pay' ? 'صرف مستحقات' : 'استلام نقدي').($note ? " — $note" : '')), $by);
+                trim(($direction === 'pay' ? 'صرف مستحقات' : 'استلام نقدي').($note ? " — $note" : '')), $by, $party);
 
             $s = Settlement::create([
                 'number' => 'TMP-'.uniqid(),
@@ -157,8 +158,8 @@ class SettlementService
         DB::transaction(function () use ($s, $reason, $by) {
             $note = "إلغاء تسوية {$s->number} — $reason";
             $s->direction === 'pay'
-                ? $this->wallets->credit($s->user, $s->amount, 'adjustment', null, $note, $by)
-                : $this->wallets->debit($s->user, $s->amount, 'adjustment', null, $note, $by, true);
+                ? $this->wallets->credit($s->user, $s->amount, 'adjustment', null, $note, $by, $s->party)
+                : $this->wallets->debit($s->user, $s->amount, 'adjustment', null, $note, $by, true, $s->party);
 
             Order::where($s->party === 'driver' ? 'driver_settlement_id' : 'store_settlement_id', $s->id)
                 ->update([$s->party === 'driver' ? 'driver_settlement_id' : 'store_settlement_id' => null]);
@@ -171,7 +172,7 @@ class SettlementService
     /** كل حسابات المتاجر أو السائقين مع أرصدتهم — لصفحة التسويات */
     public function accounts(string $party): Collection
     {
-        $users = User::withRole($party)->with(['wallet', 'store'])->orderBy('name')->get();
+        $users = User::withRole($party)->with([$party === 'driver' ? 'driverWallet' : 'storeWallet', 'store'])->orderBy('name')->get();
 
         $counts = $party === 'driver'
             ? Order::where('status', OrderStatus::Delivered->value)->where('earnings_settled', true)->whereNull('driver_settlement_id')
@@ -187,7 +188,7 @@ class SettlementService
             'id' => $u->id,
             'name' => $party === 'store' && $u->store ? $u->store->name : $u->name,
             'sub' => $party === 'store' ? $u->name.' · '.$u->phone : $u->phone,
-            'balance' => $u->walletBalance(),
+            'balance' => $u->walletBalance($party),
             'orders' => (int) ($counts[$u->id] ?? 0),
             'last' => $last[$u->id] ?? null,
         ]);

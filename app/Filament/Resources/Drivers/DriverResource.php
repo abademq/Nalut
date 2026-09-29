@@ -64,7 +64,7 @@ class DriverResource extends Resource
     {
         return parent::getEloquentQuery()
             ->withRole('driver')
-            ->with(['driverProfile.zones', 'wallet']);
+            ->with(['driverProfile.zones', 'driverWallet']);
     }
 
     public static function table(Table $table): Table

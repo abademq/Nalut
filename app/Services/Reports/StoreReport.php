@@ -103,9 +103,9 @@ class StoreReport
         $owner = $store?->owner;
         if ($owner instanceof User) {
             $wallets = app(WalletService::class);
-            $vars['balance'] = number_format($wallets->balance($owner), 2, '.', '');
+            $vars['balance'] = number_format($wallets->balance($owner, 'store'), 2, '.', '');
 
-            $payout = WalletTransaction::where('wallet_id', $wallets->walletFor($owner)->id)
+            $payout = WalletTransaction::where('wallet_id', $wallets->walletFor($owner, 'store')->id)
                 ->where('type', 'payout')->latest('id')->first();
             if ($payout) {
                 $vars['last_payout'] = number_format(abs((float) $payout->amount), 2, '.', '');

@@ -15,9 +15,22 @@ class WalletController extends Controller
 {
     public function __construct(private readonly WalletService $wallets) {}
 
+    /**
+     * كل تطبيق يشوف محفظته: السائق أجرته وكاشه، والزبون شحنه ومدفوعاته.
+     * (المتجر حسابه في «حسابي والتسويات» — store/account)
+     */
+    private function party(Request $request): string
+    {
+        return match ($request->header('X-App') ?: $request->input('app')) {
+            'driver' => 'driver',
+            'store' => 'store',
+            default => 'customer',
+        };
+    }
+
     public function show(Request $request): JsonResponse
     {
-        $wallet = $this->wallets->walletFor($request->user());
+        $wallet = $this->wallets->walletFor($request->user(), $this->party($request));
 
         return response()->json([
             'balance'  => (float) $wallet->balance,
@@ -27,7 +40,7 @@ class WalletController extends Controller
 
     public function transactions(Request $request): JsonResponse
     {
-        $wallet = $this->wallets->walletFor($request->user());
+        $wallet = $this->wallets->walletFor($request->user(), $this->party($request));
 
         $items = WalletTransaction::where('wallet_id', $wallet->id)
             ->latest('id')

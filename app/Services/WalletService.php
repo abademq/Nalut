@@ -16,14 +16,37 @@ use Illuminate\Validation\ValidationException;
  */
 class WalletService
 {
-    public function walletFor(User $user): Wallet
+    /**
+     * كل مستخدم عنده محفظة منفصلة لكل صفة (زبون · متجر · سائق) — ما تتخلطش.
+     * أغلب الحركات صفتها معروفة من نوعها؛ الصرف والتسوية والتعديل اليدوي لازم تتحدد.
+     */
+    public const PARTY_BY_TYPE = [
+        'store_earning' => 'store',
+        'driver_earning' => 'driver',
+        'cash_collected' => 'driver',
+        'topup_card' => 'customer',
+        'topup_cash' => 'customer',
+        'topup_online' => 'customer',
+        'order_payment' => 'customer',
+        'order_refund' => 'customer',
+        'points' => 'customer',
+    ];
+
+    public static function partyFor(string $type, ?string $party = null): string
     {
-        return Wallet::firstOrCreate(['user_id' => $user->id], ['balance' => 0]);
+        $party = self::PARTY_BY_TYPE[$type] ?? $party ?? 'customer';
+
+        return array_key_exists($party, Wallet::PARTIES) ? $party : 'customer';
     }
 
-    public function balance(User $user): float
+    public function walletFor(User $user, string $party = 'customer'): Wallet
     {
-        return (float) $this->walletFor($user)->balance;
+        return Wallet::firstOrCreate(['user_id' => $user->id, 'party' => $party], ['balance' => 0]);
+    }
+
+    public function balance(User $user, string $party = 'customer'): float
+    {
+        return (float) (Wallet::where('user_id', $user->id)->where('party', $party)->value('balance') ?? 0);
     }
 
     /**
@@ -35,9 +58,10 @@ class WalletService
         string $type,
         ?Order $order = null,
         ?string $note = null,
-        ?User $by = null
+        ?User $by = null,
+        ?string $party = null
     ): WalletTransaction {
-        return $this->record($user, abs($amount), $type, $order, $note, $by);
+        return $this->record($user, abs($amount), $type, $order, $note, $by, self::partyFor($type, $party));
     }
 
     /**
@@ -50,17 +74,19 @@ class WalletService
         ?Order $order = null,
         ?string $note = null,
         ?User $by = null,
-        bool $allowNegative = false
+        bool $allowNegative = false,
+        ?string $party = null
     ): WalletTransaction {
         $amount = abs($amount);
+        $party = self::partyFor($type, $party);
 
-        if (! $allowNegative && $this->balance($user) < $amount) {
+        if (! $allowNegative && $this->balance($user, $party) < $amount) {
             throw ValidationException::withMessages([
-                'wallet' => 'الرصيد ما يكفيش. المتوفر: '.number_format($this->balance($user), 2).' د.ل',
+                'wallet' => 'الرصيد ما يكفيش. المتوفر: '.number_format($this->balance($user, $party), 2).' د.ل',
             ]);
         }
 
-        return $this->record($user, -$amount, $type, $order, $note, $by);
+        return $this->record($user, -$amount, $type, $order, $note, $by, $party);
     }
 
     /** شحن المحفظة بكرت */
@@ -99,7 +125,8 @@ class WalletService
                 'topup_card',
                 null,
                 "كرت {$card->code}",
-                $user
+                $user,
+                'customer'
             );
 
             $tx->update(['recharge_card_id' => $card->id]);
@@ -162,12 +189,15 @@ class WalletService
         });
     }
 
-    /** تسوية: السائق سلّم الكاش، أو المنصة صرفت للمتجر */
-    public function settle(User $user, float $amount, string $type, ?string $note, ?User $by): WalletTransaction
+    /** تسوية: السائق سلّم الكاش، أو المنصة صرفت للمتجر — على محفظة الصفة (store|driver) */
+    public function settle(User $user, float $amount, string $type, ?string $note = null, ?User $by = null, ?string $party = null): WalletTransaction
     {
+        // بدون صفة: الصرف عادةً للمتجر، والاستلام من السائق
+        $party ??= $type === 'payout' ? 'store' : 'driver';
+
         return $type === 'payout'
-            ? $this->record($user, -abs($amount), 'payout', null, $note, $by)
-            : $this->record($user, abs($amount), 'settlement', null, $note, $by);
+            ? $this->record($user, -abs($amount), 'payout', null, $note, $by, $party)
+            : $this->record($user, abs($amount), 'settlement', null, $note, $by, $party);
     }
 
     /** الكتابة الفعلية في الدفتر مع قفل الصف */
@@ -177,11 +207,12 @@ class WalletService
         string $type,
         ?Order $order,
         ?string $note,
-        ?User $by
+        ?User $by,
+        string $party
     ): WalletTransaction {
-        return DB::transaction(function () use ($user, $signedAmount, $type, $order, $note, $by) {
-            $wallet = Wallet::where('user_id', $user->id)->lockForUpdate()->first()
-                ?? Wallet::create(['user_id' => $user->id, 'balance' => 0]);
+        return DB::transaction(function () use ($user, $signedAmount, $type, $order, $note, $by, $party) {
+            $wallet = Wallet::where('user_id', $user->id)->where('party', $party)->lockForUpdate()->first()
+                ?? Wallet::create(['user_id' => $user->id, 'party' => $party, 'balance' => 0]);
 
             $newBalance = round((float) $wallet->balance + $signedAmount, 2);
             $wallet->update(['balance' => $newBalance]);
