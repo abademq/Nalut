@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use App\Models\AppSection;
 use App\Models\Banner;
+use App\Support\AppTheme;
 use App\Support\Options;
 use App\Support\Sounds;
 use App\Support\Texts;
@@ -24,7 +25,7 @@ class AppContentController extends Controller
 {
     public function show(Request $request): JsonResponse
     {
-        $app = in_array($request->query('app'), ['customer', 'store', 'driver'], true)
+        $app = in_array($request->query('app'), ['customer', 'store', 'driver', 'admin'], true)
             ? $request->query('app')
             : 'customer';
 
@@ -36,6 +37,8 @@ class AppContentController extends Controller
             'options' => (object) Options::publicValues(),
             // صوت الإشعارات من «أصوات الإشعارات»: النغمة (داخل التطبيق) ورابط الصوت الخاص
             'sound' => Sounds::forApp($app),
+            // ألوان التطبيق من «مظهر التطبيقات»
+            'theme' => AppTheme::values(),
         ];
 
         if ($app === 'customer') {

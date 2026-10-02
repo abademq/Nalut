@@ -717,15 +717,13 @@ class OrderService
             );
         }
 
-        // تطبيق الإدارة: كل طلب جديد (حسب الإعداد)
-        if (Options::get('admin_app.push_new_orders')) {
-            AdminAlerts::pushOnly(
-                "طلب جديد {$order->code}".(Pickup::is($order) ? ' — استلام' : ''),
-                ($order->store?->name ?? '').' · '.number_format((float) $order->total, 2).' د.ل',
-                ['type' => 'new_order', 'order_id' => (string) $order->id],
-                'orders.view'
-            );
-        }
+        // الإدارة: «طلب جديد» حسب «إعدادات الإشعارات ← تنبيهات لوحة التحكم»
+        AdminAlerts::pushOnly(
+            "طلب جديد {$order->code}".(Pickup::is($order) ? ' — استلام' : ''),
+            ($order->store?->name ?? '').' · '.number_format((float) $order->total, 2).' د.ل',
+            ['type' => 'new_order', 'order_id' => (string) $order->id],
+            'orders.view'
+        );
     }
 
     /**

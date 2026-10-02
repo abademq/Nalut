@@ -13,10 +13,13 @@
     const soundUrl = @json(\App\Support\Sounds::url('admin'));
     const audio = soundUrl ? new Audio(soundUrl) : null;
 
-    function beep() {
-        if (audio) {
-            audio.currentTime = 0;
-            audio.play().catch(() => {});
+    // نغمة كل نوع من «إعدادات الإشعارات ← تنبيهات لوحة التحكم»
+    const tones = {};
+    function beep(url) {
+        const a = url ? (tones[url] = tones[url] || new Audio(url)) : audio;
+        if (a) {
+            a.currentTime = 0;
+            a.play().catch(() => {});
             return;
         }
         try {
@@ -47,9 +50,9 @@
             const id = d.latest ? d.latest.id : null;
 
             if (ready && id && id !== lastId) {
-                beep();
+                if (d.latest.sound !== false) beep(d.latest.tone);
                 if ('Notification' in window && Notification.permission === 'granted') {
-                    const n = new Notification(d.latest.title || 'تنبيه', { body: d.latest.body || '', tag: id });
+                    const n = new Notification(d.latest.title || 'تنبيه', { body: d.latest.body || '', tag: id, silent: d.latest.sound === false });
                     n.onclick = () => { window.focus(); n.close(); };
                 }
                 // نحدّث الجرس فوراً بدل ما نستنو دورته

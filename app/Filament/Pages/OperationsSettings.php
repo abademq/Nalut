@@ -49,7 +49,6 @@ class OperationsSettings extends Page
         'banners' => 'الإعلانات',
         'delivery' => 'التوصيل والعمولة',
         'pickup' => 'الاستلام من المطعم',
-        'admin_app' => 'تطبيق الإدارة',
         'tracking' => 'التتبّع',
         'wallet' => 'كروت الشحن',
     ];

@@ -78,14 +78,17 @@ class PushService
                             // القناة والنغمة حسب «أصوات الإشعارات» في لوحة التحكم
                             // تطبيق الإدارة: قناة تنبيهات بأعلى أهمية ونغمة قوية (تطلع حتى والهاتف صامت/وضع توفير)
                             'notification' => $app === 'admin'
-                                ? ['channel_id' => 'admin_alerts', 'sound' => 'tone_alert', 'notification_priority' => 'PRIORITY_MAX', 'visibility' => 'PUBLIC']
+                                ? (($data['sound'] ?? '1') === '0'
+                                    // «بدون صوت» من إعدادات تنبيهات الإدارة
+                                    ? ['channel_id' => 'admin_silent', 'notification_priority' => 'PRIORITY_HIGH', 'visibility' => 'PUBLIC']
+                                    : ['channel_id' => 'admin_alerts', 'sound' => 'tone_alert', 'notification_priority' => 'PRIORITY_MAX', 'visibility' => 'PUBLIC'])
                                 : Sounds::android($app),
                         ],
                         'apns' => [
                             'headers' => ['apns-priority' => '10'],
                             'payload' => [
                                 'aps' => $app === 'admin'
-                                    ? ['sound' => 'default', 'interruption-level' => 'time-sensitive']
+                                    ? (($data['sound'] ?? '1') === '0' ? ['interruption-level' => 'active'] : ['sound' => 'default', 'interruption-level' => 'time-sensitive'])
                                     : ['sound' => 'default'],
                             ],
                         ],

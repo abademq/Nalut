@@ -8,10 +8,12 @@ use App\Filament\Pages\OperationsSettings;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
 use App\Models\Order;
+use App\Models\OrderIssue;
 use App\Models\Setting;
 use App\Models\Store;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\DeliveryIssueService;
 use App\Services\DriverLocationService;
 use App\Services\GeoService;
 use App\Services\OrderService;
@@ -193,7 +195,30 @@ class AdminAppController extends Controller
                 ->map(fn ($s) => ['status' => $s->value, 'label' => $s->label(), 'normal' => OrderService::canMove($order, $order->status, $s)])
                 ->values(),
             'driver_location' => $order->driver_id ? DriverLocationService::get($order->driver_id) : null,
+            // بلاغ السائق المفتوح + القرارات الممكنة
+            'issue' => $order->openIssue ? [
+                'ticket' => $order->openIssue->ticket,
+                'reason' => $order->openIssue->reason_label,
+                'note' => $order->openIssue->note,
+                'driver' => $order->openIssue->driver?->name,
+                'created_at' => $order->openIssue->created_at,
+                'resolutions' => OrderIssue::RESOLUTIONS,
+            ] : null,
         ]);
+    }
+
+    public function resolveIssue(Request $request, Order $order): JsonResponse
+    {
+        $this->need($request, 'orders.manage');
+        $data = $request->validate([
+            'resolution' => ['required', 'string'],
+            'note' => ['nullable', 'string', 'max:200'],
+        ]);
+        abort_unless($order->openIssue, 422, 'ما فيش بلاغ مفتوح على الطلب.');
+
+        app(DeliveryIssueService::class)->resolve($order->openIssue, $request->user(), $data['resolution'], $data['note'] ?? null);
+
+        return $this->order($request, $order->fresh());
     }
 
     public function updateStatus(Request $request, Order $order): JsonResponse

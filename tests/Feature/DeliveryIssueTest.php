@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Enums\OrderStatus;
 use App\Enums\UserRole;
+use App\Filament\Resources\Orders\OrderResource;
+use App\Filament\Resources\Orders\Pages\ViewOrder;
 use App\Models\DriverProfile;
 use App\Models\FailureReason;
 use App\Models\Order;
@@ -16,6 +18,7 @@ use App\Services\DeliveryIssueService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -197,5 +200,31 @@ class DeliveryIssueTest extends TestCase
         $this->get('/admin/orders')->assertOk()->assertSee('قيد المراجعة');
         $this->get('/admin/failure-reasons')->assertOk()->assertSee('تعطّلت المركبة');
         $this->get('/admin/app-settings')->assertOk()->assertSee('واتساب الدعم الفني');
+    }
+
+    public function test_issue_decided_from_order_page_and_admin_app(): void
+    {
+        $this->postJson("/api/v1/driver/orders/{$this->order->id}/issue", ['reason_id' => $this->reason('تعطّلت المركبة')->id])->assertCreated();
+        $admin = User::create(['name' => 'a', 'phone' => '0910000009', 'email' => 'a@a.ly', 'password' => 'x', 'role' => UserRole::Admin->value, 'is_active' => true]);
+        $this->actingAs($admin, 'web');
+
+        // صفحة الطلب: تنبيه فوق + زر القرار
+        $this->get(OrderResource::getUrl('view', ['record' => $this->order]))
+            ->assertOk()->assertSee('عليه بلاغ مفتوح')->assertSee('مراجعة البلاغ');
+        Livewire::test(ViewOrder::class, ['record' => $this->order->id])
+            ->callAction('resolveIssue', ['resolution' => 'continue', 'note' => 'كمّل'])
+            ->assertHasNoActionErrors();
+        $this->assertNull($this->order->fresh()->openIssue);
+    }
+
+    public function test_issue_decided_from_admin_app(): void
+    {
+        $this->postJson("/api/v1/driver/orders/{$this->order->id}/issue", ['reason_id' => $this->reason('تعطّلت المركبة')->id])->assertCreated();
+        $admin = User::create(['name' => 'a', 'phone' => '0910000009', 'email' => 'a@a.ly', 'password' => 'x', 'role' => UserRole::Admin->value, 'is_active' => true]);
+        Sanctum::actingAs($admin);
+
+        $this->getJson("/api/v1/admin/orders/{$this->order->id}")->assertOk()->assertJsonPath('issue.reason', 'تعطّلت المركبة');
+        $this->postJson("/api/v1/admin/orders/{$this->order->id}/issue", ['resolution' => 'failed', 'note' => 'المركبة'])
+            ->assertOk()->assertJsonPath('data.status', 'failed')->assertJsonPath('issue', null);
     }
 }

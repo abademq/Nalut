@@ -132,6 +132,7 @@ Route::prefix('v1')->group(function () {
             Route::get('orders/{order}', [AdminAppController::class, 'order']);
             Route::post('orders/{order}/status', [AdminAppController::class, 'updateStatus']);
             Route::get('orders/{order}/drivers', [AdminAppController::class, 'drivers']);
+            Route::post('orders/{order}/issue', [AdminAppController::class, 'resolveIssue']);
             Route::get('tickets', [AdminAppController::class, 'tickets']);
             Route::get('tickets/{ticket}', [AdminAppController::class, 'showTicket']);
             Route::post('tickets/{ticket}/reply', [AdminAppController::class, 'replyTicket'])->middleware('throttle:30,1');

@@ -136,37 +136,8 @@ class OrdersTable
                     ->visible(fn () => Perm::can('logs.view'))
                     ->url(fn ($record) => ActivityLogResource::filteredUrl(['order_id' => ['value' => $record->id]])),
 
-                // بلاغ سائق مفتوح: الإدارة تقرر مصير الطلب
-                Action::make('resolveIssue')
-                    ->authorize(fn () => Perm::can('orders.manage'))
-                    ->visible(fn ($record) => (bool) $record->openIssue)
-                    ->label('مراجعة البلاغ')
-                    ->icon('heroicon-o-exclamation-triangle')
-                    ->color('danger')
-                    ->modalHeading(fn ($record) => 'بلاغ '.$record->openIssue?->ticket)
-                    ->modalDescription(fn ($record) => $record->openIssue
-                        ? "السبب: {$record->openIssue->reason_label}"
-                            .($record->openIssue->note ? " — {$record->openIssue->note}" : '')
-                            .' · السائق: '.($record->openIssue->driver?->name ?? '—')
-                            .' · '.$record->openIssue->created_at?->diffForHumans()
-                        : null)
-                    ->modalSubmitActionLabel('تنفيذ القرار')
-                    ->schema([
-                        Select::make('resolution')
-                            ->label('القرار')
-                            ->options(OrderIssue::RESOLUTIONS)
-                            ->required(),
-                        TextInput::make('note')->label('ملاحظة')->maxLength(200),
-                    ])
-                    ->action(function ($record, array $data) {
-                        try {
-                            app(DeliveryIssueService::class)
-                                ->resolve($record->openIssue, auth()->user(), $data['resolution'], $data['note'] ?? null);
-                            Notification::make()->title('تم تنفيذ القرار')->success()->send();
-                        } catch (ValidationException $e) {
-                            Notification::make()->title(collect($e->errors())->flatten()->first())->danger()->send();
-                        }
-                    }),
+                // بلاغ سائق مفتوح: الإدارة تقرر مصير الطلب (نفس الزر في صفحة الطلب)
+                self::resolveIssueAction(),
 
                 Action::make('changeStatus')
                     ->authorize(fn () => Perm::can('orders.manage'))
@@ -276,5 +247,40 @@ class OrdersTable
                 ->danger()
                 ->send();
         }
+    }
+
+    /** قرار البلاغ المفتوح — في جدول الطلبات وفي صفحة الطلب نفسها */
+    public static function resolveIssueAction(): Action
+    {
+        return Action::make('resolveIssue')
+            ->authorize(fn () => Perm::can('orders.manage'))
+            ->visible(fn ($record) => (bool) $record->openIssue)
+            ->label('مراجعة البلاغ')
+            ->icon('heroicon-o-exclamation-triangle')
+            ->color('danger')
+            ->modalHeading(fn ($record) => 'بلاغ '.$record->openIssue?->ticket)
+            ->modalDescription(fn ($record) => $record->openIssue
+                ? "السبب: {$record->openIssue->reason_label}"
+                    .($record->openIssue->note ? " — {$record->openIssue->note}" : '')
+                    .' · السائق: '.($record->openIssue->driver?->name ?? '—')
+                    .' · '.$record->openIssue->created_at?->diffForHumans()
+                : null)
+            ->modalSubmitActionLabel('تنفيذ القرار')
+            ->schema([
+                Select::make('resolution')
+                    ->label('القرار')
+                    ->options(OrderIssue::RESOLUTIONS)
+                    ->required(),
+                TextInput::make('note')->label('ملاحظة')->maxLength(200),
+            ])
+            ->action(function ($record, array $data) {
+                try {
+                    app(DeliveryIssueService::class)
+                        ->resolve($record->openIssue, auth()->user(), $data['resolution'], $data['note'] ?? null);
+                    Notification::make()->title('تم تنفيذ القرار')->success()->send();
+                } catch (ValidationException $e) {
+                    Notification::make()->title(collect($e->errors())->flatten()->first())->danger()->send();
+                }
+            });
     }
 }

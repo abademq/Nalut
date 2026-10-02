@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Support\AdminAlertTypes;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -20,9 +21,12 @@ class AlertsController extends Controller
         return response()->json([
             'unread' => $user->unreadNotifications()->count(),
             'latest' => $latest ? [
-                'id'    => $latest->id,
+                'id' => $latest->id,
                 'title' => $latest->data['title'] ?? '',
-                'body'  => strip_tags((string) ($latest->data['body'] ?? '')),
+                'body' => strip_tags((string) ($latest->data['body'] ?? '')),
+                // من «تنبيهات لوحة التحكم»: بصوت ولا لا، وأي نغمة
+                'sound' => (bool) ($latest->data['viewData']['sound'] ?? true),
+                'tone' => AdminAlertTypes::toneUrl((string) ($latest->data['viewData']['tone'] ?? 'default')),
             ] : null,
         ]);
     }

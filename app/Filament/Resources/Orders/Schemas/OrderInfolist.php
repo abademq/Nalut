@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Orders\Schemas;
 
 use App\Enums\OrderStatus;
 use App\Models\Order;
+use App\Support\Duration;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
@@ -114,8 +115,9 @@ class OrderInfolist
 
                                 $gap = '';
                                 if ($previous && $log->created_at) {
-                                    $minutes = $previous->diffInMinutes($log->created_at);
-                                    $gap = $minutes > 0 ? "  (بعد {$minutes} دقيقة)" : '';
+                                    // مقرّبة: «بعد 20 ساعة و15 دقيقة» بدل «بعد 1215.83 دقيقة»
+                                    $seconds = $log->created_at->getTimestamp() - $previous->getTimestamp();
+                                    $gap = $seconds >= 30 ? '  (بعد '.Duration::seconds($seconds).')' : '';
                                 }
                                 $previous = $log->created_at;
 

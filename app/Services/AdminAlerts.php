@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Filament\Resources\Orders\OrderResource;
 use App\Models\MessageTemplate;
 use App\Models\User;
 use App\Services\Messaging\Messenger;
+use App\Support\AdminAlertTypes;
 use App\Support\Options;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -21,10 +23,17 @@ class AdminAlerts
     /**
      * @param  string|null  $key  يمنع تكرار نفس التنبيه (مثلاً order-failed:15)
      */
-    public static function send(string $title, string $body, ?string $url = null, string $level = 'warning', ?string $key = null, string $permission = 'orders.view'): bool
+    public static function send(string $title, string $body, ?string $url = null, string $level = 'warning', ?string $key = null, string $permission = 'orders.view', ?string $type = null): bool
     {
         if ($key && ! Cache::add("admin-alert:$key", 1, now()->addDays(3))) {
             return false; // انبعت من قبل
+        }
+
+        // «إعدادات الإشعارات ← تنبيهات لوحة التحكم»: يظهر؟ بصوت؟ أي نغمة؟ لتطبيق الإدارة؟
+        $type ??= AdminAlertTypes::fromKey($key);
+        $cfg = AdminAlertTypes::config($type);
+        if (! $cfg['enabled'] && ! $cfg['push']) {
+            return false;
         }
 
         try {
@@ -32,7 +41,7 @@ class AdminAlerts
             $admins = User::withRole(UserRole::Admin)->where('is_active', true)->get()
                 ->filter(fn (User $u) => $u->hasPermission($permission));
 
-            if ($admins->isNotEmpty()) {
+            if ($admins->isNotEmpty() && $cfg['enabled']) {
                 $n = Notification::make()
                     ->title($title)
                     ->body($body)
@@ -41,7 +50,9 @@ class AdminAlerts
                         'info' => 'heroicon-o-information-circle',
                         default => 'heroicon-o-bell-alert',
                     })
-                    ->iconColor($level);
+                    ->iconColor($level)
+                    // اللوحة تقرا منها الصوت والنغمة (admin-alerts-sound)
+                    ->viewData(['alert_type' => $type, 'sound' => $cfg['sound'], 'tone' => $cfg['tone']]);
 
                 if ($url) {
                     $n->actions([Action::make('open')->label('فتح')->url($url)->markAsRead()]);
@@ -51,9 +62,14 @@ class AdminAlerts
             }
 
             // تطبيق الإدارة (ازانكس إدارة) — إشعار بأولوية عالية
-            self::pushTo($admins, $title, $body, ['type' => 'alert', 'level' => $level, 'url' => (string) $url] + self::refFromKey($key));
+            if ($cfg['push']) {
+                self::pushTo($admins, $title, $body, ['type' => 'alert', 'alert_type' => $type, 'level' => $level, 'url' => (string) $url,
+                    'sound' => $cfg['sound'] ? '1' : '0'] + self::refFromKey($key));
+            }
 
-            self::viaPhone($title, $body);
+            if ($cfg['enabled']) {
+                self::viaPhone($title, $body);
+            }
         } catch (\Throwable $e) {
             // التنبيه ما يطيّحش العملية الأصلية (إلغاء طلب، بلاغ...)
             Log::error('Admin alert failed', ['title' => $title, 'error' => $e->getMessage()]);
@@ -65,13 +81,11 @@ class AdminAlerts
     /** إشعار لتطبيق الإدارة بس (بدون جرس اللوحة) — مثلاً كل طلب جديد */
     public static function pushOnly(string $title, string $body, array $data = [], string $permission = 'orders.view'): void
     {
-        try {
-            $admins = User::withRole(UserRole::Admin)->where('is_active', true)->get()
-                ->filter(fn (User $u) => $u->hasPermission($permission));
-            self::pushTo($admins, $title, $body, $data);
-        } catch (\Throwable $e) {
-            Log::error('Admin push failed', ['title' => $title, 'error' => $e->getMessage()]);
-        }
+        // «طلب جديد»: حسب إعداداته (الافتراضي: تطبيق الإدارة بس، بدون جرس اللوحة)
+        $url = isset($data['order_id'])
+            ? rescue(fn () => OrderResource::getUrl('view', ['record' => $data['order_id']], panel: 'admin'), null, false)
+            : null;
+        self::send($title, $body, $url, 'info', isset($data['order_id']) ? "order-new:{$data['order_id']}" : null, $permission, 'order_new');
     }
 
     private static function pushTo($admins, string $title, string $body, array $data): void
