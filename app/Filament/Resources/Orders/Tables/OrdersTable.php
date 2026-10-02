@@ -3,9 +3,13 @@
 namespace App\Filament\Resources\Orders\Tables;
 
 use App\Enums\OrderStatus;
+use App\Filament\Resources\ActivityLogs\ActivityLogResource;
 use App\Models\Order;
+use App\Models\OrderIssue;
 use App\Models\User;
+use App\Services\DeliveryIssueService;
 use App\Services\OrderService;
+use App\Support\Perm;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Checkbox;
@@ -13,6 +17,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Validation\ValidationException;
@@ -30,7 +35,8 @@ class OrdersTable
                     ->label('رقم الطلب')
                     ->searchable()
                     ->copyable()
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->description(fn (Order $record) => $record->isPickup() ? '🏪 استلام من المطعم' : null),
 
                 TextColumn::make('customer.name')
                     ->label('الزبون')
@@ -53,12 +59,12 @@ class OrdersTable
                         ? '⚠ قيد المراجعة — '.$state->label()
                         : $state->label())
                     ->color(fn (OrderStatus $state, $record) => $record->openIssue ? 'danger' : match ($state) {
-                        OrderStatus::Pending                         => 'warning',
+                        OrderStatus::Pending => 'warning',
                         OrderStatus::Accepted, OrderStatus::Preparing => 'info',
-                        OrderStatus::Ready, OrderStatus::Assigned    => 'primary',
+                        OrderStatus::Ready, OrderStatus::Assigned => 'primary',
                         OrderStatus::PickedUp, OrderStatus::OnTheWay => 'info',
-                        OrderStatus::Delivered                       => 'success',
-                        OrderStatus::Cancelled, OrderStatus::Failed  => 'danger',
+                        OrderStatus::Delivered => 'success',
+                        OrderStatus::Cancelled, OrderStatus::Failed => 'danger',
                     }),
 
                 TextColumn::make('total')
@@ -99,7 +105,7 @@ class OrdersTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                \Filament\Tables\Filters\Filter::make('under_review')
+                Filter::make('under_review')
                     ->label('قيد المراجعة (بلاغات السائقين)')
                     ->query(fn ($query) => $query->whereHas('openIssue')),
 
@@ -127,12 +133,12 @@ class OrdersTable
                     ->label('السجل')
                     ->icon('heroicon-o-clipboard-document-list')
                     ->color('gray')
-                    ->visible(fn () => \App\Support\Perm::can('logs.view'))
-                    ->url(fn ($record) => \App\Filament\Resources\ActivityLogs\ActivityLogResource::filteredUrl(['order_id' => ['value' => $record->id]])),
+                    ->visible(fn () => Perm::can('logs.view'))
+                    ->url(fn ($record) => ActivityLogResource::filteredUrl(['order_id' => ['value' => $record->id]])),
 
                 // بلاغ سائق مفتوح: الإدارة تقرر مصير الطلب
                 Action::make('resolveIssue')
-                    ->authorize(fn () => \App\Support\Perm::can('orders.manage'))
+                    ->authorize(fn () => Perm::can('orders.manage'))
                     ->visible(fn ($record) => (bool) $record->openIssue)
                     ->label('مراجعة البلاغ')
                     ->icon('heroicon-o-exclamation-triangle')
@@ -148,13 +154,13 @@ class OrdersTable
                     ->schema([
                         Select::make('resolution')
                             ->label('القرار')
-                            ->options(\App\Models\OrderIssue::RESOLUTIONS)
+                            ->options(OrderIssue::RESOLUTIONS)
                             ->required(),
                         TextInput::make('note')->label('ملاحظة')->maxLength(200),
                     ])
                     ->action(function ($record, array $data) {
                         try {
-                            app(\App\Services\DeliveryIssueService::class)
+                            app(DeliveryIssueService::class)
                                 ->resolve($record->openIssue, auth()->user(), $data['resolution'], $data['note'] ?? null);
                             Notification::make()->title('تم تنفيذ القرار')->success()->send();
                         } catch (ValidationException $e) {
@@ -163,7 +169,7 @@ class OrdersTable
                     }),
 
                 Action::make('changeStatus')
-                ->authorize(fn () => \App\Support\Perm::can('orders.manage'))
+                    ->authorize(fn () => Perm::can('orders.manage'))
                     ->label('تغيير الحالة')
                     ->icon('heroicon-o-arrow-path')
                     ->color('primary')
@@ -176,7 +182,7 @@ class OrdersTable
                             ->options(fn ($record) => collect(OrderStatus::cases())
                                 ->reject(fn ($s) => $s === $record->status)
                                 ->mapWithKeys(fn ($s) => [
-                                    $s->value => $record->status->canMoveTo($s)
+                                    $s->value => OrderService::canMove($record, $record->status, $s)
                                         ? $s->label()
                                         : '⚠ '.$s->label(),
                                 ])
@@ -230,9 +236,9 @@ class OrdersTable
 
                         self::move($record, $to, [
                             'prep_time_minutes' => $data['prep_time_minutes'] ?? null,
-                            'driver_id'         => $data['driver_id'] ?? null,
-                            'reason'            => $data['reason'] ?? null,
-                            'force'             => (bool) ($data['force'] ?? false),
+                            'driver_id' => $data['driver_id'] ?? null,
+                            'reason' => $data['reason'] ?? null,
+                            'force' => (bool) ($data['force'] ?? false),
                         ]);
                     }),
             ]);
@@ -247,7 +253,7 @@ class OrdersTable
 
         $target = OrderStatus::tryFrom($status);
 
-        return $target !== null && ! $record->status->canMoveTo($target);
+        return $target !== null && ! OrderService::canMove($record, $record->status, $target);
     }
 
     private static function move(Order $order, OrderStatus $to, array $extra = []): void

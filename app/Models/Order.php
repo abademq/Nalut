@@ -9,11 +9,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 
 class Order extends Model
 {
     protected $fillable = [
-        'code', 'customer_id', 'store_id', 'delivery_zone_id', 'driver_id', 'coupon_id', 'status',
+        'code', 'customer_id', 'store_id', 'fulfillment', 'pickup_code', 'delivery_zone_id', 'driver_id', 'coupon_id', 'status',
         'payment_method', 'is_paid', 'wallet_paid', 'earnings_settled',
         'address_details', 'address_landmark',
         'address_lat', 'address_lng', 'customer_phone', 'subtotal', 'delivery_fee',
@@ -26,27 +28,27 @@ class Order extends Model
     protected function casts(): array
     {
         return [
-            'status'         => OrderStatus::class,
+            'status' => OrderStatus::class,
             'payment_method' => PaymentMethod::class,
-            'is_paid'          => 'boolean',
-            'wallet_paid'      => 'float',
+            'is_paid' => 'boolean',
+            'wallet_paid' => 'float',
             'earnings_settled' => 'boolean',
-            'address_lat'    => 'float',
-            'address_lng'    => 'float',
-            'subtotal'       => 'float',
-            'delivery_fee'   => 'float',
-            'discount'       => 'float',
-            'total'          => 'float',
-            'distance_km'    => 'float',
-            'accepted_at'    => 'datetime',
-            'ready_at'       => 'datetime',
-            'picked_up_at'   => 'datetime',
-            'delivered_at'   => 'datetime',
-            'cancelled_at'   => 'datetime',
+            'address_lat' => 'float',
+            'address_lng' => 'float',
+            'subtotal' => 'float',
+            'delivery_fee' => 'float',
+            'discount' => 'float',
+            'total' => 'float',
+            'distance_km' => 'float',
+            'accepted_at' => 'datetime',
+            'ready_at' => 'datetime',
+            'picked_up_at' => 'datetime',
+            'delivered_at' => 'datetime',
+            'cancelled_at' => 'datetime',
             'stock_restored_at' => 'datetime',
-            'awaiting_customer_at'     => 'datetime',
+            'awaiting_customer_at' => 'datetime',
             'substitution_deadline_at' => 'datetime',
-            'points_discount'          => 'float',
+            'points_discount' => 'float',
         ];
     }
 
@@ -90,6 +92,13 @@ class Order extends Model
         return $this->belongsTo(Coupon::class);
     }
 
+    /** الإدارة: نخبّيو طلبات البطاقة اللي دفعها ما كمّلش (لسه ما وصلتش للمتجر) */
+    public function scopeVisibleToStaff(Builder $q): Builder
+    {
+        return $q->where(fn ($w) => $w->where('payment_method', '!=', 'card')->orWhere('is_paid', true)
+            ->orWhereIn('status', ['cancelled', 'failed']));
+    }
+
     public function scopeActive(Builder $q): Builder
     {
         return $q->whereIn('status', OrderStatus::active());
@@ -101,7 +110,8 @@ class Order extends Model
      */
     public function isAvailableForDrivers(): bool
     {
-        if ($this->driver_id) {
+        // الاستلام من المطعم: الزبون ياخذه بنفسه
+        if ($this->driver_id || $this->isPickup()) {
             return false;
         }
 
@@ -138,7 +148,7 @@ class Order extends Model
      */
     public static function temporaryCode(): string
     {
-        return 'T'.strtoupper(\Illuminate\Support\Str::random(11));
+        return 'T'.strtoupper(Str::random(11));
     }
 
     /** @deprecated الأرقام صارت متسلسلة — استعمل temporaryCode() */
@@ -178,18 +188,23 @@ class Order extends Model
     }
 
     /** طلب بالبطاقة والدفع لسه ما تأكدش */
+    public function isPickup(): bool
+    {
+        return ($this->fulfillment ?? 'delivery') === 'pickup';
+    }
+
     public function awaitingOnlinePayment(): bool
     {
-        return $this->payment_method === \App\Enums\PaymentMethod::Card && ! $this->is_paid;
+        return $this->payment_method === PaymentMethod::Card && ! $this->is_paid;
     }
 
     /** وقت الجاهزية المتوقع = وقت القبول + مدة التحضير */
-    public function readyEta(): ?\Illuminate\Support\Carbon
+    public function readyEta(): ?Carbon
     {
         if (! $this->accepted_at || ! $this->prep_time_minutes) {
             return null;
         }
 
-        return \Illuminate\Support\Carbon::parse($this->accepted_at)->addMinutes((int) $this->prep_time_minutes);
+        return Carbon::parse($this->accepted_at)->addMinutes((int) $this->prep_time_minutes);
     }
 }

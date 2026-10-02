@@ -24,7 +24,7 @@ class Store extends Model
     protected $fillable = [
         'user_id', 'store_type_id', 'delivery_zone_id', 'name', 'slug', 'description', 'ingredients_mode',
         'logo', 'cover', 'phone', 'address', 'lat', 'lng', 'commission_percent',
-        'min_order', 'prep_time_minutes', 'opens_at', 'closes_at', 'is_open', 'is_active',
+        'min_order', 'prep_time_minutes', 'opens_at', 'closes_at', 'is_open', 'is_active', 'pickup_enabled',
         'rating_avg', 'rating_count',
     ];
 
@@ -33,6 +33,7 @@ class Store extends Model
         return [
             'lat' => 'float',
             'lng' => 'float',
+            'pickup_enabled' => 'boolean',
             'commission_percent' => 'float',
             'min_order' => 'float',
             'is_open' => 'boolean',

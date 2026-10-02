@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Engagement;
 
+use App\Filament\Concerns\GuardedByPermission;
 use App\Models\Announcement;
 use App\Models\Store;
 use BackedEnum;
@@ -24,7 +25,7 @@ use UnitEnum;
 /** شريط العروض: سطر ملوّن فوق التطبيق أو فوق متجر */
 class AnnouncementResource extends Resource
 {
-    use \App\Filament\Concerns\GuardedByPermission;
+    use GuardedByPermission;
 
     public const PERM_VIEW = 'settings.manage';
 
@@ -59,7 +60,7 @@ class AnnouncementResource extends Resource
                 ->options(fn () => Store::orderBy('name')->pluck('name', 'id'))
                 ->placeholder('التطبيق كامل (الرئيسية)'),
             TextInput::make('link')->label('يفتح على (اختياري)')->maxLength(255)
-                ->placeholder('https://api.dar-almaqam.com.ly/s/5')
+                ->placeholder('https://api.azanx.ly/s/5')
                 ->helperText('رابط مشاركة لمتجر/صنف/شاشة أو أي رابط'),
             ColorPicker::make('bg_color')->label('لون الخلفية')->default('#D84315'),
             ColorPicker::make('text_color')->label('لون النص')->default('#FFFFFF'),

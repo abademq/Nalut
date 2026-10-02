@@ -98,7 +98,7 @@ class DeliveryIssueService
                     "{$reason->label}".($note ? " — {$note}" : '')." · الطلب {$order->code} قيد مراجعتك",
                     OrderResource::getUrl('view', ['record' => $order->id], panel: 'admin'),
                     'danger',
-                    "issue:{$issue->ticket}"
+                    "order-issue:{$order->id}:{$issue->ticket}"
                 );
             }
 

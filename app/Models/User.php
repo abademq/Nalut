@@ -39,7 +39,7 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /** التطبيقات اللي تستقبل إشعارات، وكل تطبيق ودوره */
-    public const APPS = ['customer', 'driver', 'store'];
+    public const APPS = ['customer', 'driver', 'store', 'admin'];
 
     protected static function booted(): void
     {

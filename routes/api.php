@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\ActivityController;
 use App\Http\Controllers\Api\AddressController;
+use App\Http\Controllers\Api\AdminAppController;
 use App\Http\Controllers\Api\AppContentController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CatalogController;
@@ -23,6 +24,8 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/otp', [AuthController::class, 'requestOtp'])->middleware(['throttle:10,1', 'appcheck']);
     Route::post('auth/verify', [AuthController::class, 'verifyOtp'])->middleware(['throttle:10,1', 'appcheck']);
     Route::post('auth/login', [AuthController::class, 'login'])->middleware(['throttle:10,1', 'appcheck']);
+    // تطبيق الإدارة — كلمة المرور بس (مش رمز SMS)
+    Route::post('admin/login', [AdminAppController::class, 'login'])->middleware('throttle:5,1');
     Route::get('app/content', [AppContentController::class, 'show']);
     // الشروط والخصوصية (تنقرا قبل تسجيل الدخول كمان)
     Route::get('legal', [LegalController::class, 'index']);
@@ -97,10 +100,12 @@ Route::prefix('v1')->group(function () {
             Route::get('summary', [StorePanelController::class, 'summary']);
             Route::get('account', [PartyAccountController::class, 'store']);
             Route::post('toggle-open', [StorePanelController::class, 'toggleOpen']);
+            Route::post('pickup', [StorePanelController::class, 'togglePickup']);
             Route::get('orders', [StorePanelController::class, 'orders']);
             Route::get('reports/daily', [StorePanelController::class, 'dailyReport']);
             Route::post('orders/{order}/status', [StorePanelController::class, 'updateOrderStatus']);
             Route::post('orders/{order}/unavailable-items', [StorePanelController::class, 'unavailableItems']);
+            Route::post('orders/{order}/handover', [StorePanelController::class, 'handOver']);
             Route::get('products', [StorePanelController::class, 'products']);
             Route::post('products', [StorePanelController::class, 'storeProduct']);
             Route::post('products/{product}', [StorePanelController::class, 'updateProduct']);
@@ -111,9 +116,33 @@ Route::prefix('v1')->group(function () {
             Route::get('sections', [StorePanelController::class, 'sections']);
             Route::post('sections', [StorePanelController::class, 'storeSection']);
             Route::post('sections/reorder', [StorePanelController::class, 'reorderSections']);
+            Route::post('sections/{id}/availability', [StorePanelController::class, 'sectionAvailability']);
             Route::post('sections/{id}', [StorePanelController::class, 'updateSection']);
             Route::delete('sections/{id}', [StorePanelController::class, 'destroySection']);
 
+        });
+
+        // ---------- تطبيق الإدارة ----------
+        Route::prefix('admin')->middleware('role:admin')->group(function () {
+            Route::get('me', [AdminAppController::class, 'profile']);
+            Route::post('push-token', [AdminAppController::class, 'pushToken']);
+            Route::post('logout', [AdminAppController::class, 'logout']);
+            Route::get('summary', [AdminAppController::class, 'summary']);
+            Route::get('orders', [AdminAppController::class, 'orders']);
+            Route::get('orders/{order}', [AdminAppController::class, 'order']);
+            Route::post('orders/{order}/status', [AdminAppController::class, 'updateStatus']);
+            Route::get('orders/{order}/drivers', [AdminAppController::class, 'drivers']);
+            Route::get('tickets', [AdminAppController::class, 'tickets']);
+            Route::get('tickets/{ticket}', [AdminAppController::class, 'showTicket']);
+            Route::post('tickets/{ticket}/reply', [AdminAppController::class, 'replyTicket'])->middleware('throttle:30,1');
+            Route::post('tickets/{ticket}/close', [AdminAppController::class, 'closeTicket']);
+            Route::post('tickets/{ticket}/assign', [AdminAppController::class, 'assignTicket']);
+            Route::get('settings', [AdminAppController::class, 'settings']);
+            Route::post('settings', [AdminAppController::class, 'saveSettings']);
+            Route::get('stores', [AdminAppController::class, 'stores']);
+            Route::post('stores/{store}/toggle', [AdminAppController::class, 'toggleStore']);
+            Route::get('alerts', [AdminAppController::class, 'alerts']);
+            Route::post('alerts/read', [AdminAppController::class, 'readAlerts']);
         });
 
         // ---------- السائق ----------

@@ -6,9 +6,11 @@ use App\Filament\Merchant\Resources\MenuSections\Pages\ManageMenuSections;
 use App\Models\MenuSection;
 use App\Support\Merchant;
 use BackedEnum;
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -59,8 +61,18 @@ class MenuSectionResource extends Resource
                 TextColumn::make('name')->label('القسم')->weight('bold'),
                 TextColumn::make('products_count')->label('عدد الأصناف')->counts('products')->badge(),
                 ToggleColumn::make('is_active')->label('يظهر'),
+                // متاح للطلب: الموقوف يظهر للزبون برمادي وما ينطلبش
+                ToggleColumn::make('is_available')->label('متاح للطلب')
+                    ->getStateUsing(fn (MenuSection $record) => $record->isOrderable())
+                    ->updateStateUsing(fn (MenuSection $record, $state) => $record->pause((bool) $state)),
+                TextColumn::make('paused_until')->label('يرجع')
+                    ->getStateUsing(fn (MenuSection $record) => $record->pausedText())
+                    ->placeholder('—')->color('warning'),
             ])
             ->recordActions([
+                Action::make('pauseUntil')->label('إيقاف لين ساعة')->icon('heroicon-o-clock')
+                    ->schema([TimePicker::make('until')->label('يرجع متاح الساعة (بتوقيت ليبيا)')->seconds(false)->timezone('UTC')->required()])
+                    ->action(fn (MenuSection $record, array $data) => $record->pause(false, substr((string) $data['until'], 0, 5))),
                 EditAction::make()->label('تعديل'),
                 DeleteAction::make()->label('حذف')
                     ->modalDescription('الأصناف ما تنحذفش — تولّي بدون قسم.')

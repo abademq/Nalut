@@ -97,6 +97,7 @@ class OrderResource extends JsonResource
             'status_label' => match (true) {
                 (bool) $this->openIssue => Texts::get('status.under_review'),
                 $this->awaiting_customer_at !== null => Texts::get('status.awaiting_customer'),
+                $this->resource->isPickup() && in_array($this->status->value, ['ready', 'delivered'], true) => Texts::get('status.'.$this->status->value.'_pickup'),
                 default => $this->status->label(),
             },
             'under_review' => (bool) $this->openIssue,
@@ -117,6 +118,15 @@ class OrderResource extends JsonResource
                 ]
             ),
             'is_final' => $this->status->isFinal(),
+            // delivery | pickup — الاستلام: بدون سائق، والزبون يورّي الرمز للمتجر
+            'fulfillment' => $this->fulfillment ?? 'delivery',
+            'is_pickup' => $this->resource->isPickup(),
+            // الرمز للزبون صاحب الطلب بس — المتجر لازم ياخذه منه
+            'pickup_code' => $this->when(
+                $this->resource->isPickup() && $request->user()?->id === $this->customer_id && OrderMoney::viewer($request) !== 'store',
+                fn () => $this->pickup_code
+            ),
+            'pickup_requires_code' => $this->resource->isPickup() && (bool) Options::get('pickup.require_code'),
             'payment_method' => $this->payment_method->value,
             'is_paid' => (bool) $this->is_paid,
             'wallet_paid' => (float) ($this->wallet_paid ?? 0),

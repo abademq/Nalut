@@ -16,6 +16,12 @@ return [
     // بصمات SHA-256 مفصولة بفاصلة (مفتاح الإصدار، ومفتاح Google Play لو فعّلت Play App Signing)
     'android_sha256' => array_values(array_filter(array_map('trim', explode(',', (string) env('APP_ANDROID_SHA256', ''))))),
 
+    // iOS: TEAMID.ly.azanx.app مفصولة بفاصلة — لروابط الأيفون (Universal Links)
+    'ios_app_ids' => array_values(array_filter(array_map('trim', explode(',', (string) env('APP_IOS_APP_ID', ''))))),
+
+    // رابط التطبيق في App Store — فاضي = ما نوروش زر الأيفون
+    'app_store_url' => env('APP_APP_STORE_URL'),
+
     // رابط التطبيق في Google Play — فاضي = نبنيه من اسم الحزمة
     'play_store_url' => env('APP_PLAY_STORE_URL'),
 
@@ -23,8 +29,8 @@ return [
     'scheme' => 'nalut',
 
     'screens' => [
-        'home'   => 'الرئيسية',
-        'cart'   => 'السلة',
+        'home' => 'الرئيسية',
+        'cart' => 'السلة',
         'wallet' => 'المحفظة وشحن الرصيد',
         'orders' => 'طلباتي',
         'points' => 'نقاطي',

@@ -23,7 +23,10 @@ class ProductResource extends JsonResource
             'image_hashes' => array_map(fn ($p) => $this->blurHashFor($p), array_values(array_filter((array) $this->images))),
             'price' => (float) $this->price,
             'discount_price' => $this->discount_price ? (float) $this->discount_price : null,
-            'is_available' => (bool) $this->is_available,
+            // للزبون: الصنف موقوف كمان لو قسمه موقوف — تطبيق المتجر ياخذ القيمة الأصلية (فورم التعديل)
+            'is_available' => (bool) $this->is_available && ($request->is('api/*/store/*') || ! $this->sectionPaused()),
+            'section_paused' => $this->sectionPaused(),
+            'section_paused_text' => $this->sectionPaused() ? $this->section?->pausedText() : null,
             // الظهور (المتجر يخفي الصنف على الزبائن بعيد عن التوفّر)
             'is_visible' => (bool) ($this->is_visible ?? true),
             // المكوّنات — removable = الزبون يقدر يطلبه «بدون»

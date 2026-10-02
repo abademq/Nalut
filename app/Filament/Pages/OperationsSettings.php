@@ -30,7 +30,7 @@ class OperationsSettings extends Page
 
     public ?array $data = [];
 
-    private const SECTIONS = [
+    public const SECTIONS = [
         'orders' => 'الطلبات',
         'otp' => 'رموز التحقق',
         'alerts' => 'التنبيهات الفورية',
@@ -48,6 +48,8 @@ class OperationsSettings extends Page
         'stores' => 'فتح وإغلاق المتاجر',
         'banners' => 'الإعلانات',
         'delivery' => 'التوصيل والعمولة',
+        'pickup' => 'الاستلام من المطعم',
+        'admin_app' => 'تطبيق الإدارة',
         'tracking' => 'التتبّع',
         'wallet' => 'كروت الشحن',
     ];

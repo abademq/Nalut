@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Api;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\AccountDeletionService;
 use App\Services\Otp\OtpService;
+use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -17,13 +19,13 @@ class AuthController extends Controller
     public function requestOtp(Request $request, OtpService $otp): JsonResponse
     {
         $data = $request->validate([
-            'phone'    => ['required', 'string', 'regex:/^(09[1-6][0-9]{7})$/'],
+            'phone' => ['required', 'string', 'regex:/^(09[1-6][0-9]{7})$/'],
             // بصمة التطبيق (11 حرف) — تنضاف للرسالة باش أندرويد يعبّي الرمز لحاله
             'app_hash' => ['nullable', 'string', 'regex:/^[A-Za-z0-9+\/]{11}$/'],
             // signup: حساب جديد · login: دخول برمز — نفحصو الرقم قبل ما نصرفو رسالة
-            'purpose'  => ['nullable', 'in:signup,login'],
+            'purpose' => ['nullable', 'in:signup,login'],
             // sms: الزبون طلب الرمز برسالة نصية (ما وصلهش على واتساب)
-            'channel'  => ['nullable', 'in:sms,whatsapp'],
+            'channel' => ['nullable', 'in:sms,whatsapp'],
         ], [], ['phone' => 'رقم الهاتف']);
 
         $exists = User::where('phone', $data['phone'])->exists();
@@ -43,12 +45,12 @@ class AuthController extends Controller
         $result = $otp->request($data['phone'], $request->ip(), $data['app_hash'] ?? null, $data['channel'] ?? null);
 
         return response()->json([
-            'message'      => 'تم إرسال رمز التحقق.',
-            'channel'      => $result['channel'],
-            'expires_in'   => $result['expires_in'],
+            'message' => 'تم إرسال رمز التحقق.',
+            'channel' => $result['channel'],
+            'expires_in' => $result['expires_in'],
             'resend_after' => $result['resend_after'],
             // للتجربة فقط — OTP_DEV_MODE لازم يكون false مع مستخدمين حقيقيين
-            'debug_code'   => config('otp.debug') ? $result['code'] : null,
+            'debug_code' => config('otp.debug') ? $result['code'] : null,
         ]);
     }
 
@@ -57,9 +59,9 @@ class AuthController extends Controller
     {
         $data = $request->validate([
             'phone' => ['required', 'string'],
-            'code'  => ['required', 'string'],
-            'name'  => ['nullable', 'string', 'max:60'],
-            'role'  => ['nullable', 'in:customer,store,driver'],
+            'code' => ['required', 'string'],
+            'name' => ['nullable', 'string', 'max:60'],
+            'role' => ['nullable', 'in:customer,store,driver'],
             'create_account' => ['nullable', 'boolean'],
             'password' => ['nullable', 'string', 'min:6', 'max:60'],
             'fcm_token' => ['nullable', 'string'],
@@ -93,11 +95,11 @@ class AuthController extends Controller
             // is_active لازم تنكتب صراحةً — قيمة قاعدة البيانات الافتراضية
             // ما تنعكسش على الكائن في الذاكرة، فالفحص اللي بعدها كان يفشل
             $user = User::create([
-                'name'      => $data['name'],
-                'phone'     => $data['phone'],
-                'role'      => $data['role'] ?? ($this->app($request) === 'driver' ? 'driver' : UserRole::Customer->value),
+                'name' => $data['name'],
+                'phone' => $data['phone'],
+                'role' => $data['role'] ?? ($this->app($request) === 'driver' ? 'driver' : UserRole::Customer->value),
                 'is_active' => true,
-                'password'  => isset($data['password'])
+                'password' => isset($data['password'])
                     ? Hash::make($data['password'])
                     : null,
             ]);
@@ -112,13 +114,13 @@ class AuthController extends Controller
 
         $user->forceFill([
             'phone_verified_at' => $user->phone_verified_at ?? now(),
-            'last_seen_at'      => now(),
+            'last_seen_at' => now(),
         ])->save();
         $user->setPushToken($app, $data['fcm_token'] ?? null);
 
         return response()->json([
             'token' => $user->createToken('mobile')->plainTextToken,
-            'user'  => $this->userPayload($user, $app),
+            'user' => $this->userPayload($user, $app),
         ]);
     }
 
@@ -129,8 +131,8 @@ class AuthController extends Controller
     public function login(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'phone'     => ['required', 'string', 'regex:/^(09[1-6][0-9]{7})$/'],
-            'password'  => ['required', 'string'],
+            'phone' => ['required', 'string', 'regex:/^(09[1-6][0-9]{7})$/'],
+            'password' => ['required', 'string'],
             'fcm_token' => ['nullable', 'string'],
         ]);
 
@@ -166,7 +168,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $user->createToken('app')->plainTextToken,
-            'user'  => $this->userPayload($user, $app),
+            'user' => $this->userPayload($user, $app),
         ]);
     }
 
@@ -178,9 +180,9 @@ class AuthController extends Controller
     public function updateProfile(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'name'      => ['nullable', 'string', 'max:60'],
-            'email'     => ['nullable', 'email', 'unique:users,email,'.$request->user()->id],
-            'password'  => ['nullable', 'string', 'min:6', 'max:60'],
+            'name' => ['nullable', 'string', 'max:60'],
+            'email' => ['nullable', 'email', 'unique:users,email,'.$request->user()->id],
+            'password' => ['nullable', 'string', 'min:6', 'max:60'],
             'fcm_token' => ['nullable', 'string'],
         ]);
 
@@ -198,16 +200,16 @@ class AuthController extends Controller
     }
 
     /** قبل الحذف: التطبيق يوري الموانع ويعرف لو يطلب كلمة المرور ولا رمز */
-    public function deletionCheck(Request $request, \App\Services\AccountDeletionService $svc): JsonResponse
+    public function deletionCheck(Request $request, AccountDeletionService $svc): JsonResponse
     {
         $user = $request->user();
 
         return response()->json([
-            'blockers'     => $svc->blockers($user),
-            'needs_admin'  => $svc->needsAdmin($user),
+            'blockers' => $svc->blockers($user),
+            'needs_admin' => $svc->needsAdmin($user),
             'has_password' => filled($user->password),
-            'wallet'       => app(\App\Services\WalletService::class)->balance($user),
-            'points'       => (int) $user->points_balance,
+            'wallet' => app(WalletService::class)->balance($user),
+            'points' => (int) $user->points_balance,
         ]);
     }
 
@@ -215,12 +217,12 @@ class AuthController extends Controller
      * حذف الحساب — بعد التأكيد بكلمة المرور أو رمز تحقق على نفس الرقم.
      * حساب متجر/إدارة: يوصل طلب للإدارة بدل الحذف المباشر.
      */
-    public function deleteAccount(Request $request, OtpService $otp, \App\Services\AccountDeletionService $svc): JsonResponse
+    public function deleteAccount(Request $request, OtpService $otp, AccountDeletionService $svc): JsonResponse
     {
         $data = $request->validate([
             'password' => ['nullable', 'string'],
-            'code'     => ['nullable', 'string'],
-            'reason'   => ['nullable', 'string', 'max:500'],
+            'code' => ['nullable', 'string'],
+            'reason' => ['nullable', 'string', 'max:500'],
         ]);
         $user = $request->user();
 
@@ -238,7 +240,7 @@ class AuthController extends Controller
             $svc->requestByAdmin($user, $data['reason'] ?? null);
 
             return response()->json([
-                'status'  => 'requested',
+                'status' => 'requested',
                 'message' => 'وصل طلبك للإدارة. حسابات المتاجر تنحذف بعد تسوية المنتجات والمستحقات، ونتواصلوا معاك خلال أيام.',
             ], 202);
         }
@@ -246,7 +248,7 @@ class AuthController extends Controller
         $svc->delete($user, $data['reason'] ?? null);
 
         return response()->json([
-            'status'  => 'deleted',
+            'status' => 'deleted',
             'message' => 'تم حذف حسابك. نتمنولك التوفيق 🌿',
         ]);
     }
@@ -273,6 +275,11 @@ class AuthController extends Controller
      */
     private function ensureAppRole(User $user, ?string $app): void
     {
+        // تطبيق الإدارة: بكلمة المرور من /admin/login بس (مش برمز SMS)
+        if ($app === 'admin') {
+            throw ValidationException::withMessages(['phone' => 'تطبيق الإدارة يدخل بالبريد/الرقم وكلمة المرور.']);
+        }
+
         if (! $app || $user->hasRole($app)) {
             if ($app === 'driver') {
                 $user->ensureDriverProfile();
@@ -299,17 +306,17 @@ class AuthController extends Controller
         $user->loadMissing(['store', 'driverProfile']);
 
         return [
-            'id'       => $user->id,
-            'name'     => $user->name,
-            'phone'    => $user->phone,
+            'id' => $user->id,
+            'name' => $user->name,
+            'phone' => $user->phone,
             // الدور حسب التطبيق اللي داخل منه — والقائمة كاملة في roles
-            'role'     => $app && $user->hasRole($app) ? $app : $user->role->value,
-            'roles'    => $user->roleValues(),
-            'avatar'   => $user->avatar ? asset('storage/'.$user->avatar) : null,
+            'role' => $app && $user->hasRole($app) ? $app : $user->role->value,
+            'roles' => $user->roleValues(),
+            'avatar' => $user->avatar ? asset('storage/'.$user->avatar) : null,
             'store_id' => $user->store?->id,
-            'driver'   => $user->driverProfile ? [
-                'is_approved'  => (bool) $user->driverProfile->is_approved,
-                'is_online'    => (bool) $user->driverProfile->is_online,
+            'driver' => $user->driverProfile ? [
+                'is_approved' => (bool) $user->driverProfile->is_approved,
+                'is_online' => (bool) $user->driverProfile->is_online,
                 'cash_in_hand' => (float) $user->driverProfile->cash_in_hand,
             ] : null,
         ];

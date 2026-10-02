@@ -33,6 +33,24 @@ class AppLinkController extends Controller
         ]] : []);
     }
 
+    /**
+     * iOS Universal Links: نفس روابط /s و /go تفتح تطبيق الأيفون.
+     * APP_IOS_APP_ID = TEAMID.ly.azanx.app (من Apple Developer ← Membership).
+     */
+    public function appleAppSiteAssociation(): JsonResponse
+    {
+        $ids = config('applinks.ios_app_ids');
+
+        return response()->json([
+            'applinks' => [
+                'details' => $ids ? [[
+                    'appIDs' => $ids,
+                    'components' => [['/' => '/s/*'], ['/' => '/go/*']],
+                ]] : [],
+            ],
+        ]);
+    }
+
     public function store(Store $store): Response
     {
         abort_unless($store->is_active, 404);

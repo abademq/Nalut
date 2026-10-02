@@ -32,7 +32,9 @@ class OrderController extends Controller
     {
         $data = $request->validate([
             'store_id' => ['required', 'exists:stores,id'],
-            'address_id' => ['required', 'integer'],
+            // delivery (الافتراضي) | pickup = استلام من المطعم (بدون عنوان)
+            'fulfillment' => ['nullable', 'in:delivery,pickup'],
+            'address_id' => ['required_unless:fulfillment,pickup', 'nullable', 'integer'],
             'payment_method' => ['nullable', 'in:cash,wallet,card'],
             'use_wallet' => ['nullable', 'boolean'],
             'use_points' => ['nullable', 'boolean'],
@@ -62,7 +64,9 @@ class OrderController extends Controller
     {
         $data = $request->validate([
             'store_id' => ['required', 'exists:stores,id'],
-            'address_id' => ['required', 'integer'],
+            // delivery (الافتراضي) | pickup = استلام من المطعم (بدون عنوان)
+            'fulfillment' => ['nullable', 'in:delivery,pickup'],
+            'address_id' => ['required_unless:fulfillment,pickup', 'nullable', 'integer'],
             'payment_method' => ['nullable', 'in:cash,wallet,card'],
             'use_wallet' => ['nullable', 'boolean'],
             'use_points' => ['nullable', 'boolean'],

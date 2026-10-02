@@ -130,6 +130,11 @@ class StoreForm
                     ->label('مفتوح توّا')
                     ->default(true),
 
+                Toggle::make('pickup_enabled')
+                    ->label('الاستلام من المطعم')
+                    ->default(true)
+                    ->helperText('الزبون يطلب ويجي ياخذه بنفسه — بالدفع الإلكتروني بس'),
+
                 Toggle::make('is_active')
                     ->label('مفعّل')
                     ->default(true)

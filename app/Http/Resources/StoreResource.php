@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Models\Store;
 use App\Support\FavoriteIds;
+use App\Support\Pickup;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -36,9 +37,10 @@ class StoreResource extends JsonResource
             'closed_message' => $this->isAcceptingOrders() ? null : $this->closedMessage(),
             'is_favorite' => FavoriteIds::has($request->user(), Store::class, $this->id),
             'distance_km' => $this->when(isset($this->distance_km), fn () => $this->distance_km),
-            'sections' => $this->whenLoaded('sections', fn () => $this->sections->map(fn ($s) => [
-                'id' => $s->id, 'name' => $s->name,
-            ])),
+            // القسم الموقوف يظهر برمادي ومكتوب تحته متى يتوفر
+            'sections' => $this->whenLoaded('sections', fn () => $this->sections->map->toApp()->values()),
+            // الاستلام من المطعم متاح في المتجر هذا؟ (يحتاج دفع إلكتروني)
+            'pickup_available' => Pickup::availableAt($this->resource),
             'products' => ProductResource::collection($this->whenLoaded('products')),
         ];
     }

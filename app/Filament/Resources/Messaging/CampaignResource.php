@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Messaging;
 
+use App\Filament\Concerns\GuardedByPermission;
 use App\Models\Campaign;
 use App\Models\MessageTemplate;
 use App\Models\Store;
@@ -24,7 +25,7 @@ use UnitEnum;
 /** حملات تسويقية لأرقام الزبائن */
 class CampaignResource extends Resource
 {
-    use \App\Filament\Concerns\GuardedByPermission;
+    use GuardedByPermission;
 
     public const PERM_VIEW = 'messages.manage';
 
@@ -65,7 +66,7 @@ class CampaignResource extends Resource
                 ->required(fn ($get) => $get('channel') === 'push')
                 ->visible(fn ($get) => $get('channel') === 'push'),
             TextInput::make('push_link')->label('يفتح على (رابط مشاركة — اختياري)')->maxLength(255)
-                ->placeholder('https://api.dar-almaqam.com.ly/s/5')
+                ->placeholder('https://api.azanx.ly/s/5')
                 ->helperText('انسخه من 🔗 في المتاجر/المنتجات أو من «روابط التطبيق». يشتغل في تطبيق الزبون.')
                 ->visible(fn ($get) => $get('channel') === 'push' && $get('target_role') === 'customer'),
             Select::make('message_template_id')->label('القالب')->native(false)

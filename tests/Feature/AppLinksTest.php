@@ -4,9 +4,11 @@ namespace Tests\Feature;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\AppLinks;
+use App\Filament\Resources\Stores\Pages\ListStores;
 use App\Models\Store;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class AppLinksTest extends TestCase
@@ -66,10 +68,17 @@ class AppLinksTest extends TestCase
         $this->actingAs($admin, 'web');
 
         $this->get(AppLinks::getUrl())->assertOk()->assertSee('روابط الشاشات');
-        \Livewire\Livewire::test(AppLinks::class)->assertSet('data.wallet', url('/go/wallet'));
+        Livewire::test(AppLinks::class)->assertSet('data.wallet', url('/go/wallet'));
 
-        \Livewire\Livewire::test(\App\Filament\Resources\Stores\Pages\ListStores::class)
+        Livewire::test(ListStores::class)
             ->mountTableAction('shareLink', $this->store)
             ->assertTableActionDataSet(['url' => url("/s/{$this->store->id}")]);
+    }
+
+    public function test_apple_app_site_association(): void
+    {
+        config(['applinks.ios_app_ids' => ['ABCDE12345.ly.azanx.app']]);
+        $this->get('/.well-known/apple-app-site-association')->assertOk()
+            ->assertJsonPath('applinks.details.0.appIDs.0', 'ABCDE12345.ly.azanx.app');
     }
 }

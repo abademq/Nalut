@@ -92,7 +92,7 @@ class SupportService
         AdminAlerts::send(
             "رد جديد على {$ticket->code}",
             Str::limit((string) ($body ?: '📷 صورة'), 120),
-            $this->adminUrl($ticket), 'info', "ticket-msg:{$msg->id}", 'support.manage'
+            $this->adminUrl($ticket), 'info', "ticket-msg:{$ticket->id}:{$msg->id}", 'support.manage'
         );
 
         return $msg;

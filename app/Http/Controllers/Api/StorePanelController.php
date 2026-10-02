@@ -13,6 +13,7 @@ use App\Services\OrderService;
 use App\Services\ProductOptionsSync;
 use App\Services\SubstitutionService;
 use App\Support\LocalDay;
+use App\Support\Pickup;
 use App\Support\Texts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -45,6 +46,9 @@ class StorePanelController extends Controller
                 'opens_at' => $store->opens_at ? substr($store->opens_at, 0, 5) : null,
                 'closes_at' => $store->closes_at ? substr($store->closes_at, 0, 5) : null,
                 'force_open_until' => $store->isForcedOpen() ? $store->force_open_until : null,
+                // الاستلام من المطعم: مفتاح المتجر + هل الإدارة مفعّلتها أصلاً
+                'pickup_enabled' => (bool) $store->pickup_enabled,
+                'pickup_allowed' => Pickup::enabled(),
             ],
             'today' => [
                 'orders' => $store->orders()->whereBetween('created_at', [$from, $to])->count(),
@@ -75,6 +79,16 @@ class StorePanelController extends Controller
             'status_text' => $store->statusText(),
             'message' => $accepting ? 'المتجر مفتوح — '.$store->statusText() : 'المتجر مغلق — الزبائن يقدرو يجهّزو سلاتهم بس ما يطلبوش',
         ]);
+    }
+
+    /** المتجر يقفل/يفتح «الاستلام من المطعم» عنده */
+    public function togglePickup(Request $request): JsonResponse
+    {
+        $store = $this->store($request);
+        $data = $request->validate(['enabled' => ['required', 'boolean']]);
+        $store->update(['pickup_enabled' => (bool) $data['enabled']]);
+
+        return response()->json(['pickup_enabled' => (bool) $store->pickup_enabled]);
     }
 
     public function orders(Request $request): JsonResponse
@@ -142,6 +156,17 @@ class StorePanelController extends Controller
         return response()->json(['data' => new OrderResource($order->load(['items', 'customer']))]);
     }
 
+    /** الاستلام من المطعم: الزبون جا وورّى الرمز */
+    public function handOver(Request $request, Order $order): JsonResponse
+    {
+        abort_unless($order->store_id === $this->store($request)->id, 403);
+        $data = $request->validate(['code' => ['nullable', 'string', 'max:6']]);
+
+        $order = $this->orders->handOverPickup($order, $data['code'] ?? null, $request->user());
+
+        return response()->json(['data' => new OrderResource($order->load(['items', 'customer']))]);
+    }
+
     /** أصناف مش متوفرة: تتقفل، والزبون يختار يكمّل بدونها أو يعدّل طلبه */
     public function unavailableItems(Request $request, Order $order, SubstitutionService $subs): JsonResponse
     {
@@ -171,7 +196,7 @@ class StorePanelController extends Controller
                 'sort' => $s->sort,
                 'is_active' => (bool) $s->is_active,
                 'products_count' => $s->products_count,
-            ]);
+            ] + $s->toApp());
 
         return response()->json(['data' => $sections]);
     }
@@ -204,6 +229,24 @@ class StorePanelController extends Controller
         ]));
 
         return response()->json(['data' => $section->fresh()]);
+    }
+
+    /**
+     * إيقاف/تشغيل قسم كامل بضغطة — الأصناف تظهر للزبون بس ما تنطلبش.
+     * until = «HH:MM» يرجع وحده في الساعة هذي (بتوقيت ليبيا)، أو فاضي = لين المتجر يفتحه.
+     */
+    public function sectionAvailability(Request $request, int $id): JsonResponse
+    {
+        $section = $this->store($request)->sections()->findOrFail($id);
+
+        $data = $request->validate([
+            'available' => ['required', 'boolean'],
+            'until' => ['nullable', 'date_format:H:i'],
+        ]);
+
+        $section->pause((bool) $data['available'], $data['until'] ?? null);
+
+        return response()->json(['data' => $section->fresh()->toApp() + ['is_active' => (bool) $section->is_active]]);
     }
 
     public function destroySection(Request $request, int $id): JsonResponse

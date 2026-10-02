@@ -163,6 +163,17 @@ class Product extends Model
         return $this->belongsTo(MenuSection::class, 'menu_section_id');
     }
 
+    /** القسم الأساسي متاعه موقوف (مثلاً المعجنات لسه ما بدتش) — الصنف يظهر وما ينطلبش */
+    public function sectionPaused(): bool
+    {
+        if (! $this->menu_section_id) {
+            return false;
+        }
+        $section = $this->relationLoaded('section') ? $this->section : $this->section()->first();
+
+        return $section !== null && ! $section->isOrderable();
+    }
+
     public function options(): HasMany
     {
         return $this->hasMany(ProductOption::class)->orderBy('sort');

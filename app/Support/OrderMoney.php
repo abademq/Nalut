@@ -28,6 +28,10 @@ class OrderMoney
         if ($request->is('api/v1/driver/*')) {
             return 'driver';
         }
+        // تطبيق الإدارة يشوف كل شي
+        if ($request->is('api/v1/admin/*')) {
+            return 'admin';
+        }
         if ($request->is('api/*')) {
             return 'customer';
         }

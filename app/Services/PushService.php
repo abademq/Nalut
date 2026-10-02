@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\User;
+use App\Support\Sounds;
 use Google\Auth\Credentials\ServiceAccountCredentials;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -66,20 +67,26 @@ class PushService
                 ->timeout(10)
                 ->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", [
                     'message' => [
-                        'token'        => $token,
+                        'token' => $token,
                         'notification' => [
                             'title' => $title,
-                            'body'  => $body,
+                            'body' => $body,
                         ],
-                        'data'    => $stringData,
+                        'data' => $stringData,
                         'android' => [
-                            'priority'     => 'high',
+                            'priority' => 'high',
                             // القناة والنغمة حسب «أصوات الإشعارات» في لوحة التحكم
-                            'notification' => \App\Support\Sounds::android($app),
+                            // تطبيق الإدارة: قناة تنبيهات بأعلى أهمية ونغمة قوية (تطلع حتى والهاتف صامت/وضع توفير)
+                            'notification' => $app === 'admin'
+                                ? ['channel_id' => 'admin_alerts', 'sound' => 'tone_alert', 'notification_priority' => 'PRIORITY_MAX', 'visibility' => 'PUBLIC']
+                                : Sounds::android($app),
                         ],
                         'apns' => [
+                            'headers' => ['apns-priority' => '10'],
                             'payload' => [
-                                'aps' => ['sound' => 'default'],
+                                'aps' => $app === 'admin'
+                                    ? ['sound' => 'default', 'interruption-level' => 'time-sensitive']
+                                    : ['sound' => 'default'],
                             ],
                         ],
                     ],
@@ -88,7 +95,7 @@ class PushService
             if ($response->failed()) {
                 Log::warning('FCM send failed', [
                     'status' => $response->status(),
-                    'body'   => $response->json(),
+                    'body' => $response->json(),
                 ]);
 
                 // التوكن صار غير صالح — نمسحه باش ما نحاولش فيه كل مرة

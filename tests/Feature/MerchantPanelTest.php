@@ -161,6 +161,13 @@ class MerchantPanelTest extends TestCase
         Livewire::test(ManageMenuSections::class)->assertOk()->assertDontSee('قسم غيري')
             ->callAction('create', ['name' => 'حلويات'])->assertHasNoActionErrors();
         $this->assertSame($this->store->id, MenuSection::firstWhere('name', 'حلويات')->store_id);
+
+        // إيقاف القسم لين ساعة معيّنة من اللوحة
+        $sec = MenuSection::firstWhere('name', 'حلويات');
+        Livewire::test(ManageMenuSections::class)
+            ->callTableAction('pauseUntil', $sec, ['until' => '16:00'])->assertHasNoTableActionErrors();
+        $this->assertFalse($sec->fresh()->isOrderable());
+        Livewire::test(ManageMenuSections::class)->assertSee('يتوفر الساعة 16:00');
     }
 
     public function test_orders_scoped_and_status_actions_work(): void

@@ -50,6 +50,9 @@ class AdminAlerts
                 $n->sendToDatabase($admins);
             }
 
+            // تطبيق الإدارة (ازانكس إدارة) — إشعار بأولوية عالية
+            self::pushTo($admins, $title, $body, ['type' => 'alert', 'level' => $level, 'url' => (string) $url] + self::refFromKey($key));
+
             self::viaPhone($title, $body);
         } catch (\Throwable $e) {
             // التنبيه ما يطيّحش العملية الأصلية (إلغاء طلب، بلاغ...)
@@ -57,6 +60,37 @@ class AdminAlerts
         }
 
         return true;
+    }
+
+    /** إشعار لتطبيق الإدارة بس (بدون جرس اللوحة) — مثلاً كل طلب جديد */
+    public static function pushOnly(string $title, string $body, array $data = [], string $permission = 'orders.view'): void
+    {
+        try {
+            $admins = User::withRole(UserRole::Admin)->where('is_active', true)->get()
+                ->filter(fn (User $u) => $u->hasPermission($permission));
+            self::pushTo($admins, $title, $body, $data);
+        } catch (\Throwable $e) {
+            Log::error('Admin push failed', ['title' => $title, 'error' => $e->getMessage()]);
+        }
+    }
+
+    private static function pushTo($admins, string $title, string $body, array $data): void
+    {
+        foreach ($admins as $admin) {
+            if ($admin->pushTokenFor('admin')) {
+                PushService::toUser($admin, $title, $body, $data, 'admin');
+            }
+        }
+    }
+
+    /** order-failed:15 → order_id=15 · ticket-new:3 → ticket_id=3 (التطبيق يفتح الشاشة الصح) */
+    private static function refFromKey(?string $key): array
+    {
+        if (! $key || ! preg_match('/^(order|stuck|ticket)[a-z\-]*:(\d+)/', $key, $m)) {
+            return [];
+        }
+
+        return $m[1] === 'ticket' ? ['ticket_id' => $m[2]] : ['order_id' => $m[2]];
     }
 
     private static function viaPhone(string $title, string $body): void

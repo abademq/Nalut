@@ -84,9 +84,10 @@ class CatalogController extends Controller
 
         $store->load([
             'type',
-            'sections',
+            // القسم المخفي (is_active = false) ما يطلعش للزبون أصلاً
+            'sections' => fn ($q) => $q->where('is_active', true),
             // المخفي عن الزبائن ما يطلعش أصلاً (غير المتوفر يطلع «غير متوفر»)
-            'products' => fn ($q) => $q->visible()->orderBy('sort')->with(['options.values', 'extraSections:id']),
+            'products' => fn ($q) => $q->visible()->orderBy('sort')->with(['options.values', 'extraSections:id', 'section']),
         ]);
 
         return response()->json([

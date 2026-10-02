@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\OrderStatus;
 use App\Filament\Resources\Orders\OrderResource;
+use App\Models\Address;
 use App\Models\Coupon;
+use App\Models\DeliveryZone;
 use App\Models\NotificationSetting;
 use App\Models\Order;
 use App\Models\Product;
@@ -12,6 +14,7 @@ use App\Models\Store;
 use App\Models\User;
 use App\Models\WalletTransaction;
 use App\Support\Options;
+use App\Support\Pickup;
 use App\Support\Texts;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -32,9 +35,15 @@ class OrderService
             throw ValidationException::withMessages(['store_id' => $store->closedMessage()]);
         }
 
-        $address = $customer->addresses()->findOrFail($data['address_id']);
+        // استلام من المطعم: بدون عنوان ولا سائق ولا رسوم توصيل — بالدفع الإلكتروني بس
+        $pickup = ($data['fulfillment'] ?? 'delivery') === 'pickup';
+        if ($pickup) {
+            Pickup::validate($store, $data);
+        }
 
-        return DB::transaction(function () use ($customer, $store, $address, $data, $actor) {
+        $address = $pickup ? null : $customer->addresses()->findOrFail($data['address_id'] ?? 0);
+
+        return DB::transaction(function () use ($customer, $store, $address, $data, $actor, $pickup) {
             $lines = $this->buildLines($store, $data['items']);
             $subtotal = round(array_sum(array_column($lines, 'line_total')), 2);
 
@@ -44,13 +53,7 @@ class OrderService
                 ]);
             }
 
-            $distance = ($store->lat && $store->lng)
-                ? GeoService::distanceKm($store->lat, $store->lng, $address->lat, $address->lng)
-                : 0;
-
-            // المنطقة تتحسب من جديد — لو الإدارة عدّلت المناطق بعد حفظ العنوان
-            $zone = GeoService::requireZone((float) $address->lat, (float) $address->lng, 'address_id');
-            $deliveryFee = GeoService::deliveryFee($distance, $zone);
+            [$distance, $zone, $deliveryFee] = $this->deliveryFor($store, $address);
 
             // الكوبون بعد حساب التوصيل — باش يشتغل عرض «توصيل مجاني»
             $coupon = null;
@@ -93,16 +96,19 @@ class OrderService
                 'code' => Order::temporaryCode(),
                 'customer_id' => $customer->id,
                 'store_id' => $store->id,
+                'fulfillment' => $pickup ? 'pickup' : 'delivery',
+                'pickup_code' => $pickup ? Pickup::newCode() : null,
                 'delivery_zone_id' => $zone?->id,
                 'coupon_id' => $coupon?->id,
                 'status' => OrderStatus::Pending,
                 'payment_method' => $walletPaid >= $total ? 'wallet' : ($data['payment_method'] ?? 'cash'),
                 'wallet_paid' => $walletPaid,
                 'is_paid' => $walletPaid >= $total,
-                'address_details' => $address->details,
-                'address_landmark' => $address->landmark,
-                'address_lat' => $address->lat,
-                'address_lng' => $address->lng,
+                // الاستلام: العنوان = المتجر نفسه (الأعمدة مطلوبة، والخرائط تفتح على المتجر)
+                'address_details' => $address?->details ?? 'استلام من المطعم',
+                'address_landmark' => $address?->landmark ?? $store->address,
+                'address_lat' => $address?->lat ?? $store->lat,
+                'address_lng' => $address?->lng ?? $store->lng,
                 'customer_phone' => $customer->phone,
                 'subtotal' => $subtotal,
                 'delivery_fee' => $deliveryFee,
@@ -188,18 +194,13 @@ class OrderService
     public function quote(User $customer, array $data): array
     {
         $store = Store::findOrFail($data['store_id']);
-        $address = $customer->addresses()->findOrFail($data['address_id']);
+        $pickup = ($data['fulfillment'] ?? 'delivery') === 'pickup';
+        $address = $pickup ? null : $customer->addresses()->findOrFail($data['address_id'] ?? 0);
 
         $lines = $this->buildLines($store, $data['items']);
         $subtotal = round(array_sum(array_column($lines, 'line_total')), 2);
 
-        $distance = ($store->lat && $store->lng)
-            ? GeoService::distanceKm($store->lat, $store->lng, $address->lat, $address->lng)
-            : 0;
-
-        // المنطقة تتحسب من جديد — لو الإدارة عدّلت المناطق بعد حفظ العنوان
-        $zone = GeoService::requireZone((float) $address->lat, (float) $address->lng, 'address_id');
-        $deliveryFee = GeoService::deliveryFee($distance, $zone);
+        [$distance, $zone, $deliveryFee] = $this->deliveryFor($store, $address);
 
         $discount = 0;
         $couponError = null;
@@ -232,6 +233,10 @@ class OrderService
             // المتجر مسكّر: الزبون يقدر يجهّز سلته، بس زر الطلب يتقفل برسالة
             'store_accepting' => $store->isAcceptingOrders(),
             'store_closed_message' => $store->isAcceptingOrders() ? null : $store->closedMessage(),
+            'fulfillment' => $pickup ? 'pickup' : 'delivery',
+            // الاستلام من المطعم: متاح؟ وبأي طرق دفع؟
+            'pickup_available' => Pickup::availableAt($store),
+            'pickup_payment_methods' => Pickup::paymentMethods(),
             'subtotal' => $subtotal,
             'delivery_fee' => $deliveryFee,
             'discount' => $discount,
@@ -250,6 +255,27 @@ class OrderService
             'points_used' => $pointsUsed,
             'points_discount' => $pointsDiscount,
         ];
+    }
+
+    /**
+     * المسافة والمنطقة ورسوم التوصيل — الاستلام من المطعم: صفر وبدون منطقة.
+     *
+     * @return array{0: float, 1: ?DeliveryZone, 2: float}
+     */
+    private function deliveryFor(Store $store, ?Address $address): array
+    {
+        if (! $address) {
+            return [0.0, null, 0.0];
+        }
+
+        $distance = ($store->lat && $store->lng)
+            ? GeoService::distanceKm($store->lat, $store->lng, $address->lat, $address->lng)
+            : 0;
+
+        // المنطقة تتحسب من جديد — لو الإدارة عدّلت المناطق بعد حفظ العنوان
+        $zone = GeoService::requireZone((float) $address->lat, (float) $address->lng, 'address_id');
+
+        return [$distance, $zone, GeoService::deliveryFee($distance, $zone)];
     }
 
     /** @param  array<int, array{product_id: ?int, quantity: int, name: string}>  $lines */
@@ -317,6 +343,13 @@ class OrderService
             if (! $product->is_available) {
                 throw ValidationException::withMessages([
                     'items' => Texts::get('msg.product_unavailable', ['name' => $product->name]),
+                ]);
+            }
+
+            // القسم كامل موقوف (مثلاً المعجنات لسه ما بدتش)
+            if ($product->sectionPaused()) {
+                throw ValidationException::withMessages([
+                    'items' => "«{$product->name}» من قسم «{$product->section->name}» — ".$product->section->pausedText().'.',
                 ]);
             }
 
@@ -467,6 +500,24 @@ class OrderService
         return [round($price, 2), $chosen];
     }
 
+    /**
+     * الانتقالات المسموحة. الاستلام من المطعم ما فيهش سائق:
+     * جاهز ← تم الاستلام مباشرة، وما فيش «أُسند / استلم / في الطريق».
+     */
+    public static function canMove(Order $order, OrderStatus $from, OrderStatus $to): bool
+    {
+        if (! Pickup::is($order)) {
+            return $from->canMoveTo($to);
+        }
+
+        return match ($from) {
+            OrderStatus::Pending => in_array($to, [OrderStatus::Preparing, OrderStatus::Cancelled], true),
+            OrderStatus::Accepted, OrderStatus::Preparing => in_array($to, [OrderStatus::Ready, OrderStatus::Cancelled], true),
+            OrderStatus::Ready => in_array($to, [OrderStatus::Delivered, OrderStatus::Cancelled], true),
+            default => false,
+        };
+    }
+
     /** الانتقال بين الحالات — البوابة الوحيدة لتغيير حالة الطلب */
     public function transition(
         Order $order,
@@ -478,7 +529,7 @@ class OrderService
 
         // الإدارة تقدر تفرض أي انتقال (force) — التطبيقات لا
         $force = (bool) ($extra['force'] ?? false);
-        $isAbnormal = ! $from->canMoveTo($to);
+        $isAbnormal = ! self::canMove($order, $from, $to);
 
         if ($from === $to) {
             throw ValidationException::withMessages([
@@ -660,11 +711,39 @@ class OrderService
             PushService::toUser(
                 $owner,
                 Texts::get('notify.store.new_order'),
-                Texts::get('notify.store.new_order_body', ['code' => $order->code]),
+                Texts::get(Pickup::is($order) ? 'notify.store.new_pickup_body' : 'notify.store.new_order_body', ['code' => $order->code]),
                 ['type' => 'new_order', 'order_id' => (string) $order->id],
                 'store'
             );
         }
+
+        // تطبيق الإدارة: كل طلب جديد (حسب الإعداد)
+        if (Options::get('admin_app.push_new_orders')) {
+            AdminAlerts::pushOnly(
+                "طلب جديد {$order->code}".(Pickup::is($order) ? ' — استلام' : ''),
+                ($order->store?->name ?? '').' · '.number_format((float) $order->total, 2).' د.ل',
+                ['type' => 'new_order', 'order_id' => (string) $order->id],
+                'orders.view'
+            );
+        }
+    }
+
+    /**
+     * الاستلام من المطعم: الزبون جا — المتجر يدخل رمزه (لو الإعداد يطلبه) والطلب يتعلّم مسلّم.
+     */
+    public function handOverPickup(Order $order, ?string $code, ?User $actor = null): Order
+    {
+        if (! Pickup::is($order)) {
+            throw ValidationException::withMessages(['status' => 'الطلب هذا توصيل مش استلام.']);
+        }
+        if ($order->status !== OrderStatus::Ready) {
+            throw ValidationException::withMessages(['status' => 'اضغط «جاهز» أول، وبعدها سلّمه للزبون.']);
+        }
+        if (Options::get('pickup.require_code') && trim((string) $code) !== (string) $order->pickup_code) {
+            throw ValidationException::withMessages(['code' => 'رمز الاستلام غلط — اطلبه من الزبون (يطلعله في صفحة الطلب).']);
+        }
+
+        return $this->transition($order, OrderStatus::Delivered, $actor, ['reason' => 'استلمه الزبون من المتجر']);
     }
 
     /**
@@ -720,8 +799,9 @@ class OrderService
             PushService::toUser($order->store->owner, $title, $this->storeBody($order, $to), $data, 'store');
         }
 
-        // ===== السائقين المتاحين: طلب جاهز للاستلام =====
+        // ===== السائقين المتاحين: طلب جاهز للاستلام (مش طلبات الاستلام من المطعم) =====
         if ($to === OrderStatus::Ready
+            && ! Pickup::is($order)
             && ! $order->driver_id
             && NotificationSetting::isEnabled('driver', 'available')) {
             $this->notifyAvailableDrivers($order);
@@ -740,11 +820,16 @@ class OrderService
             'reason' => $order->cancel_reason ?? '',
             'earning' => number_format((float) $order->driver_earning, 2),
             'distance' => number_format((float) $order->distance_km, 1),
+            'pickup_code' => $order->pickup_code ?? '',
         ];
     }
 
     private function customerBody(Order $order, OrderStatus $to): string
     {
+        if (Pickup::is($order) && in_array($to, [OrderStatus::Ready, OrderStatus::Delivered], true)) {
+            return Texts::get('notify.customer.'.$to->value.'_pickup', $this->vars($order));
+        }
+
         return Texts::get('notify.customer.'.$to->value, $this->vars($order));
     }
 
@@ -759,6 +844,10 @@ class OrderService
 
     private function storeBody(Order $order, OrderStatus $to): string
     {
+        if (Pickup::is($order) && $to === OrderStatus::Ready) {
+            return Texts::get('notify.store.ready_pickup', $this->vars($order));
+        }
+
         return Texts::get('notify.store.'.$to->value, $this->vars($order));
     }
 

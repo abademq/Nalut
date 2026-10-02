@@ -51,6 +51,8 @@ Route::get('legal/{key}', function (string $key) {
 // روابط تفتح التطبيق مباشرة (متجر / صنف / شاشة) — وصفحة بديلة لو التطبيق مش مثبّت
 
 Route::get('.well-known/assetlinks.json', [AppLinkController::class, 'assetLinks']);
+Route::get('.well-known/apple-app-site-association', [AppLinkController::class, 'appleAppSiteAssociation']);
+Route::get('apple-app-site-association', [AppLinkController::class, 'appleAppSiteAssociation']);
 Route::get('s/{store}', [AppLinkController::class, 'store'])->whereNumber('store')->name('link.store');
 Route::get('s/{store}/p/{product}', [AppLinkController::class, 'product'])->whereNumber(['store', 'product'])->name('link.product');
 Route::get('go/{screen}', [AppLinkController::class, 'screen'])->name('link.screen');
