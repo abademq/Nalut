@@ -9,6 +9,7 @@ use App\Models\Announcement;
 use App\Models\AppSection;
 use App\Models\Banner;
 use App\Support\AppTheme;
+use App\Support\Emergency;
 use App\Support\Options;
 use App\Support\Sounds;
 use App\Support\Texts;
@@ -39,6 +40,8 @@ class AppContentController extends Controller
             'sound' => Sounds::forApp($app),
             // ألوان التطبيق من «مظهر التطبيقات»
             'theme' => AppTheme::values(),
+            // مركز الطوارئ: التطبيق مقفول؟ تحديث إجباري؟
+            'emergency' => Emergency::forApp($app),
         ];
 
         if ($app === 'customer') {

@@ -3,6 +3,8 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Merchant\Auth\Login;
+use App\Http\Middleware\EmergencyMerchantGate;
+use App\Support\BrandColors;
 use App\Support\Merchant;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -10,13 +12,13 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 /**
@@ -38,8 +40,8 @@ class MerchantPanelProvider extends PanelProvider
             ->brandLogoHeight('1.8rem')
             ->favicon(fn () => asset('brand/favicon.png'))
             ->colors([
-                'primary' => \App\Support\BrandColors::GREEN,
-                'warning' => \App\Support\BrandColors::ORANGE,
+                'primary' => BrandColors::GREEN,
+                'warning' => BrandColors::ORANGE,
             ])
             ->sidebarCollapsibleOnDesktop()
             ->discoverResources(in: app_path('Filament/Merchant/Resources'), for: 'App\Filament\Merchant\Resources')
@@ -56,6 +58,8 @@ class MerchantPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
+            // مركز الطوارئ: «قفل تطبيق المتجر» يقفل اللوحة هذي كمان (حتى أزرار Livewire)
+            ->middleware([EmergencyMerchantGate::class], isPersistent: true)
             ->authMiddleware([
                 Authenticate::class,
             ])
@@ -67,11 +71,11 @@ class MerchantPanelProvider extends PanelProvider
             );
     }
 
-    private static function logo(string $file): \Illuminate\Support\HtmlString
+    private static function logo(string $file): HtmlString
     {
         $name = e(Merchant::store()?->name ?? 'لوحة المتجر');
 
-        return new \Illuminate\Support\HtmlString(
+        return new HtmlString(
             '<span style="display:inline-flex;align-items:center;gap:.6rem;height:100%">'
             .'<img src="'.e(asset('brand/'.$file)).'" alt="ازانكس" style="height:100%;width:auto">'
             .'<span style="font-weight:700;font-size:1rem;white-space:nowrap">'.$name.'</span></span>'

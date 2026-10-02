@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EmergencyGate;
 use App\Http\Middleware\EnsureRole;
 use App\Http\Middleware\LogApiActivity;
 use App\Http\Middleware\RecordTraffic;
@@ -23,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // حالة السيرفر: عدّاد خفيف لكل طلب (ملف نصي، بعد ما الرد يوصل)
         $middleware->append(RecordTraffic::class);
+
+        // مركز الطوارئ: يوقف الأجزاء اللي الإدارة قفلتها (قبل الدخول وأي كود ثاني)
+        $middleware->append(EmergencyGate::class);
 
         // سجل النشاط: كل عملية من التطبيقات
         $middleware->api(append: LogApiActivity::class);

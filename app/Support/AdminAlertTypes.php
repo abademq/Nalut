@@ -21,6 +21,7 @@ class AdminAlertTypes
         'ticket_new' => ['تذكرة دعم جديدة', 'زبون أو سائق أو متجر فتح تذكرة.', true, true, 'chime', true],
         'ticket_reply' => ['رد على تذكرة', 'المستخدم ردّ على تذكرة مفتوحة.', true, true, 'ding', true],
         'account_delete' => ['طلب حذف حساب', 'حساب طلب الحذف ويحتاج موافقة الإدارة.', true, false, 'default', false],
+        'emergency' => ['مركز الطوارئ', 'حد شغّل أو وقّف مفتاح طوارئ (دفع، طلبات، قفل تطبيق...).', true, true, 'alert', true],
         'server' => ['ضغط على السيرفر', 'الذاكرة أو المعالج أو الطابور تجاوزو الحد.', true, true, 'bell', true],
         'other' => ['تنبيهات أخرى', 'أي تنبيه ثاني من النظام.', true, true, 'default', true],
     ];
@@ -41,6 +42,7 @@ class AdminAlertTypes
             'ticket-msg' => 'ticket_reply',
             'delete-request' => 'account_delete',
             'server-high' => 'server',
+            'emergency' => 'emergency',
             default => 'other',
         };
     }
