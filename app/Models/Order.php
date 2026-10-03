@@ -23,7 +23,7 @@ class Order extends Model
         'address_lat', 'address_lng', 'customer_phone', 'subtotal', 'delivery_fee',
         'discount', 'total', 'commission_amount', 'store_earning', 'driver_earning',
         'distance_km', 'notes', 'prep_time_minutes', 'accepted_at', 'ready_at', 'drivers_notified_at',
-        'picked_up_at', 'arrived_at', 'handover_deadline_at', 'left_at_door_at', 'door_photo', 'delivered_at', 'cancelled_at', 'cancel_reason', 'cancelled_by',
+        'picked_up_at', 'arrived_at', 'handover_deadline_at', 'handover_expired_at', 'left_at_door_at', 'door_photo', 'delivered_at', 'cancelled_at', 'cancel_reason', 'cancelled_by',
         'points_used', 'points_discount', 'awaiting_customer_at', 'substitution_deadline_at',
     ];
 
@@ -47,6 +47,7 @@ class Order extends Model
             'picked_up_at' => 'datetime',
             'arrived_at' => 'datetime',
             'handover_deadline_at' => 'datetime',
+            'handover_expired_at' => 'datetime',
             'left_at_door_at' => 'datetime',
             'delivered_at' => 'datetime',
             'cancelled_at' => 'datetime',
@@ -221,6 +222,9 @@ class Order extends Model
         }
         if (($this->handoverSecondsLeft() ?? 0) > 0) {
             return 'مهلة الزبون ما كمّلتش لين توّا.';
+        }
+        if (Options::get('handover.expired_action') === 'report_issue') {
+            return 'الإجراء المعتمد بعد انتهاء المهلة: بلّغ من زر «تعذّر التسليم» والإدارة تقرر.';
         }
         if (OrderMoney::cashToCollect($this) > 0 && ! Options::get('delivery.leave_at_door_cash')) {
             return 'الطلب فيه مبلغ نقدي يتحصّل — ما ينفعش يتترك أمام الباب. استعمل «تعذّر التسليم».';

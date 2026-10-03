@@ -7,8 +7,9 @@ use App\Enums\UserRole;
 use App\Filament\Pages\OperationsSettings;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\OrderResource;
+use App\Models\Campaign;
+use App\Models\MessageLog;
 use App\Models\Order;
-use App\Models\OrderIssue;
 use App\Models\Setting;
 use App\Models\Store;
 use App\Models\Ticket;
@@ -17,8 +18,10 @@ use App\Services\DeliveryIssueService;
 use App\Services\DriverLocationService;
 use App\Services\GeoService;
 use App\Services\OrderService;
+use App\Services\PushService;
 use App\Services\SupportService;
 use App\Support\Activity;
+use App\Support\IssueDecisions;
 use App\Support\LocalDay;
 use App\Support\Options;
 use Illuminate\Http\JsonResponse;
@@ -111,6 +114,7 @@ class AdminAppController extends Controller
                 'settings' => $user->hasPermission('settings.manage'),
                 'stores' => $user->hasPermission('stores.manage'),
                 'finance' => $user->hasPermission('finance.view'),
+                'messages' => $user->hasPermission('messages.manage'),
             ],
         ];
     }
@@ -202,7 +206,7 @@ class AdminAppController extends Controller
                 'note' => $order->openIssue->note,
                 'driver' => $order->openIssue->driver?->name,
                 'created_at' => $order->openIssue->created_at,
-                'resolutions' => OrderIssue::RESOLUTIONS,
+                'resolutions' => IssueDecisions::options(),
             ] : null,
         ]);
     }
@@ -514,6 +518,104 @@ class AdminAppController extends Controller
         $request->user()->unreadNotifications()->update(['read_at' => now()]);
 
         return response()->json(['ok' => true]);
+    }
+
+    // ===== إرسال الإشعارات من تطبيق الإدارة =====
+
+    /** آخر الإشعارات اللي انبعتت (حملات «إشعار في التطبيق») */
+    public function notifications(Request $request): JsonResponse
+    {
+        $this->need($request, 'messages.manage');
+
+        $list = Campaign::where('channel', 'push')->latest('id')->limit(30)->get()
+            ->map(fn (Campaign $c) => [
+                'id' => $c->id,
+                'title' => $c->push_title,
+                'body' => $c->push_body,
+                'target_role' => $c->target_role,
+                'target_label' => Campaign::ROLES[$c->target_role] ?? $c->target_role,
+                'kind' => $c->audience_params['kind'] ?? 'promo',
+                'audience' => $c->audience,
+                'status' => $c->status,
+                'status_label' => Campaign::STATUSES[$c->status] ?? $c->status,
+                'total' => (int) $c->total,
+                'sent' => (int) $c->sent,
+                'failed' => (int) $c->failed,
+                'created_at' => $c->created_at?->toIso8601String(),
+            ]);
+
+        return response()->json(['data' => $list]);
+    }
+
+    /**
+     * إشعار جديد: لمجموعة (زبائن / سائقين / متاجر) أو لرقم واحد.
+     * dry_run=1 = يرجع عدد اللي بيوصلهم بس (قبل التأكيد).
+     */
+    public function sendNotification(Request $request): JsonResponse
+    {
+        $this->need($request, 'messages.manage');
+
+        $data = $request->validate([
+            'target_role' => ['required', 'in:customer,driver,store'],
+            'kind' => ['required', 'in:service,promo'],
+            'audience' => ['nullable', 'in:all,active,inactive'],
+            'days' => ['nullable', 'integer', 'min:1', 'max:365'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'title' => ['required', 'string', 'max:80'],
+            'body' => ['required', 'string', 'max:300'],
+            'link' => ['nullable', 'string', 'max:200'],
+            'dry_run' => ['nullable', 'boolean'],
+        ]);
+
+        // العروض للزبائن بس — السائقين والمتاجر تنبيهات تشغيلية
+        if ($data['kind'] === 'promo' && $data['target_role'] !== 'customer') {
+            $data['kind'] = 'service';
+        }
+
+        // رقم واحد: إرسال فوري
+        if (filled($data['phone'] ?? null)) {
+            $digits = preg_replace('/\D/', '', (string) $data['phone']);
+            $tail = substr($digits, -9);
+            $user = strlen($tail) < 7 ? null : User::withRole($data['target_role'])->where('phone', 'like', '%'.$tail)->first();
+            if (! $user) {
+                throw ValidationException::withMessages(['phone' => 'ما لقيناش حساب بالرقم هذا في الفئة المختارة.']);
+            }
+            if ($request->boolean('dry_run')) {
+                return response()->json(['recipients' => 1, 'name' => $user->name]);
+            }
+            $ok = PushService::toUser($user, $data['title'], $data['body'],
+                array_filter(['type' => $data['kind'] === 'service' ? 'notice' : 'promo', 'link' => $data['link'] ?? null]), $data['target_role']);
+            MessageLog::create(['channel' => 'push', 'phone' => (string) $user->phone, 'context' => 'admin_app',
+                'status' => $ok ? 'sent' : 'failed', 'error' => $ok ? null : 'ما عندوش التطبيق (ما فيش توكن إشعارات)', 'created_at' => now()]);
+            Activity::record('notify.single', "إشعار لـ {$user->name}: {$data['title']}", $user);
+
+            return response()->json(['sent' => $ok, 'recipients' => 1, 'message' => $ok ? 'وصل الإشعار.' : 'الحساب هذا ما عندوش التطبيق مفتوح بإشعارات.']);
+        }
+
+        $campaign = new Campaign([
+            'title' => 'من تطبيق الإدارة: '.$data['title'],
+            'channel' => 'push',
+            'target_role' => $data['target_role'],
+            'push_title' => $data['title'],
+            'push_body' => $data['body'],
+            'push_link' => $data['link'] ?? null,
+            'audience' => $data['target_role'] === 'customer' ? ($data['audience'] ?? 'all') : 'all',
+            'audience_params' => ['days' => (int) ($data['days'] ?? 30), 'kind' => $data['kind']],
+        ]);
+
+        $count = $campaign->customersQuery()->count();
+        if ($request->boolean('dry_run')) {
+            return response()->json(['recipients' => $count]);
+        }
+        if ($count === 0) {
+            throw ValidationException::withMessages(['audience' => 'ما فيش حد بيوصله الإشعار هذا.']);
+        }
+
+        $campaign->fill(['status' => 'queued', 'scheduled_at' => now(), 'created_by' => $request->user()->id, 'total' => $count])->save();
+        Activity::record('notify.campaign', "إشعار من تطبيق الإدارة ($count): {$data['title']}", $campaign);
+
+        return response()->json(['queued' => true, 'recipients' => $count, 'id' => $campaign->id,
+            'message' => "الإشعار في الطريق لـ $count — يبدا الإرسال خلال دقيقة."], 201);
     }
 
     private function need(Request $request, string $permission): void

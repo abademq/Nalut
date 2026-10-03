@@ -68,10 +68,13 @@ class Campaign extends Model
 
         $role = $this->channel === 'push' ? ($this->target_role ?: 'customer') : 'customer';
 
+        // تنبيه خدمي (صيانة، تغيير مواعيد، طوارئ) = مش تسويق: يوصل للكل بدون شرط الموافقة على العروض
+        $service = ($p['kind'] ?? 'promo') === 'service';
+
         $q = User::query()
             ->withRole($role)
             ->where('is_active', true)
-            ->where('marketing_opt_out', false)
+            ->when(! $service, fn ($w) => $w->where('marketing_opt_out', false))
             ->when($this->channel === 'push',
                 fn ($w) => $w->where(fn ($t) => $t->whereNotNull('fcm_tokens')->orWhereNotNull('fcm_token')),
                 fn ($w) => $w->whereNotNull('phone'));
@@ -82,7 +85,7 @@ class Campaign extends Model
         }
 
         // Apple وGoogle: العروض للزبائن بس للي وافق بنفسه (مش الافتراضي)
-        if (Options::get('marketing.require_opt_in')) {
+        if (! $service && Options::get('marketing.require_opt_in')) {
             $q->whereNotNull('marketing_choice_at');
         }
 
@@ -162,7 +165,8 @@ class Campaign extends Model
                 $user,
                 Texts::fill((string) $this->push_title, $vars),
                 Texts::fill((string) $this->push_body, $vars),
-                array_filter(['type' => 'promo', 'campaign_id' => (string) $this->id, 'link' => $this->push_link]),
+                array_filter(['type' => ($this->audience_params['kind'] ?? 'promo') === 'service' ? 'notice' : 'promo',
+                    'campaign_id' => (string) $this->id, 'link' => $this->push_link]),
                 $this->target_role ?: 'customer'
             );
 

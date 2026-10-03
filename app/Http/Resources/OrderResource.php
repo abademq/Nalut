@@ -127,6 +127,11 @@ class OrderResource extends JsonResource
                 'wait_minutes' => (int) Options::get('delivery.handover_wait_minutes'),
                 // للسائق: يقدر يتركه توّا؟ ولو لا، ليش (مثلاً طلب نقدي)
                 'leave_at_door_blocker' => $this->resource->leaveAtDoorBlocker(),
+                // بعد انتهاء المهلة: الإجراء المعتمد والرسالة (من «قرارات البلاغات والتسليم»)
+                'expired_action' => Options::get('handover.expired_action'),
+                'expired_message' => OrderMoney::viewer($request) === 'driver'
+                    ? Options::get('handover.driver_message')
+                    : Options::get('handover.customer_message'),
             ] : null,
             'left_at_door' => $this->left_at_door_at !== null,
             'left_at_door_at' => $this->left_at_door_at?->toIso8601String(),

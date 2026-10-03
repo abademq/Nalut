@@ -144,6 +144,8 @@ Route::prefix('v1')->group(function () {
             Route::post('stores/{store}/toggle', [AdminAppController::class, 'toggleStore']);
             Route::get('alerts', [AdminAppController::class, 'alerts']);
             Route::post('alerts/read', [AdminAppController::class, 'readAlerts']);
+            Route::get('notifications', [AdminAppController::class, 'notifications']);
+            Route::post('notifications', [AdminAppController::class, 'sendNotification'])->middleware('throttle:20,1');
         });
 
         // ---------- السائق ----------

@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\OrderIssue;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Support\IssueDecisions;
 use App\Support\Options;
 use App\Support\Texts;
 use Illuminate\Support\Facades\DB;
@@ -159,11 +160,12 @@ class DeliveryIssueService
             throw ValidationException::withMessages(['resolution' => 'البلاغ مقفول من قبل.']);
         }
 
-        if (! array_key_exists($resolution, OrderIssue::RESOLUTIONS)) {
-            throw ValidationException::withMessages(['resolution' => 'قرار غير معروف.']);
+        if (! array_key_exists($resolution, IssueDecisions::options())) {
+            throw ValidationException::withMessages(['resolution' => 'قرار غير معروف أو موقوف من الإعدادات.']);
         }
+        $decision = IssueDecisions::get($resolution);
 
-        return DB::transaction(function () use ($issue, $admin, $resolution, $note) {
+        return DB::transaction(function () use ($issue, $admin, $resolution, $note, $decision) {
             $order = $issue->order;
             $reason = "بلاغ {$issue->ticket}: {$issue->reason_label}".($note ? " — {$note}" : '');
 
@@ -176,16 +178,29 @@ class DeliveryIssueService
                 'resolved_at' => now(),
             ]);
 
+            $driver = $issue->driver;
+            $title = Texts::get('notify.title', ['code' => $order->code]);
+            $data = ['type' => 'order_status', 'order_id' => (string) $order->id];
+
             match ($resolution) {
-                'continue' => $issue->driver && PushService::toUser(
-                    $issue->driver, Texts::get('notify.title', ['code' => $order->code]), Texts::get('notify.driver.review_continue'),
-                    ['type' => 'order_status', 'order_id' => (string) $order->id],
-                    'driver'
-                ),
+                'continue' => null,
                 'reassign' => $this->reassign($order, $admin, $reason),
                 'failed' => $this->orders->transition($order, OrderStatus::Failed, $admin, ['reason' => $reason, 'force' => true]),
                 'cancelled' => $this->orders->transition($order, OrderStatus::Cancelled, $admin, ['reason' => $reason, 'force' => true]),
             };
+
+            // رسائل القرار من «قرارات البلاغات والتسليم» — فاضية = ما فيش رسالة إضافية
+            $driverMsg = trim($decision['driver_message']);
+            if ($resolution === 'continue' && $driverMsg === '') {
+                $driverMsg = Texts::get('notify.driver.review_continue');
+            }
+            if ($driver && $driverMsg !== '') {
+                PushService::toUser($driver, $title, Texts::fill($driverMsg, ['code' => $order->code, 'note' => (string) $note]), $data, 'driver');
+            }
+            $customerMsg = trim($decision['customer_message']);
+            if ($order->customer && $customerMsg !== '') {
+                PushService::toUser($order->customer, $title, Texts::fill($customerMsg, ['code' => $order->code, 'note' => (string) $note]), $data, 'customer');
+            }
 
             return $issue->fresh();
         });
@@ -199,7 +214,8 @@ class DeliveryIssueService
 
         $this->orders->transition($order->fresh(), OrderStatus::Ready, $admin, ['reason' => $reason, 'force' => true]);
 
-        if ($old) {
+        // رسالة السائق القديم تتبعت من resolve() حسب «قرارات البلاغات» (لو فاضية: النص الافتراضي)
+        if ($old && trim(IssueDecisions::get('reassign')['driver_message']) === '') {
             PushService::toUser($old, Texts::get('notify.title', ['code' => $order->code]), Texts::get('notify.driver.reassigned_away'), [
                 'type' => 'order_status', 'order_id' => (string) $order->id,
             ], 'driver');

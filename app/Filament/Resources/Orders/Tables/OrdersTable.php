@@ -5,10 +5,10 @@ namespace App\Filament\Resources\Orders\Tables;
 use App\Enums\OrderStatus;
 use App\Filament\Resources\ActivityLogs\ActivityLogResource;
 use App\Models\Order;
-use App\Models\OrderIssue;
 use App\Models\User;
 use App\Services\DeliveryIssueService;
 use App\Services\OrderService;
+use App\Support\IssueDecisions;
 use App\Support\Perm;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
@@ -270,7 +270,7 @@ class OrdersTable
             ->schema([
                 Select::make('resolution')
                     ->label('القرار')
-                    ->options(OrderIssue::RESOLUTIONS)
+                    ->options(fn () => IssueDecisions::options())
                     ->required(),
                 TextInput::make('note')->label('ملاحظة')->maxLength(200),
             ])

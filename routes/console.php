@@ -14,6 +14,9 @@ Schedule::command('orders:cancel-unpaid')->everyFiveMinutes()->withoutOverlappin
 // تنبيه الإدارة على الطلبات الواقفة
 Schedule::command('orders:check-stuck')->everyMinute()->withoutOverlapping();
 
+// «بانتظار التسليم»: إشعار انتهاء مهلة الزبون
+Schedule::command('orders:handover-expired')->everyMinute()->withoutOverlapping();
+
 // التقارير الدورية (واتساب/SMS) والحملات المجدولة
 Schedule::command('reports:send-due')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('campaigns:send-due')->everyMinute()->withoutOverlapping();

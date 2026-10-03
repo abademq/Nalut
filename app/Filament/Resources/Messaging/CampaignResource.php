@@ -58,6 +58,10 @@ class CampaignResource extends Resource
             Select::make('channel')->label('نوع الحملة')->options(Campaign::CHANNELS)->required()->default('template')->native(false)->live(),
             Select::make('target_role')->label('للتطبيق')->options(Campaign::ROLES)->default('customer')->native(false)->live()
                 ->visible(fn ($get) => $get('channel') === 'push'),
+            Select::make('audience_params.kind')->label('نوع الإشعار')->native(false)->default('promo')
+                ->options(['promo' => 'عرض / تسويق (للي وافقو على العروض بس)', 'service' => 'تنبيه خدمي (صيانة، مواعيد، طوارئ) — للكل'])
+                ->helperText('التنبيه الخدمي ما يتستعملش للعروض — Apple وGoogle يمنعو هذا.')
+                ->visible(fn ($get) => $get('channel') === 'push' && $get('target_role') === 'customer'),
             TextInput::make('push_title')->label('عنوان الإشعار')->maxLength(120)
                 ->required(fn ($get) => $get('channel') === 'push')
                 ->visible(fn ($get) => $get('channel') === 'push')
