@@ -17,11 +17,12 @@ class PointsTransaction extends Model
     }
 
     public const TYPES = [
-        'earned'    => 'نقاط طلب',
+        'earned' => 'نقاط طلب',
         'converted' => 'تحويل للمحفظة',
-        'redeemed'  => 'استعمال في طلب',
-        'refund'    => 'استرجاع نقاط',
-        'adjust'    => 'تعديل من الإدارة',
+        'redeemed' => 'استعمال في طلب',
+        'refund' => 'استرجاع نقاط',
+        'adjust' => 'تعديل من الإدارة',
+        'referral' => 'دعوة صديق',
     ];
 
     public function user(): BelongsTo

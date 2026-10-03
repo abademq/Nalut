@@ -77,11 +77,15 @@ class OrderMoney
         $commission = (float) $o->commission_amount;
         $storeNet = (float) $o->store_earning;
         $driver = (float) $o->driver_earning;
+        $subsidy = (float) ($o->delivery_subsidy ?? 0);
         $cash = self::cashToCollect($o);
 
         return [
             'subtotal' => $subtotal,
             'delivery_fee' => $delivery,
+            // دعم التوصيل: الشركة تدفعه من الرسوم الكاملة
+            'delivery_subsidy' => $subsidy,
+            'delivery_fee_full' => round($delivery + $subsidy, 2),
             'coupon_discount' => $coupon,
             'points_discount' => $points,
             'total' => $total,
@@ -92,8 +96,9 @@ class OrderMoney
             'commission_percent' => $subtotal > 0 ? round(100 * $commission / $subtotal, 1) : 0,
             'store_net' => $storeNet,
             'driver_earning' => $driver,
-            'delivery_platform' => round($delivery - $driver, 2),
-            // ربح المنصة = العمولة + نصيبها من التوصيل − الخصومات اللي تتحمّلها
+            // نصيب المنصة من الرسوم الكاملة (قبل الدعم)
+            'delivery_platform' => round($delivery + $subsidy - $driver, 2),
+            // ربح المنصة = العمولة + اللي دفعه الزبون للتوصيل − أجرة السائق − الخصومات اللي تتحمّلها
             'platform_net' => round($commission + ($delivery - $driver) - $coupon - $points, 2),
             // السائق: يسلّم الكاش للمنصة ويستحق أجرته → الصافي اللي عليه
             'driver_owes' => round($cash - $driver, 2),
@@ -119,7 +124,8 @@ class OrderMoney
         // ===== على الزبون =====
         if ($can('order_total')) {
             $add('customer', 'مجموع الأصناف', $n['subtotal']);
-            $add('customer', 'رسوم التوصيل', $n['delivery_fee']);
+            $add('customer', 'رسوم التوصيل', $n['delivery_fee'], 'normal',
+                $n['delivery_subsidy'] > 0 ? "بدل {$n['delivery_fee_full']} — الباقي على الشركة" : null);
             if ($n['coupon_discount'] > 0) {
                 $add('customer', 'خصم الكوبون', -$n['coupon_discount'], 'minus');
             }
@@ -170,6 +176,10 @@ class OrderMoney
             $add('split', 'عمولة المنصة من المتجر', $n['commission']);
             if ($n['delivery_platform'] != 0) {
                 $add('split', 'نصيب المنصة من التوصيل', $n['delivery_platform']);
+            }
+            if ($n['delivery_subsidy'] > 0) {
+                $add('split', 'دعم التوصيل (تدفعه الشركة)', -$n['delivery_subsidy'], 'minus',
+                    "الرسوم الكاملة {$n['delivery_fee_full']} — الزبون دفع {$n['delivery_fee']}");
             }
             if ($n['coupon_discount'] + $n['points_discount'] > 0) {
                 $add('split', 'خصومات تتحمّلها المنصة', -($n['coupon_discount'] + $n['points_discount']), 'minus');

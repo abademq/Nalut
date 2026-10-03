@@ -13,6 +13,7 @@ use App\Models\Product;
 use App\Models\Store;
 use App\Models\User;
 use App\Models\WalletTransaction;
+use App\Support\DeliverySubsidy;
 use App\Support\Options;
 use App\Support\Pickup;
 use App\Support\Texts;
@@ -53,7 +54,9 @@ class OrderService
                 ]);
             }
 
-            [$distance, $zone, $deliveryFee] = $this->deliveryFor($store, $address);
+            [$distance, $zone, $fullDeliveryFee] = $this->deliveryFor($store, $address);
+            // دعم التوصيل: الزبون يدفع جزء والشركة الباقي — السائق ياخذ على الرسوم الكاملة
+            [$deliveryFee, $deliverySubsidy] = DeliverySubsidy::split($fullDeliveryFee, $subtotal);
 
             // الكوبون بعد حساب التوصيل — باش يشتغل عرض «توصيل مجاني»
             $coupon = null;
@@ -112,6 +115,7 @@ class OrderService
                 'customer_phone' => $customer->phone,
                 'subtotal' => $subtotal,
                 'delivery_fee' => $deliveryFee,
+                'delivery_subsidy' => $deliverySubsidy,
                 'discount' => $discount,
                 'points_used' => $pointsUsed,
                 'points_discount' => $pointsDiscount,
@@ -120,7 +124,7 @@ class OrderService
                 'store_earning' => round($subtotal - $commission, 2),
                 // أجرة السائق ما تتأثرش بعرض التوصيل المجاني — المنصة تتحمّلها.
                 // نصيب السائق من رسوم التوصيل (الباقي للمنصة) — من «إعدادات التشغيل»
-                'driver_earning' => round($deliveryFee * min(100, max(0, (float) Options::get('delivery.driver_share_percent'))) / 100, 2),
+                'driver_earning' => round($fullDeliveryFee * min(100, max(0, (float) Options::get('delivery.driver_share_percent'))) / 100, 2),
                 'distance_km' => $distance,
                 'notes' => $data['notes'] ?? null,
                 'prep_time_minutes' => $store->prep_time_minutes,
@@ -200,7 +204,8 @@ class OrderService
         $lines = $this->buildLines($store, $data['items']);
         $subtotal = round(array_sum(array_column($lines, 'line_total')), 2);
 
-        [$distance, $zone, $deliveryFee] = $this->deliveryFor($store, $address);
+        [$distance, $zone, $fullDeliveryFee] = $this->deliveryFor($store, $address);
+        [$deliveryFee, $deliverySubsidy] = DeliverySubsidy::split($fullDeliveryFee, $subtotal);
 
         $discount = 0;
         $couponError = null;
@@ -239,6 +244,9 @@ class OrderService
             'pickup_payment_methods' => Pickup::paymentMethods(),
             'subtotal' => $subtotal,
             'delivery_fee' => $deliveryFee,
+            // الرسوم الكاملة وكم تدفع الشركة منها — التطبيق يورّي «10 ← 5»
+            'delivery_fee_full' => $fullDeliveryFee,
+            'delivery_subsidy' => $deliverySubsidy,
             'discount' => $discount,
             'total' => $total,
             'distance_km' => $distance,
@@ -618,6 +626,8 @@ class OrderService
             // نقاط الولاء على الطلب المكتمل
             if ($to === OrderStatus::Delivered) {
                 app(PointsService::class)->award($order->fresh('customer'));
+                // «ادعُ صديقك»: أول طلب مكتمل للصديق المدعو = هدية للاثنين
+                app(ReferralService::class)->onDelivered($order->fresh('customer'));
             }
 
             // استرجاع ما دُفع من المحفظة

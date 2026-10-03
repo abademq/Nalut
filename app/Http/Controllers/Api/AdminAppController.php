@@ -21,6 +21,7 @@ use App\Services\OrderService;
 use App\Services\PushService;
 use App\Services\SupportService;
 use App\Support\Activity;
+use App\Support\Analytics;
 use App\Support\IssueDecisions;
 use App\Support\LocalDay;
 use App\Support\Options;
@@ -616,6 +617,41 @@ class AdminAppController extends Controller
 
         return response()->json(['queued' => true, 'recipients' => $count, 'id' => $campaign->id,
             'message' => "الإشعار في الطريق لـ $count — يبدا الإرسال خلال دقيقة."], 201);
+    }
+
+    // ===== الإحصاءات =====
+
+    /** شاشة المراقبة الحية (التطبيق يحدّثها كل كم ثانية) */
+    public function monitor(Request $request): JsonResponse
+    {
+        $this->need($request, 'orders.view');
+
+        return response()->json(Analytics::monitor());
+    }
+
+    /** التحليلات: ?range=today|7|30|month|90 أو ?from=Y-m-d&to=Y-m-d */
+    public function analytics(Request $request): JsonResponse
+    {
+        $this->need($request, 'orders.view');
+        $request->validate([
+            'range' => ['nullable', 'in:today,7,30,month,90'],
+            'from' => ['nullable', 'date_format:Y-m-d'],
+            'to' => ['nullable', 'date_format:Y-m-d'],
+        ]);
+
+        [$f, $t] = Analytics::range($request->query('range'), $request->query('from'), $request->query('to'));
+        $report = Analytics::report($f, $t);
+
+        // الأرقام المالية للي عنده صلاحية المالية بس
+        if (! $request->user()->hasPermission('finance.view')) {
+            unset($report['money']);
+            foreach (['sections', 'stores'] as $k) {
+                $report[$k] = array_map(fn ($x) => array_diff_key($x, ['sales' => 1, 'avg_order_value' => 1]), $report[$k]);
+            }
+            $report['drivers'] = array_map(fn ($x) => array_diff_key($x, ['earnings' => 1]), $report['drivers']);
+        }
+
+        return response()->json($report);
     }
 
     private function need(Request $request, string $permission): void

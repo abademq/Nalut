@@ -7,6 +7,8 @@ use App\Filament\Pages\BrandingSettings;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Store;
+use App\Models\User;
+use App\Services\ReferralService;
 use App\Support\Options;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
@@ -89,10 +91,33 @@ class AppLinkController extends Controller
         );
     }
 
-    private function page(string $title, string $subtitle, ?string $image, string $deepPath): Response
+    /** رابط دعوة صديق: Google Play ياخذ الكود معاه (Install Referrer) والتطبيق يقراه أول ما يتفتح */
+    public function referral(string $code): Response
+    {
+        $code = strtoupper($code);
+        $referrer = User::where('referral_code', $code)->first();
+        abort_unless($referrer && ReferralService::enabled(), 404);
+
+        $points = (int) Options::get('referral.referee_points');
+        $first = trim(explode(' ', (string) $referrer->name)[0] ?? '');
+
+        return $this->page(
+            title: ($first ? "{$first} يدعوك" : 'دعوة').' لـ '.AppSettings::values()['name'],
+            subtitle: "نزّل التطبيق وخذ {$points} نقطة هدية مع أول طلب.",
+            image: null,
+            deepPath: "r/{$code}",
+            referralCode: $code,
+        );
+    }
+
+    private function page(string $title, string $subtitle, ?string $image, string $deepPath, ?string $referralCode = null): Response
     {
         $package = config('applinks.android_package');
         $play = config('applinks.play_store_url') ?: "https://play.google.com/store/apps/details?id={$package}";
+        if ($referralCode) {
+            // Google Play يمرّر referrer للتطبيق بعد التثبيت
+            $play .= (str_contains($play, '?') ? '&' : '?').'referrer='.rawurlencode('ref='.$referralCode);
+        }
 
         // intent:// يفتح التطبيق لو مثبّت، ولو لا يمشي لـ Google Play
         $intent = 'intent://'.$deepPath.'#Intent;scheme='.config('applinks.scheme')
@@ -110,6 +135,8 @@ class AppLinkController extends Controller
             'play' => $play,
             'app' => AppSettings::values()['name'],
             'url' => url()->current(),
+            'referral_code' => $referralCode,
+            'app_store' => config('applinks.app_store_url'),
             // موقع الطلب — للآيفون أو اللي ما عندوش التطبيق
             'web' => Options::get('web.enabled')
                 ? (config('weborder.domain') ? 'https://'.config('weborder.domain') : url(config('weborder.path', 'order')))

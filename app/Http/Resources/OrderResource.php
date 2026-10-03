@@ -153,6 +153,8 @@ class OrderResource extends JsonResource
             'cash_to_collect' => OrderMoney::cashToCollect($this->resource),
             'subtotal' => (float) $this->subtotal,
             'delivery_fee' => (float) $this->delivery_fee,
+            // دعم التوصيل: كم دفعت الشركة من الرسوم (الزبون شاف «10 ← 5»)
+            'delivery_subsidy' => (float) ($this->delivery_subsidy ?? 0),
             'discount' => (float) $this->discount,
             'points_used' => (int) $this->points_used,
             'points_discount' => (float) $this->points_discount,

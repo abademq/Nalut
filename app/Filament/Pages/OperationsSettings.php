@@ -35,6 +35,7 @@ class OperationsSettings extends Page
         'otp' => 'رموز التحقق',
         'alerts' => 'التنبيهات الفورية',
         'points' => 'نقاط الولاء',
+        'referral' => 'ادعُ صديقك',
         'carts' => 'سلات الزبون المحفوظة',
         'logs' => 'سجل النشاط',
         'server' => 'حالة السيرفر',

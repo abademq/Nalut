@@ -20,6 +20,7 @@ class User extends Authenticatable implements FilamentUser
     protected $fillable = [
         'name', 'phone', 'email', 'password', 'role', 'roles', 'permissions', 'is_active', 'marketing_opt_out',
         'avatar', 'fcm_token', 'fcm_tokens', 'locale', 'phone_verified_at', 'last_seen_at',
+        'referral_code', 'referred_by_id', 'referred_at', 'referral_rewarded_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -35,6 +36,8 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'phone_verified_at' => 'datetime',
             'last_seen_at' => 'datetime',
+            'referred_at' => 'datetime',
+            'referral_rewarded_at' => 'datetime',
         ];
     }
 

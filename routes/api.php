@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\LegalController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PartyAccountController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\StorePanelController;
 use App\Http\Controllers\Api\SupportController;
 use App\Http\Controllers\Api\WalletController;
@@ -92,6 +93,8 @@ Route::prefix('v1')->group(function () {
             Route::get('saved-carts/{savedCart}', [CustomerExtrasController::class, 'savedCart']);
             Route::delete('saved-carts/{savedCart}', [CustomerExtrasController::class, 'deleteSavedCart']);
             Route::get('points', [CustomerExtrasController::class, 'points']);
+            Route::get('referral', [ReferralController::class, 'show']);
+            Route::post('referral', [ReferralController::class, 'apply'])->middleware('throttle:10,1');
             Route::post('points/convert', [CustomerExtrasController::class, 'convertPoints']);
         });
 
@@ -145,6 +148,8 @@ Route::prefix('v1')->group(function () {
             Route::get('alerts', [AdminAppController::class, 'alerts']);
             Route::post('alerts/read', [AdminAppController::class, 'readAlerts']);
             Route::get('notifications', [AdminAppController::class, 'notifications']);
+            Route::get('monitor', [AdminAppController::class, 'monitor'])->middleware('throttle:60,1');
+            Route::get('analytics', [AdminAppController::class, 'analytics'])->middleware('throttle:30,1');
             Route::post('notifications', [AdminAppController::class, 'sendNotification'])->middleware('throttle:20,1');
         });
 

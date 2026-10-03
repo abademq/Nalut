@@ -21,7 +21,7 @@ class Order extends Model
         'payment_method', 'is_paid', 'wallet_paid', 'earnings_settled',
         'address_details', 'address_landmark',
         'address_lat', 'address_lng', 'customer_phone', 'subtotal', 'delivery_fee',
-        'discount', 'total', 'commission_amount', 'store_earning', 'driver_earning',
+        'discount', 'delivery_subsidy', 'total', 'commission_amount', 'store_earning', 'driver_earning',
         'distance_km', 'notes', 'prep_time_minutes', 'accepted_at', 'ready_at', 'drivers_notified_at',
         'picked_up_at', 'arrived_at', 'handover_deadline_at', 'handover_expired_at', 'left_at_door_at', 'door_photo', 'delivered_at', 'cancelled_at', 'cancel_reason', 'cancelled_by',
         'points_used', 'points_discount', 'awaiting_customer_at', 'substitution_deadline_at',

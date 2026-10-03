@@ -121,6 +121,14 @@ class PointsService
         }
     }
 
+    /** هدية «ادعُ صديقك» */
+    public function referral(User $user, int $points, string $note): void
+    {
+        if ($points > 0) {
+            $this->record($user, $points, 'referral', null, $note);
+        }
+    }
+
     public function adjust(User $user, int $points, ?string $note, ?User $by): void
     {
         $this->record($user, $points, 'adjust', null, $note, $by);

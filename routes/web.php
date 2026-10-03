@@ -3,6 +3,7 @@
 use App\Filament\Pages\AppSettings;
 use App\Http\Controllers\Admin\AlertsController;
 use App\Http\Controllers\Admin\DriverMapController;
+use App\Http\Controllers\Admin\MonitorController;
 use App\Http\Controllers\Admin\SettlementPrintController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Web\AppLinkController;
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\Route;
 $webOrder = function () {
     Route::get('manifest.webmanifest', [WebOrderController::class, 'manifest']);
     Route::get('sw.js', [WebOrderController::class, 'serviceWorker']);
-    Route::get('{any?}', [WebOrderController::class, 'shell'])->where('any', '^(?!api/|admin|merchant|legal/|livewire|storage/|weborder/|admin-api|settlements/|payments/|up$|\.well-known).*$');
+    Route::get('{any?}', [WebOrderController::class, 'shell'])->where('any', '^(?!api/|admin|merchant|legal/|livewire|storage/|weborder/|admin-api|monitor|settlements/|payments/|up$|\.well-known).*$');
 };
 
 // على الدومين الفرعي (WEB_ORDER_DOMAIN في .env) — قبل باقي المسارات باش «/» يفتح الموقع
@@ -29,6 +30,10 @@ Route::get('/', function () {
 
 Route::get('payments/callback', [PaymentController::class, 'callback'])
     ->name('payments.callback');
+
+// شاشة المراقبة (شاشة كبيرة) — إداري مسجّل أو رابط الشاشة ?key=
+Route::get('monitor', [MonitorController::class, 'page'])->middleware('throttle:60,1')->name('monitor');
+Route::get('monitor/data', [MonitorController::class, 'data'])->middleware('throttle:120,1')->name('monitor.data');
 
 Route::middleware(['web', 'auth'])
     ->get('admin-api/drivers-map', [DriverMapController::class, 'locations']);
@@ -56,6 +61,7 @@ Route::get('apple-app-site-association', [AppLinkController::class, 'appleAppSit
 Route::get('s/{store}', [AppLinkController::class, 'store'])->whereNumber('store')->name('link.store');
 Route::get('s/{store}/p/{product}', [AppLinkController::class, 'product'])->whereNumber(['store', 'product'])->name('link.product');
 Route::get('go/{screen}', [AppLinkController::class, 'screen'])->name('link.screen');
+Route::get('r/{code}', [AppLinkController::class, 'referral'])->where('code', '[A-Za-z0-9]{4,12}')->name('link.referral');
 
 // واصل التسوية للطباعة (اللوحة، أو رابط موقّع من تطبيق المتجر/السائق)
 Route::get('settlements/{settlement}/print', SettlementPrintController::class)
