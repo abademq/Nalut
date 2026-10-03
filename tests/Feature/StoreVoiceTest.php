@@ -197,6 +197,10 @@ class StoreVoiceTest extends TestCase
         $this->assertTrue($o['voice.confirm']);
         $this->assertSame('ar-LY', $o['voice.locale']);
         $this->assertArrayNotHasKey('voice.daily_limit', $o);
+        // v89: الاستماع المستمر
+        $this->assertFalse($o['voice.hands_free']);
+        $this->assertTrue($o['voice.speak_back']);
+        $this->assertStringContainsString('ازانكس', $o['voice.wake_words']);
     }
 
     public function test_rule_phrases(): void
