@@ -47,6 +47,7 @@ class OperationsSettings extends Page
         'marketing' => 'الرسائل التسويقية',
         'stock' => 'المخزون',
         'stores' => 'فتح وإغلاق المتاجر',
+        'voice' => 'الأوامر الصوتية (تطبيق المتجر)',
         'banners' => 'الإعلانات',
         'delivery' => 'التوصيل والعمولة',
         'pickup' => 'الاستلام من المطعم',

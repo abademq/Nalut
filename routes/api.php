@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\PartyAccountController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\StorePanelController;
+use App\Http\Controllers\Api\StoreVoiceController;
 use App\Http\Controllers\Api\SupportController;
 use App\Http\Controllers\Api\WalletController;
 use Illuminate\Support\Facades\Route;
@@ -103,6 +104,9 @@ Route::prefix('v1')->group(function () {
         // ---------- المتجر ----------
         Route::prefix('store')->middleware('role:store')->group(function () {
             Route::get('summary', [StorePanelController::class, 'summary']);
+            // v88: الأوامر الصوتية
+            Route::post('voice/interpret', [StoreVoiceController::class, 'interpret'])->middleware('throttle:20,1');
+            Route::post('voice/execute', [StoreVoiceController::class, 'execute'])->middleware('throttle:30,1');
             Route::get('account', [PartyAccountController::class, 'store']);
             Route::post('toggle-open', [StorePanelController::class, 'toggleOpen']);
             Route::post('pickup', [StorePanelController::class, 'togglePickup']);

@@ -50,4 +50,15 @@ return [
         'project_id' => env('FCM_PROJECT_ID'),
         'credentials' => env('FCM_CREDENTIALS_PATH', 'storage/app/firebase.json'),
     ],
+
+    // v88: الأوامر الصوتية في تطبيق المتجر — الذكاء الاصطناعي اللي يفهم الجملة.
+    // فاضي = نفهمو الأوامر بالقواعد بس (بدون ذكاء اصطناعي).
+    // provider: anthropic | openai (أي خدمة متوافقة مع OpenAI: Gemini, Groq... عبر VOICE_AI_URL)
+    'voice_ai' => [
+        'provider' => env('VOICE_AI_PROVIDER', 'anthropic'),
+        'key' => env('VOICE_AI_KEY'),
+        'model' => env('VOICE_AI_MODEL'),
+        'url' => env('VOICE_AI_URL'),
+        'timeout' => (int) env('VOICE_AI_TIMEOUT', 12),
+    ],
 ];
