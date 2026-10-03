@@ -19,11 +19,12 @@ use Illuminate\Console\Command;
  *   php artisan emergency admins-off --keep=1     (يوقف كل حسابات الإدارة إلا رقم 1)
  *   php artisan emergency admins-on
  *   php artisan emergency min-build customer 25   (تحديث إجباري: أقل رقم بناء)
+ *   php artisan emergency 2fa-off                 (لو انقفلت برا لوحة التحكم بسبب التحقق بخطوتين)
  */
 class EmergencyCommand extends Command
 {
     protected $signature = 'emergency
-        {action : status | on | off | message | logout | admins-off | admins-on | min-build}
+        {action : status | on | off | message | logout | admins-off | admins-on | min-build | 2fa-off | 2fa-on}
         {targets?* : المفاتيح، أو الدور، أو النص}
         {--keep= : رقم حساب الإدارة اللي يبقى شغّال (admins-off)}
         {--force : بدون سؤال تأكيد}';
@@ -43,7 +44,8 @@ class EmergencyCommand extends Command
             'admins-off' => $this->adminsOff(),
             'admins-on' => $this->adminsOn(),
             'min-build' => $this->minBuild($targets),
-            default => $this->bad('أمر مش معروف. الأوامر: status, on, off, message, logout, admins-off, admins-on, min-build'),
+            '2fa-off', '2fa-on' => $this->twoFactor($this->argument('action') === '2fa-on'),
+            default => $this->bad('أمر مش معروف. الأوامر: status, on, off, message, logout, admins-off, admins-on, min-build, 2fa-off, 2fa-on'),
         };
     }
 
@@ -155,6 +157,15 @@ class EmergencyCommand extends Command
         Setting::put("emergency.min_build.$app", (string) max(0, (int) $build));
         Activity::record('emergency.min_build', "تحديث إجباري $app: $build", null, [], null, 'system');
         $this->info("تم: $app أقل بناء = ".Emergency::minBuild($app));
+
+        return self::SUCCESS;
+    }
+
+    private function twoFactor(bool $on): int
+    {
+        Setting::put('opt.security.admin_2fa', $on ? '1' : '0');
+        Activity::record('security.admin_2fa', 'التحقق بخطوتين للإدارة: '.($on ? 'تشغيل' : 'إيقاف').' من السيرفر', null, [], null, 'system');
+        $this->info('التحقق بخطوتين للإدارة: '.($on ? 'شغّال' : 'موقوف'));
 
         return self::SUCCESS;
     }

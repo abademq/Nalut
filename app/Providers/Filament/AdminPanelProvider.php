@@ -3,6 +3,8 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Auth\Login;
+use App\Http\Middleware\EnsureAdminTwoFactor;
+use App\Support\BrandColors;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -10,7 +12,6 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
@@ -37,8 +38,8 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2rem')
             ->favicon(fn () => asset('brand/favicon.png'))
             ->colors([
-                'primary' => \App\Support\BrandColors::GREEN,
-                'warning' => \App\Support\BrandColors::ORANGE,
+                'primary' => BrandColors::GREEN,
+                'warning' => BrandColors::ORANGE,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
@@ -63,7 +64,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
+                // التحقق بخطوتين (لو مفعّل من «إعدادات التشغيل ← الحماية»)
+                EnsureAdminTwoFactor::class,
+            ], isPersistent: true)
             // جرس التنبيهات — يتحدّث كل 15 ثانية
             ->databaseNotifications()
             ->databaseNotificationsPolling('15s')

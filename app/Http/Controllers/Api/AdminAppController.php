@@ -21,6 +21,7 @@ use App\Services\OrderService;
 use App\Services\PushService;
 use App\Services\SupportService;
 use App\Support\Activity;
+use App\Support\AdminTwoFactor;
 use App\Support\Analytics;
 use App\Support\IssueDecisions;
 use App\Support\LocalDay;
@@ -66,6 +67,51 @@ class AdminAppController extends Controller
             throw ValidationException::withMessages(['login' => 'الحساب موقوف.']);
         }
 
+        // التحقق بخطوتين: رمز على الهاتف قبل التوكن
+        if (AdminTwoFactor::enabled()) {
+            $r = AdminTwoFactor::send($user, $request->ip());
+
+            return response()->json([
+                'two_factor' => true,
+                'challenge' => AdminTwoFactor::challengeFor($user),
+                'phone' => AdminTwoFactor::masked($user),
+                'channel' => $r['channel'],
+                'resend_after' => $r['resend_after'],
+                'message' => 'بعتنالك رمز على '.AdminTwoFactor::masked($user).'.',
+                'debug_code' => config('otp.debug') ? $r['code'] : null,
+            ]);
+        }
+
+        return $this->issueToken($user, $data);
+    }
+
+    /** الخطوة الثانية: الرمز ← التوكن */
+    public function verifyLogin(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'challenge' => ['required', 'string', 'max:1000'],
+            'code' => ['required', 'string', 'max:10'],
+            'fcm_token' => ['nullable', 'string'],
+            'device' => ['nullable', 'string', 'max:60'],
+        ]);
+        $user = AdminTwoFactor::userFromChallenge($data['challenge']);
+        AdminTwoFactor::verify($user, $data['code']);
+
+        return $this->issueToken($user, $data);
+    }
+
+    public function resendLogin(Request $request): JsonResponse
+    {
+        $data = $request->validate(['challenge' => ['required', 'string', 'max:1000']]);
+        $user = AdminTwoFactor::userFromChallenge($data['challenge']);
+        $r = AdminTwoFactor::send($user, $request->ip());
+
+        return response()->json(['message' => 'انبعت رمز جديد.', 'resend_after' => $r['resend_after'],
+            'debug_code' => config('otp.debug') ? $r['code'] : null]);
+    }
+
+    private function issueToken(User $user, array $data): JsonResponse
+    {
         $user->setPushToken('admin', $data['fcm_token'] ?? null);
         Activity::record('admin_app.login', "دخول تطبيق الإدارة: {$user->name}", $user);
 

@@ -5,10 +5,12 @@ use App\Http\Controllers\Admin\AlertsController;
 use App\Http\Controllers\Admin\DriverMapController;
 use App\Http\Controllers\Admin\MonitorController;
 use App\Http\Controllers\Admin\SettlementPrintController;
+use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Web\AppLinkController;
 use App\Http\Controllers\Web\MerchantAlertsController;
 use App\Http\Controllers\Web\WebOrderController;
+use App\Http\Middleware\EnsureAdminTwoFactor;
 use App\Models\LegalDocument;
 use Illuminate\Support\Facades\Route;
 
@@ -31,15 +33,22 @@ Route::get('/', function () {
 Route::get('payments/callback', [PaymentController::class, 'callback'])
     ->name('payments.callback');
 
+// التحقق بخطوتين للوحة التحكم
+Route::middleware(['auth'])->group(function () {
+    Route::get('admin-2fa', [TwoFactorController::class, 'show'])->middleware('throttle:20,1')->name('admin.2fa');
+    Route::post('admin-2fa', [TwoFactorController::class, 'verify'])->middleware('throttle:10,1')->name('admin.2fa.verify');
+    Route::post('admin-2fa/resend', [TwoFactorController::class, 'resend'])->middleware('throttle:5,1')->name('admin.2fa.resend');
+});
+
 // شاشة المراقبة (شاشة كبيرة) — إداري مسجّل أو رابط الشاشة ?key=
 Route::get('monitor', [MonitorController::class, 'page'])->middleware('throttle:60,1')->name('monitor');
 Route::get('monitor/data', [MonitorController::class, 'data'])->middleware('throttle:120,1')->name('monitor.data');
 
-Route::middleware(['web', 'auth'])
+Route::middleware(['web', 'auth', EnsureAdminTwoFactor::class])
     ->get('admin-api/drivers-map', [DriverMapController::class, 'locations']);
 
 // تنبيهات اللوحة الفورية (صوت + إشعار المتصفح)
-Route::middleware(['web', 'auth'])
+Route::middleware(['web', 'auth', EnsureAdminTwoFactor::class])
     ->get('admin-api/alerts', [AlertsController::class, 'poll']);
 
 // لوحة المتجر على الموقع: صوت الطلب الجديد

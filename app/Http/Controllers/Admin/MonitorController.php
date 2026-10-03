@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Support\AdminTwoFactor;
 use App\Support\Analytics;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,7 +44,10 @@ class MonitorController extends Controller
             return true;
         }
 
-        return (bool) $request->user()?->hasPermission('orders.view');
+        $user = $request->user();
+
+        return $user && $user->hasPermission('orders.view')
+            && (! AdminTwoFactor::enabled() || AdminTwoFactor::passedInSession($user));
     }
 
     public function page(Request $request): Response

@@ -87,6 +87,12 @@ class Options
             'security.recaptcha_admin' => ['type' => 'bool', 'default' => true,
                 'label' => 'reCAPTCHA في صفحة دخول لوحة التحكم',
                 'help' => 'يشتغل بس لو مفاتيح RECAPTCHA_SITE_KEY و RECAPTCHA_SECRET_KEY موجودة في .env'],
+            'security.admin_2fa' => ['type' => 'bool', 'default' => false,
+                'label' => 'التحقق بخطوتين لحسابات الإدارة (لوحة التحكم وتطبيق الإدارة)',
+                'help' => 'بعد كلمة المرور، رمز يوصل على هاتف الموظف (واتساب أو SMS حسب «رموز التحقق»). تأكد إن كل حساب إدارة فيه رقم هاتف صحيح قبل التفعيل. لو انقفلت برا: php artisan emergency 2fa-off'],
+            'security.admin_2fa_trust_days' => ['type' => 'int', 'default' => 30, 'min' => 0, 'max' => 90,
+                'label' => 'تذكّر الجهاز الموثوق في لوحة التحكم (أيام)',
+                'help' => 'الموظف يقدر يعلّم «هذا جهازي» وما يطلبش الرمز على نفس المتصفح للمدة هذي. 0 = الرمز في كل دخول.'],
             'security.app_check' => ['type' => 'string', 'default' => 'monitor',
                 'choices' => [
                     'off' => 'معطّل',

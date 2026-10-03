@@ -27,6 +27,10 @@ php artisan down || true
 echo "==> حزم Composer"
 composer install --no-dev --optimize-autoloader --no-interaction
 
+echo "==> فحص ثغرات المكتبات"
+COMPOSER_ALLOW_SUPERUSER=1 composer audit --no-dev --no-interaction --abandoned=ignore \
+  || echo "⚠⚠ فيه مكتبة فيها ثغرة معروفة — شوف القائمة فوق وحدّثها (composer update اسم/المكتبة)"
+
 if $FRESH; then
   grep -q "APP_KEY=base64" .env || php artisan key:generate --force
   php artisan storage:link || true

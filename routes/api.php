@@ -27,6 +27,8 @@ Route::prefix('v1')->group(function () {
     Route::post('auth/login', [AuthController::class, 'login'])->middleware(['throttle:10,1', 'appcheck']);
     // تطبيق الإدارة — كلمة المرور بس (مش رمز SMS)
     Route::post('admin/login', [AdminAppController::class, 'login'])->middleware('throttle:5,1');
+    Route::post('admin/login/verify', [AdminAppController::class, 'verifyLogin'])->middleware('throttle:10,1');
+    Route::post('admin/login/resend', [AdminAppController::class, 'resendLogin'])->middleware('throttle:3,1');
     Route::get('app/content', [AppContentController::class, 'show']);
     // الشروط والخصوصية (تنقرا قبل تسجيل الدخول كمان)
     Route::get('legal', [LegalController::class, 'index']);
