@@ -78,7 +78,7 @@ class OrderResource extends Resource
             OrderStatus::Pending => 'danger',
             OrderStatus::Accepted, OrderStatus::Preparing => 'warning',
             OrderStatus::Ready, OrderStatus::Assigned => 'info',
-            OrderStatus::PickedUp, OrderStatus::OnTheWay => 'primary',
+            OrderStatus::PickedUp, OrderStatus::OnTheWay, OrderStatus::AwaitingHandover => 'primary',
             OrderStatus::Delivered => 'success',
             default => 'gray',
         };

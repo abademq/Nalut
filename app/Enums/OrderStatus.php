@@ -2,26 +2,30 @@
 
 namespace App\Enums;
 
+use App\Support\Texts;
+
 /**
  * آلة حالات الطلب — أي انتقال غير مذكور هنا مرفوض.
  */
 enum OrderStatus: string
 {
-    case Pending   = 'pending';
-    case Accepted  = 'accepted';
+    case Pending = 'pending';
+    case Accepted = 'accepted';
     case Preparing = 'preparing';
-    case Ready     = 'ready';
-    case Assigned  = 'assigned';
-    case PickedUp  = 'picked_up';
-    case OnTheWay  = 'on_the_way';
+    case Ready = 'ready';
+    case Assigned = 'assigned';
+    case PickedUp = 'picked_up';
+    case OnTheWay = 'on_the_way';
+    // السائق عند الزبون ويستنى يستلم منه (توصيل بس) — فيه مؤقت، وبعده يقدر يحطه قدام الباب بصورة
+    case AwaitingHandover = 'awaiting_handover';
     case Delivered = 'delivered';
     case Cancelled = 'cancelled';
-    case Failed    = 'failed';
+    case Failed = 'failed';
 
     /** الاسم الظاهر — قابل للتعديل من لوحة التحكم (النصوص ← حالات الطلب) */
     public function label(): string
     {
-        return \App\Support\Texts::get('status.'.$this->value);
+        return Texts::get('status.'.$this->value);
     }
 
     /** @return array<int, OrderStatus> */
@@ -29,15 +33,16 @@ enum OrderStatus: string
     {
         return match ($this) {
             // القبول يعني بدء التحضير مباشرة
-            self::Pending   => [self::Preparing, self::Cancelled],
+            self::Pending => [self::Preparing, self::Cancelled],
             // موجودة للطلبات القديمة فقط
-            self::Accepted  => [self::Preparing, self::Ready, self::Cancelled],
+            self::Accepted => [self::Preparing, self::Ready, self::Cancelled],
             self::Preparing => [self::Ready, self::Assigned, self::Cancelled],
-            self::Ready     => [self::Assigned, self::Cancelled],
-            self::Assigned  => [self::PickedUp, self::Cancelled],
-            self::PickedUp  => [self::OnTheWay, self::Failed],
-            self::OnTheWay  => [self::Delivered, self::Failed],
-            default         => [],
+            self::Ready => [self::Assigned, self::Cancelled],
+            self::Assigned => [self::PickedUp, self::Cancelled],
+            self::PickedUp => [self::OnTheWay, self::Failed],
+            self::OnTheWay => [self::AwaitingHandover, self::Delivered, self::Failed],
+            self::AwaitingHandover => [self::Delivered, self::Failed],
+            default => [],
         };
     }
 
@@ -57,7 +62,7 @@ enum OrderStatus: string
         return [
             self::Pending->value, self::Accepted->value, self::Preparing->value,
             self::Ready->value, self::Assigned->value, self::PickedUp->value,
-            self::OnTheWay->value,
+            self::OnTheWay->value, self::AwaitingHandover->value,
         ];
     }
 }

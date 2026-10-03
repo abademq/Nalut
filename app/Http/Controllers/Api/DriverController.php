@@ -15,6 +15,9 @@ use App\Services\OrderService;
 use App\Support\Texts;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /** واجهات تطبيق السائق */
@@ -184,7 +187,7 @@ class DriverController extends Controller
         }
 
         $data = $request->validate([
-            'status' => ['required', 'in:picked_up,on_the_way,delivered,failed'],
+            'status' => ['required', 'in:picked_up,on_the_way,awaiting_handover,delivered,failed'],
             'reason' => ['nullable', 'string', 'max:200'],
             'lat' => ['nullable', 'numeric'],
             'lng' => ['nullable', 'numeric'],
@@ -203,6 +206,76 @@ class DriverController extends Controller
         );
 
         return response()->json(['data' => new OrderResource($order)]);
+    }
+
+    /**
+     * الزبون ما استلمش خلال المهلة: السائق يحط الطلب أمام الباب ويصوّره.
+     * الصورة إجبارية، وتظهر للزبون في صفحة الطلب. الطلب يتسجّل «تم التسليم» (تُرك أمام الباب).
+     */
+    public function leaveAtDoor(Request $request, Order $order): JsonResponse
+    {
+        $this->profile($request);
+        abort_unless($order->driver_id === $request->user()->id, 403);
+
+        if ($order->openIssue()->exists()) {
+            throw ValidationException::withMessages(['status' => Texts::get('msg.under_review_block')]);
+        }
+
+        // الصورة: ملف مرفوع، أو base64 (data:image/jpeg;base64,...) زي صور الدعم في التطبيقات
+        $data = $request->validate([
+            'photo' => ['required', $request->hasFile('photo') ? 'image' : 'string', $request->hasFile('photo') ? 'max:8192' : 'max:12000000'],
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+        ], ['photo.required' => 'صوّر الطلب أمام الباب أول.']);
+
+        if ($blocker = $order->leaveAtDoorBlocker()) {
+            throw ValidationException::withMessages(['status' => $blocker]);
+        }
+
+        if (isset($data['lat'], $data['lng'])) {
+            DriverLocationService::put($request->user()->id, (float) $data['lat'], (float) $data['lng']);
+        }
+
+        $path = $this->storeDoorPhoto($request->file('photo') ?? $data['photo']);
+
+        $minutes = $order->arrived_at ? max(1, (int) round($order->arrived_at->diffInMinutes(now()))) : null;
+
+        $order = $this->orders->transition($order, OrderStatus::Delivered, $request->user(), [
+            'door_photo' => $path,
+            'reason' => 'تُرك أمام الباب — الزبون ما استلمش'.($minutes ? " بعد {$minutes} دقيقة من وصول السائق" : ''),
+            'lat' => $data['lat'] ?? null,
+            'lng' => $data['lng'] ?? null,
+        ]);
+
+        return response()->json(['data' => new OrderResource($order)]);
+    }
+
+    private function storeDoorPhoto(mixed $photo): string
+    {
+        $dir = 'door-photos/'.now()->format('Y-m');
+
+        if ($photo instanceof UploadedFile) {
+            return $photo->store($dir, 'public');
+        }
+
+        $raw = (string) $photo;
+        if (str_starts_with($raw, 'data:') && str_contains($raw, ',')) {
+            $raw = substr($raw, strpos($raw, ',') + 1);
+        }
+        $bin = base64_decode($raw, true);
+        $info = $bin !== false && strlen($bin) <= 8 * 1024 * 1024 ? @getimagesizefromstring($bin) : false;
+        $ext = match ($info['mime'] ?? null) {
+            'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp',
+            default => null,
+        };
+        if (! $ext) {
+            throw ValidationException::withMessages(['photo' => 'الصورة مش صالحة أو كبيرة (لحد 8 ميغا).']);
+        }
+
+        $path = "$dir/".Str::random(32).".$ext";
+        Storage::disk('public')->put($path, $bin);
+
+        return $path;
     }
 
     /** أسباب تعذّر التسليم — من لوحة التحكم */

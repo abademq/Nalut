@@ -35,7 +35,7 @@ class DeliveryIssueService
             abort(403);
         }
 
-        if (! in_array($order->status, [OrderStatus::Assigned, OrderStatus::PickedUp, OrderStatus::OnTheWay], true)) {
+        if (! in_array($order->status, [OrderStatus::Assigned, OrderStatus::PickedUp, OrderStatus::OnTheWay, OrderStatus::AwaitingHandover], true)) {
             throw ValidationException::withMessages(['reason_id' => 'ما تقدرش تبلّغ على طلب في هذي الحالة.']);
         }
 

@@ -63,6 +63,7 @@ class OrdersTable
                         OrderStatus::Accepted, OrderStatus::Preparing => 'info',
                         OrderStatus::Ready, OrderStatus::Assigned => 'primary',
                         OrderStatus::PickedUp, OrderStatus::OnTheWay => 'info',
+                        OrderStatus::AwaitingHandover => 'warning',
                         OrderStatus::Delivered => 'success',
                         OrderStatus::Cancelled, OrderStatus::Failed => 'danger',
                     }),

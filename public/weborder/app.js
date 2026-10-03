@@ -490,7 +490,7 @@ function productCard(p, storeOpen) {
 
 const STATUS_STEPS = [
   ['pending', 'قيد الانتظار'], ['preparing', 'قيد التحضير'], ['ready', 'جاهز'],
-  ['assigned', 'مع السائق'], ['picked_up', 'استلم الطلب'], ['on_the_way', 'في الطريق'], ['delivered', 'وصل'],
+  ['assigned', 'مع السائق'], ['picked_up', 'استلم الطلب'], ['on_the_way', 'في الطريق'], ['awaiting_handover', 'عند الباب'], ['delivered', 'وصل'],
 ];
 const statusPill = (o) => {
   const cls = o.status === 'delivered' ? 'ok' : ['cancelled', 'failed'].includes(o.status) ? 'err' : o.awaiting_customer ? 'warn' : 'brand';
@@ -1205,6 +1205,15 @@ route('/orders/:id', async ({ params, alive, onLeave }) => {
           <button class="btn outline block" data-sub="edit">عدّل الطلب</button>
           <button class="btn danger block" data-sub="cancel">إلغاء الطلب</button>
         </div></div>` : ''}
+      ${o.handover ? `<div class="card" style="border:2px solid #FDBA74;background:#FFF7ED;text-align:center">
+        <div style="font-size:30px">🛵🚪</div>
+        <b style="font-size:17px">السائق وصل عندك!</b>
+        <div class="small" style="margin-top:4px">اطلع استلم طلبك خلال</div>
+        <div id="handover-left" data-deadline="${esc(o.handover.deadline_at || '')}" style="font-size:34px;font-weight:800;color:var(--warn);direction:ltr">--:--</div>
+        <div class="tiny muted">لو ما استلمتش في الوقت، السائق يحط الطلب أمام الباب ويصوّره.</div></div>` : ''}
+      ${o.left_at_door && o.door_photo_url ? `<div class="card"><b>تُرك طلبك أمام الباب</b>
+        <div class="tiny muted" style="margin:4px 0 8px">ما استلمتش في المهلة، فالسائق حطه أمام الباب. هذي صورة الإثبات:</div>
+        <a href="${esc(o.door_photo_url)}" target="_blank" rel="noopener"><img src="${esc(o.door_photo_url)}" alt="صورة الطلب أمام الباب" style="width:100%;border-radius:12px"></a></div>` : ''}
       ${!final && (o.driver || o.status === 'on_the_way' || o.status === 'picked_up') ? '<div class="card" style="padding:0;overflow:hidden"><div class="map" id="map"></div></div>' : ''}
       ${o.driver ? `<div class="card"><div class="row"><div style="font-size:30px">🛵</div><div class="grow"><b>${esc(o.driver.name)}</b>
         <div class="tiny muted">⭐ ${num(o.driver.rating_avg).toFixed(1)} · ${o.driver.delivered || 0} توصيلة</div></div>
@@ -1321,6 +1330,13 @@ route('/orders/:id', async ({ params, alive, onLeave }) => {
   const secs = Math.max(3, num(await opt('tracking.refresh_seconds', 5)));
   timers.push(setInterval(() => { if (order && !order.is_final && document.visibilityState === 'visible') track(); }, secs * 1000));
   timers.push(setInterval(() => { if (order && !order.is_final && document.visibilityState === 'visible') load().catch(() => {}); }, 20000));
+  // مؤقت «السائق عند الباب»
+  timers.push(setInterval(() => {
+    const el = document.getElementById('handover-left');
+    if (!el || !el.dataset.deadline) return;
+    const left = Math.max(0, Math.round((Date.parse(el.dataset.deadline) - Date.now()) / 1000));
+    el.textContent = left > 0 ? `${String(Math.floor(left / 60)).padStart(2, '0')}:${String(left % 60).padStart(2, '0')}` : 'انتهى الوقت';
+  }, 1000));
 }, { tab: 'orders', title: 'تفاصيل الطلب' });
 
 // ================= العناوين =================

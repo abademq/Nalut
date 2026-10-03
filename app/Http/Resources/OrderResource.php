@@ -97,6 +97,7 @@ class OrderResource extends JsonResource
             'status_label' => match (true) {
                 (bool) $this->openIssue => Texts::get('status.under_review'),
                 $this->awaiting_customer_at !== null => Texts::get('status.awaiting_customer'),
+                $this->left_at_door_at !== null && $this->status->value === 'delivered' => Texts::get('status.left_at_door'),
                 $this->resource->isPickup() && in_array($this->status->value, ['ready', 'delivered'], true) => Texts::get('status.'.$this->status->value.'_pickup'),
                 default => $this->status->label(),
             },
@@ -118,6 +119,19 @@ class OrderResource extends JsonResource
                 ]
             ),
             'is_final' => $this->status->isFinal(),
+            // بانتظار التسليم: السائق عند الباب — مؤقت الزبون، وبعده «اتركه أمام الباب» بصورة
+            'handover' => $this->status->value === 'awaiting_handover' ? [
+                'arrived_at' => $this->arrived_at?->toIso8601String(),
+                'deadline_at' => $this->handover_deadline_at?->toIso8601String(),
+                'seconds_left' => $this->resource->handoverSecondsLeft(),
+                'wait_minutes' => (int) Options::get('delivery.handover_wait_minutes'),
+                // للسائق: يقدر يتركه توّا؟ ولو لا، ليش (مثلاً طلب نقدي)
+                'leave_at_door_blocker' => $this->resource->leaveAtDoorBlocker(),
+            ] : null,
+            'left_at_door' => $this->left_at_door_at !== null,
+            'left_at_door_at' => $this->left_at_door_at?->toIso8601String(),
+            // صورة الإثبات: للزبون والسائق والإدارة (المتجر ما يحتاجهاش)
+            'door_photo_url' => $this->when(OrderMoney::viewer($request) !== 'store', fn () => $this->resource->doorPhotoUrl()),
             // delivery | pickup — الاستلام: بدون سائق، والزبون يورّي الرمز للمتجر
             'fulfillment' => $this->fulfillment ?? 'delivery',
             'is_pickup' => $this->resource->isPickup(),

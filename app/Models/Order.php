@@ -4,6 +4,8 @@ namespace App\Models;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
+use App\Support\Options;
+use App\Support\OrderMoney;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,7 +23,7 @@ class Order extends Model
         'address_lat', 'address_lng', 'customer_phone', 'subtotal', 'delivery_fee',
         'discount', 'total', 'commission_amount', 'store_earning', 'driver_earning',
         'distance_km', 'notes', 'prep_time_minutes', 'accepted_at', 'ready_at', 'drivers_notified_at',
-        'picked_up_at', 'delivered_at', 'cancelled_at', 'cancel_reason', 'cancelled_by',
+        'picked_up_at', 'arrived_at', 'handover_deadline_at', 'left_at_door_at', 'door_photo', 'delivered_at', 'cancelled_at', 'cancel_reason', 'cancelled_by',
         'points_used', 'points_discount', 'awaiting_customer_at', 'substitution_deadline_at',
     ];
 
@@ -43,6 +45,9 @@ class Order extends Model
             'accepted_at' => 'datetime',
             'ready_at' => 'datetime',
             'picked_up_at' => 'datetime',
+            'arrived_at' => 'datetime',
+            'handover_deadline_at' => 'datetime',
+            'left_at_door_at' => 'datetime',
             'delivered_at' => 'datetime',
             'cancelled_at' => 'datetime',
             'stock_restored_at' => 'datetime',
@@ -191,6 +196,42 @@ class Order extends Model
     public function isPickup(): bool
     {
         return ($this->fulfillment ?? 'delivery') === 'pickup';
+    }
+
+    // ===== بانتظار التسليم =====
+
+    /** الثواني الباقية على مهلة الزبون (0 = انتهت). null = مش في الحالة هذي */
+    public function handoverSecondsLeft(): ?int
+    {
+        if ($this->status !== OrderStatus::AwaitingHandover || ! $this->handover_deadline_at) {
+            return null;
+        }
+
+        return max(0, (int) now()->diffInSeconds($this->handover_deadline_at, false));
+    }
+
+    /**
+     * السائق يقدر يحط الطلب أمام الباب؟ بعد انتهاء المهلة بس،
+     * والطلب النقدي (فيه فلوس يحصّلها) لا — إلا لو الإدارة سمحت.
+     */
+    public function leaveAtDoorBlocker(): ?string
+    {
+        if ($this->status !== OrderStatus::AwaitingHandover) {
+            return 'الطلب مش في حالة «بانتظار التسليم».';
+        }
+        if (($this->handoverSecondsLeft() ?? 0) > 0) {
+            return 'مهلة الزبون ما كمّلتش لين توّا.';
+        }
+        if (OrderMoney::cashToCollect($this) > 0 && ! Options::get('delivery.leave_at_door_cash')) {
+            return 'الطلب فيه مبلغ نقدي يتحصّل — ما ينفعش يتترك أمام الباب. استعمل «تعذّر التسليم».';
+        }
+
+        return null;
+    }
+
+    public function doorPhotoUrl(): ?string
+    {
+        return $this->door_photo ? asset('storage/'.$this->door_photo) : null;
     }
 
     public function awaitingOnlinePayment(): bool

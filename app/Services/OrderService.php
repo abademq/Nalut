@@ -548,7 +548,7 @@ class OrderService
         // حتى الإدارة (force) ما تتجاوزهاش: لو الزبون دفع بطريقة ثانية، غيّر طريقة الدفع أول.
         if ($order->awaitingOnlinePayment()
             && in_array($to, [OrderStatus::Preparing, OrderStatus::Ready, OrderStatus::Assigned,
-                OrderStatus::PickedUp, OrderStatus::OnTheWay, OrderStatus::Delivered], true)) {
+                OrderStatus::PickedUp, OrderStatus::OnTheWay, OrderStatus::AwaitingHandover, OrderStatus::Delivered], true)) {
             throw ValidationException::withMessages([
                 'status' => Texts::get('msg.awaiting_payment'),
             ]);
@@ -570,10 +570,19 @@ class OrderService
                 OrderStatus::Ready => $payload['ready_at'] = now(),
                 OrderStatus::Assigned => $payload['driver_id'] = $extra['driver_id'] ?? $order->driver_id,
                 OrderStatus::PickedUp => $payload['picked_up_at'] = now(),
+                // السائق عند الباب: مهلة للزبون من «إعدادات التشغيل»
+                OrderStatus::AwaitingHandover => $payload = $payload + [
+                    'arrived_at' => now(),
+                    'handover_deadline_at' => now()->addMinutes((int) Options::get('delivery.handover_wait_minutes')),
+                ],
                 OrderStatus::Delivered => $payload = $payload + [
                     'delivered_at' => now(),
                     'is_paid' => true,
-                ],
+                ] + (! empty($extra['door_photo']) ? [
+                    // الزبون ما استلمش في المهلة: السائق حطه أمام الباب وصوّره
+                    'left_at_door_at' => now(),
+                    'door_photo' => $extra['door_photo'],
+                ] : []),
                 OrderStatus::Cancelled, OrderStatus::Failed => $payload = $payload + [
                     'cancelled_at' => now(),
                     'cancel_reason' => $extra['reason'] ?? null,
@@ -819,6 +828,7 @@ class OrderService
             'earning' => number_format((float) $order->driver_earning, 2),
             'distance' => number_format((float) $order->distance_km, 1),
             'pickup_code' => $order->pickup_code ?? '',
+            'minutes' => (int) Options::get('delivery.handover_wait_minutes'),
         ];
     }
 
@@ -826,6 +836,10 @@ class OrderService
     {
         if (Pickup::is($order) && in_array($to, [OrderStatus::Ready, OrderStatus::Delivered], true)) {
             return Texts::get('notify.customer.'.$to->value.'_pickup', $this->vars($order));
+        }
+
+        if ($to === OrderStatus::Delivered && $order->left_at_door_at) {
+            return Texts::get('notify.customer.left_at_door', $this->vars($order));
         }
 
         return Texts::get('notify.customer.'.$to->value, $this->vars($order));

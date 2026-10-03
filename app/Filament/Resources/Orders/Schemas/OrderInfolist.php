@@ -5,6 +5,8 @@ namespace App\Filament\Resources\Orders\Schemas;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Support\Duration;
+use App\Support\Texts;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\View;
@@ -27,8 +29,11 @@ class OrderInfolist
                     TextEntry::make('status')
                         ->label('الحالة')
                         ->badge()
-                        ->formatStateUsing(fn (OrderStatus $state) => $state->label())
+                        ->formatStateUsing(fn (OrderStatus $state, Order $record) => $record->left_at_door_at && $state === OrderStatus::Delivered
+                            ? Texts::get('status.left_at_door')
+                            : $state->label())
                         ->color(fn (OrderStatus $state) => match ($state) {
+                            OrderStatus::AwaitingHandover => 'warning',
                             OrderStatus::Delivered => 'success',
                             OrderStatus::Cancelled, OrderStatus::Failed => 'danger',
                             OrderStatus::Pending => 'warning',
@@ -134,6 +139,22 @@ class OrderInfolist
                     TextEntry::make('cancel_reason')
                         ->label('سبب الإلغاء / الفشل')
                         ->placeholder('—')
+                        ->columnSpanFull(),
+                ]),
+
+            // الزبون ما استلمش في المهلة: صورة السائق للطلب أمام الباب
+            Section::make('تُرك أمام الباب')
+                ->visible(fn (Order $record) => $record->left_at_door_at !== null)
+                ->columns(3)
+                ->schema([
+                    TextEntry::make('arrived_at')->label('وصل السائق')->dateTime('H:i — d/m/Y')->placeholder('—'),
+                    TextEntry::make('handover_deadline_at')->label('انتهت مهلة الزبون')->dateTime('H:i — d/m/Y')->placeholder('—'),
+                    TextEntry::make('left_at_door_at')->label('تُرك أمام الباب')->dateTime('H:i — d/m/Y'),
+                    ImageEntry::make('door_photo')
+                        ->label('صورة الإثبات')
+                        ->disk('public')
+                        ->imageHeight(260)
+                        ->url(fn (Order $record) => $record->doorPhotoUrl(), true)
                         ->columnSpanFull(),
                 ]),
         ]);
